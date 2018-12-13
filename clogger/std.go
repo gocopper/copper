@@ -28,6 +28,11 @@ func (s *StdLogger) Errorw(msg string, tags map[string]string) {
 }
 
 func (*StdLogger) logw(lvl Level, msg string, tags map[string]string) {
+	if tags == nil {
+		log.Printf("[%s] %s", string(lvl), msg)
+		return
+	}
+
 	tagsJSON, _ := json.Marshal(tags)
 	log.Printf("[%s] %s %s", string(lvl), msg, string(tagsJSON))
 }
