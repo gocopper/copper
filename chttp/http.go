@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/tusharsoni/copper/clogger"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/fx"
@@ -17,16 +20,22 @@ type RouterParams struct {
 	fx.In
 
 	Routes []Route `group:"routes"`
+	Logger clogger.Logger
 }
 
 func NewRouter(p RouterParams) http.Handler {
 	r := mux.NewRouter()
 
 	if len(p.Routes) == 0 {
-		panic("No routes to register")
+		p.Logger.Warnw("No routes to register", nil)
 	}
 
 	for _, route := range p.Routes {
+		p.Logger.Infow("Registering route..", map[string]string{
+			"path":    route.Path,
+			"methods": strings.Join(route.Methods, ", "),
+		})
+
 		handlerFunc := route.Handler
 
 		for _, f := range route.MiddlewareFuncs {
