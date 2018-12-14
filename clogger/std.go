@@ -1,8 +1,9 @@
 package clogger
 
 import (
-	"encoding/json"
 	"log"
+
+	"github.com/tusharsoni/copper/cerror"
 )
 
 type StdLogger struct{}
@@ -11,28 +12,22 @@ func NewStdLogger() Logger {
 	return &StdLogger{}
 }
 
-func (s *StdLogger) Debugw(msg string, tags map[string]string) {
-	s.logw(DEBUG, msg, tags)
+func (s *StdLogger) Debug(msg string, tags map[string]string) {
+	s.log(DEBUG, cerror.New(nil, msg, tags))
 }
 
-func (s *StdLogger) Infow(msg string, tags map[string]string) {
-	s.logw(INFO, msg, tags)
+func (s *StdLogger) Info(msg string, tags map[string]string) {
+	s.log(DEBUG, cerror.New(nil, msg, tags))
 }
 
-func (s *StdLogger) Warnw(msg string, tags map[string]string) {
-	s.logw(WARN, msg, tags)
+func (s *StdLogger) Warn(msg string, err error) {
+	s.log(WARN, cerror.New(err, msg, nil))
 }
 
-func (s *StdLogger) Errorw(msg string, tags map[string]string) {
-	s.logw(ERROR, msg, tags)
+func (s *StdLogger) Error(msg string, err error) {
+	s.log(ERROR, cerror.New(err, msg, nil))
 }
 
-func (*StdLogger) logw(lvl Level, msg string, tags map[string]string) {
-	if tags == nil {
-		log.Printf("[%s] %s", string(lvl), msg)
-		return
-	}
-
-	tagsJSON, _ := json.Marshal(tags)
-	log.Printf("[%s] %s %s", string(lvl), msg, string(tagsJSON))
+func (*StdLogger) log(lvl Level, err error) {
+	log.Printf("[%s] %s", string(lvl), err.Error())
 }

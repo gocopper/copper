@@ -10,8 +10,8 @@ const (
 type Level string
 
 type Logger interface {
-	Debugw(msg string, tags map[string]string)
-	Infow(msg string, tags map[string]string)
-	Warnw(msg string, tags map[string]string)
-	Errorw(msg string, tags map[string]string)
+	Debug(msg string, tags map[string]string)
+	Info(msg string, tags map[string]string)
+	Warn(msg string, err error)
+	Error(msg string, err error)
 }

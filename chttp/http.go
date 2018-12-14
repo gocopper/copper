@@ -27,11 +27,11 @@ func NewRouter(p RouterParams) http.Handler {
 	r := mux.NewRouter()
 
 	if len(p.Routes) == 0 {
-		p.Logger.Warnw("No routes to register", nil)
+		p.Logger.Warn("No routes to register", nil)
 	}
 
 	for _, route := range p.Routes {
-		p.Logger.Infow("Registering route..", map[string]string{
+		p.Logger.Info("Registering route..", map[string]string{
 			"path":    route.Path,
 			"methods": strings.Join(route.Methods, ", "),
 		})
@@ -64,9 +64,7 @@ func NewServer(lc fx.Lifecycle, logger clogger.Logger, config Config) *http.Serv
 			go func() {
 				err := server.ListenAndServe()
 				if err != nil && err != http.ErrServerClosed {
-					logger.Errorw("Failed to start http server", map[string]string{
-						"error": err.Error(),
-					})
+					logger.Error("Failed to start http server", err)
 				}
 			}()
 			return nil

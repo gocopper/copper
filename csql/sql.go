@@ -27,7 +27,7 @@ func NewGormDB(p Params) (*gorm.DB, error) {
 		p.Config.User,
 		p.Config.Name,
 	)
-	p.Logger.Infow("Connecting to database..", map[string]string{
+	p.Logger.Info("Connecting to database..", map[string]string{
 		"connection": conn,
 	})
 
@@ -37,15 +37,13 @@ func NewGormDB(p Params) (*gorm.DB, error) {
 
 	db, err := gorm.Open("postgres", conn)
 	if err != nil {
-		p.Logger.Errorw("Failed to connect to database..", map[string]string{
-			"error": err.Error(),
-		})
+		p.Logger.Error("Failed to connect to database..", err)
 		return nil, err
 	}
 
 	p.Lifecycle.Append(fx.Hook{
 		OnStop: func(context context.Context) error {
-			p.Logger.Infow("Closing connection to database..", nil)
+			p.Logger.Info("Closing connection to database..", nil)
 			return db.Close()
 		},
 	})
