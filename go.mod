@@ -2,6 +2,7 @@ module github.com/tusharsoni/copper
 
 require (
 	cloud.google.com/go v0.34.0 // indirect
+	github.com/aws/aws-sdk-go v1.16.6
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
