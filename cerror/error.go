@@ -12,14 +12,14 @@ type Error struct {
 }
 
 func New(cause error, msg string, tags map[string]string) error {
-	return &Error{
+	return Error{
 		Message: msg,
 		Tags:    tags,
 		Cause:   cause,
 	}
 }
 
-func (e *Error) Error() string {
+func (e Error) Error() string {
 	var err strings.Builder
 	var tags []string
 
