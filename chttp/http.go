@@ -12,10 +12,12 @@ import (
 	"go.uber.org/fx"
 )
 
+// Register can be used with fx.Invoke to register the given handler with the server.
 func Register(server *http.ServeMux, handler http.Handler) {
 	server.Handle("/", handler)
 }
 
+// RouterParams holds the dependencies needed to create a router using NewRouter.
 type RouterParams struct {
 	fx.In
 
@@ -23,6 +25,7 @@ type RouterParams struct {
 	Logger clogger.Logger
 }
 
+// NewRouter creates a http.Handler by registering all routes that have been provided in the application container.
 func NewRouter(p RouterParams) http.Handler {
 	r := mux.NewRouter()
 
@@ -52,6 +55,7 @@ func NewRouter(p RouterParams) http.Handler {
 	return r
 }
 
+// ServerParams holds the dependencies needed to create a http server using NewServer.
 type ServerParams struct {
 	fx.In
 
@@ -61,6 +65,8 @@ type ServerParams struct {
 	Config Config `optional:"true"`
 }
 
+// NewServer creates a http request mux. This server starts when the application starts and stops gracefully when
+// the application stops.
 func NewServer(p ServerParams) *http.ServeMux {
 	config := p.Config
 	if !config.isValid() {
