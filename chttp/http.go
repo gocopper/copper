@@ -12,21 +12,21 @@ import (
 	"go.uber.org/fx"
 )
 
-// Register can be used with fx.Invoke to register the given handler with the server.
+// Register can be used with fx.Invoke to register the root handler with the server.
 func Register(server *http.ServeMux, handler http.Handler) {
 	server.Handle("/", handler)
 }
 
-// RouterParams holds the dependencies needed to create a router using NewRouter.
-type RouterParams struct {
+// routerParams holds the dependencies needed to create a router using newRouter.
+type routerParams struct {
 	fx.In
 
 	Routes []Route `group:"routes"`
 	Logger clogger.Logger
 }
 
-// NewRouter creates a http.Handler by registering all routes that have been provided in the application container.
-func NewRouter(p RouterParams) http.Handler {
+// newRouter creates a http.Handler by registering all routes that have been provided in the application container.
+func newRouter(p routerParams) http.Handler {
 	r := mux.NewRouter()
 
 	if len(p.Routes) == 0 {
@@ -55,8 +55,8 @@ func NewRouter(p RouterParams) http.Handler {
 	return r
 }
 
-// ServerParams holds the dependencies needed to create a http server using NewServer.
-type ServerParams struct {
+// serverParams holds the dependencies needed to create a http server using newServer.
+type serverParams struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
@@ -65,9 +65,9 @@ type ServerParams struct {
 	Config Config `optional:"true"`
 }
 
-// NewServer creates a http request mux. This server starts when the application starts and stops gracefully when
+// newServer creates a http request mux. This server starts when the application starts and stops gracefully when
 // the application stops.
-func NewServer(p ServerParams) *http.ServeMux {
+func newServer(p serverParams) *http.ServeMux {
 	config := p.Config
 	if !config.isValid() {
 		config = GetDefaultConfig()
