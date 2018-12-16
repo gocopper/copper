@@ -2,9 +2,22 @@ package chttp
 
 import (
 	"net/http"
+
+	"go.uber.org/fx"
 )
 
-func NewHealthRoute(config Config) RouteResult {
+type HealthRouteParams struct {
+	fx.In
+
+	Config Config `optional:"true"`
+}
+
+func NewHealthRoute(p HealthRouteParams) RouteResult {
+	config := p.Config
+	if !config.isValid() {
+		config = GetDefaultConfig()
+	}
+
 	route := Route{
 		MiddlewareFuncs: []MiddlewareFunc{},
 		Path:            config.HealthPath,

@@ -52,19 +52,33 @@ func NewRouter(p RouterParams) http.Handler {
 	return r
 }
 
-func NewServer(lc fx.Lifecycle, logger clogger.Logger, config Config) *http.ServeMux {
+type ServerParams struct {
+	fx.In
+
+	Lifecycle fx.Lifecycle
+	Logger    clogger.Logger
+
+	Config Config `optional:"true"`
+}
+
+func NewServer(p ServerParams) *http.ServeMux {
+	config := p.Config
+	if !config.isValid() {
+		config = GetDefaultConfig()
+	}
+
 	serveMux := http.NewServeMux()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Port),
 		Handler: serveMux,
 	}
 
-	lc.Append(fx.Hook{
+	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go func() {
 				err := server.ListenAndServe()
 				if err != nil && err != http.ErrServerClosed {
-					logger.Error("Failed to start http server", err)
+					p.Logger.Error("Failed to start http server", err)
 				}
 			}()
 			return nil
