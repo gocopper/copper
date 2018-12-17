@@ -3,6 +3,7 @@ package copper
 
 import (
 	"github.com/tusharsoni/copper/chttp"
+	"github.com/tusharsoni/copper/crandom"
 
 	"go.uber.org/fx"
 )
@@ -14,6 +15,7 @@ func NewHTTPApp(opts ...fx.Option) *fx.App {
 	combined := append([]fx.Option{
 		chttp.Fx,
 
+		fx.Invoke(crandom.Seed),
 		fx.Invoke(chttp.Register),
 	}, opts...)
 
