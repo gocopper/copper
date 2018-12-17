@@ -7,10 +7,10 @@ import (
 	"go.uber.org/fx"
 )
 
-// NewHttpApp creates a new copper app that starts a http server.
+// NewHTTPApp creates a new copper app that starts a http server.
 // It accepts additional modules as fx.Option that can be registered in the app.
 // Returns *fx.App that be started using the Run() method.
-func NewHttpApp(opts ...fx.Option) *fx.App {
+func NewHTTPApp(opts ...fx.Option) *fx.App {
 	combined := append([]fx.Option{
 		chttp.Fx,
 
