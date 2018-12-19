@@ -24,6 +24,6 @@ require (
 	go.uber.org/fx v1.8.0
 	go.uber.org/goleak v0.10.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 // indirect
+	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	google.golang.org/appengine v1.3.0 // indirect
 )
