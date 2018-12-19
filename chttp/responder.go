@@ -48,11 +48,16 @@ func (r *Responder) BadRequest(w http.ResponseWriter, err error) {
 func (r *Responder) json(w http.ResponseWriter, o interface{}, status int) {
 	j, err := json.Marshal(o)
 	if err != nil {
-		r.logger.Error("Responder.json.error", err)
+		r.logger.Error("Failed to marshal response as json", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(status)
-	w.Write(j)
+
+	_, err = w.Write(j)
+	if err != nil {
+		r.logger.Error("Failed to write response to body", err)
+	}
 }
