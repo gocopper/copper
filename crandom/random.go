@@ -29,7 +29,7 @@ func GenerateRandomNumberBetween(start, end uint) uint64 {
 
 // GenerateRandomString generates a random string of the given length.
 func GenerateRandomString(n uint) string {
-	var letterRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+	var letterRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
