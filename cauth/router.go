@@ -9,13 +9,13 @@ import (
 )
 
 type router struct {
-	req    *chttp.BodyReader
-	resp   *chttp.Responder
+	req    chttp.BodyReader
+	resp   chttp.Responder
 	users  UsersSvc
 	logger clogger.Logger
 }
 
-func newRouter(req *chttp.BodyReader, resp *chttp.Responder, users UsersSvc, logger clogger.Logger) *router {
+func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, logger clogger.Logger) *router {
 	return &router{
 		req:    req,
 		resp:   resp,

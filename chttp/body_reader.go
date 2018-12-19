@@ -11,19 +11,23 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
-type BodyReader struct {
-	resp   *Responder
+type BodyReader interface {
+	Read(w http.ResponseWriter, r *http.Request, body interface{}) bool
+}
+
+type bodyReader struct {
+	resp   Responder
 	logger clogger.Logger
 }
 
-func newBodyReader(responder *Responder, logger clogger.Logger) *BodyReader {
-	return &BodyReader{
-		resp:   responder,
+func newBodyReader(resp Responder, logger clogger.Logger) BodyReader {
+	return &bodyReader{
+		resp:   resp,
 		logger: logger,
 	}
 }
 
-func (b *BodyReader) Read(w http.ResponseWriter, r *http.Request, body interface{}) bool {
+func (b *bodyReader) Read(w http.ResponseWriter, r *http.Request, body interface{}) bool {
 	url := r.URL.String()
 
 	err := json.NewDecoder(r.Body).Decode(body)

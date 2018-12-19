@@ -7,37 +7,46 @@ import (
 	"github.com/tusharsoni/copper/clogger"
 )
 
-type Responder struct {
+type Responder interface {
+	OK(w http.ResponseWriter, o interface{})
+	Created(w http.ResponseWriter, o interface{})
+	InternalErr(w http.ResponseWriter)
+	Unauthorized(w http.ResponseWriter)
+	Forbidden(w http.ResponseWriter)
+	BadRequest(w http.ResponseWriter, err error)
+}
+
+type responder struct {
 	logger clogger.Logger
 }
 
-func newResponder(logger clogger.Logger) *Responder {
-	return &Responder{
+func newResponder(logger clogger.Logger) Responder {
+	return &responder{
 		logger: logger,
 	}
 }
 
-func (r *Responder) OK(w http.ResponseWriter, o interface{}) {
+func (r *responder) OK(w http.ResponseWriter, o interface{}) {
 	r.json(w, o, http.StatusOK)
 }
 
-func (r *Responder) Created(w http.ResponseWriter, o interface{}) {
+func (r *responder) Created(w http.ResponseWriter, o interface{}) {
 	r.json(w, o, http.StatusCreated)
 }
 
-func (*Responder) InternalErr(w http.ResponseWriter) {
+func (*responder) InternalErr(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-func (*Responder) Unauthorized(w http.ResponseWriter) {
+func (*responder) Unauthorized(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
-func (*Responder) Forbidden(w http.ResponseWriter) {
+func (*responder) Forbidden(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusForbidden)
 }
 
-func (r *Responder) BadRequest(w http.ResponseWriter, err error) {
+func (r *responder) BadRequest(w http.ResponseWriter, err error) {
 	var resp struct {
 		Error string `json:"error"`
 	}
@@ -45,7 +54,7 @@ func (r *Responder) BadRequest(w http.ResponseWriter, err error) {
 	r.json(w, &resp, http.StatusBadRequest)
 }
 
-func (r *Responder) json(w http.ResponseWriter, o interface{}, status int) {
+func (r *responder) json(w http.ResponseWriter, o interface{}, status int) {
 	j, err := json.Marshal(o)
 	if err != nil {
 		r.logger.Error("Failed to marshal response as json", err)
