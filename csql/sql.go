@@ -11,7 +11,7 @@ import (
 	"go.uber.org/fx"
 )
 
-type Params struct {
+type gormDBParams struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
@@ -19,7 +19,7 @@ type Params struct {
 	Logger    clogger.Logger
 }
 
-func NewGormDB(p Params) (*gorm.DB, error) {
+func newGormDB(p gormDBParams) (*gorm.DB, error) {
 	conn := fmt.Sprintf(
 		"host=%s port=%d user=%s dbname=%s sslmode=disable",
 		p.Config.Host,
