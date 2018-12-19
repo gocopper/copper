@@ -3,6 +3,7 @@ package cauth
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -21,8 +22,13 @@ import (
 // with which a user already exists.
 var ErrUserAlreadyExists = errors.New("user already exists")
 
+// ErrInvalidCredentials is returned by UsersSvc when the given credentials such as email/password or session token
+// are incorrect.
+var ErrInvalidCredentials = errors.New("invalid credentials")
+
 // UsersSvc provides high level methods to manage users.
 type UsersSvc interface {
+	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Signup(ctx context.Context, email, password string) (*user, error)
 }
 
@@ -42,10 +48,31 @@ func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger cl
 	}
 }
 
+func (s *usersSvc) Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error) {
+	u, err := s.users.FindByEmail(ctx, email)
+	if err != nil && cerror.Cause(err) != ErrUserNotFound {
+		return nil, "", cerror.New(err, "failed to find user by email", nil)
+	} else if err == ErrUserNotFound {
+		return nil, "", ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if err != nil {
+		return nil, "", ErrInvalidCredentials
+	}
+
+	sessionToken, err = s.resetSessionToken(ctx, u)
+	if err != nil {
+		return nil, "", cerror.New(err, "failed to reset user's session token", nil)
+	}
+
+	return u, sessionToken, nil
+}
+
 func (s *usersSvc) Signup(ctx context.Context, email, password string) (*user, error) {
 	_, err := s.users.FindByEmail(ctx, email)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
-		return nil, cerror.New(err, "failed to find u by email", nil)
+		return nil, cerror.New(err, "failed to find user by email", nil)
 	}
 	if err == nil {
 		return nil, ErrUserAlreadyExists
@@ -120,4 +147,28 @@ func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
 	}
 
 	return nil
+}
+
+func (s *usersSvc) resetSessionToken(ctx context.Context, u *user) (string, error) {
+	newToken := crandom.GenerateRandomString(s.config.SessionTokenLen)
+
+	hashedTokenData, err := bcrypt.GenerateFromPassword([]byte(newToken), s.config.PasswordHashCost)
+	if err != nil {
+		return "", cerror.New(err, "failed to generate hashed session token", map[string]string{
+			"sessionToken": newToken,
+		})
+	}
+
+	hashedToken := string(hashedTokenData)
+	u.SessionToken = &hashedToken
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		return "", cerror.New(err, "failed to update user's session token", map[string]string{
+			"userId":       strconv.Itoa(int(u.ID)),
+			"sessionToken": newToken,
+		})
+	}
+
+	return newToken, nil
 }

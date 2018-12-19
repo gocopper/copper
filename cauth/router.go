@@ -24,11 +24,50 @@ func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, logge
 	}
 }
 
-func newSignupRoute(router *router) chttp.RouteResult {
+func newLoginRoute(ro *router) chttp.RouteResult {
+	route := chttp.Route{
+		Path:    "/login",
+		Methods: []string{http.MethodPost},
+		Handler: http.HandlerFunc(ro.login),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) login(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email    string `json:"email" valid:"email"`
+		Password string `json:"password" valid:"runelength(4|32)"`
+	}
+	var resp struct {
+		User         *user  `json:"user"`
+		SessionToken string `json:"session_token"`
+	}
+
+	if !ro.req.Read(w, r, &body) {
+		return
+	}
+
+	u, sessionToken, err := ro.users.Login(r.Context(), body.Email, body.Password)
+	if err != nil && err != ErrInvalidCredentials {
+		ro.logger.Error("Failed to login user with email and password", err)
+		ro.resp.InternalErr(w)
+		return
+	} else if err == ErrInvalidCredentials {
+		ro.resp.Unauthorized(w)
+		return
+	}
+
+	resp.User = u
+	resp.SessionToken = sessionToken
+
+	ro.resp.OK(w, resp)
+}
+
+func newSignupRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		Path:    "/signup",
 		Methods: []string{http.MethodPost},
-		Handler: http.HandlerFunc(router.signup),
+		Handler: http.HandlerFunc(ro.signup),
 	}
 	return chttp.RouteResult{Route: route}
 }

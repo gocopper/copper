@@ -7,6 +7,7 @@ type Config struct {
 	VerificationCodeLen uint
 	PasswordHashCost    int
 	VerificationEmail   VerificationEmailConfig
+	SessionTokenLen     uint
 }
 
 // VerificationEmailConfig can be used to configure the email that is sent after a user signs up.
@@ -23,6 +24,7 @@ type VerificationEmailConfig struct {
 func GetDefaultConfig() Config {
 	return Config{
 		VerificationCodeLen: 6,
+		SessionTokenLen:     128,
 		PasswordHashCost:    bcrypt.DefaultCost,
 		VerificationEmail: VerificationEmailConfig{
 			From:         "info@webmaster",
