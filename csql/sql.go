@@ -48,5 +48,7 @@ func NewGormDB(p Params) (*gorm.DB, error) {
 		},
 	})
 
+	db.LogMode(false)
+
 	return db, nil
 }
