@@ -11,6 +11,8 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
+// BodyReader provides methods to read the incoming http request's JSON body, parse it into a struct, validate the
+// data using govalidator, and respond if it's a bad request.
 type BodyReader interface {
 	Read(w http.ResponseWriter, r *http.Request, body interface{}) bool
 }

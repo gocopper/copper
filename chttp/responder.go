@@ -7,6 +7,7 @@ import (
 	"github.com/tusharsoni/copper/clogger"
 )
 
+// Responder provides methods to write an http response with JSON easily.
 type Responder interface {
 	OK(w http.ResponseWriter, o interface{})
 	Created(w http.ResponseWriter, o interface{})
