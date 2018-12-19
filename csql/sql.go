@@ -7,7 +7,7 @@ import (
 	"github.com/tusharsoni/copper/clogger"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // Postgres dialect for gorm
 	"go.uber.org/fx"
 )
 
