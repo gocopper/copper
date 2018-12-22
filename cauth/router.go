@@ -9,19 +9,53 @@ import (
 )
 
 type router struct {
-	req    chttp.BodyReader
-	resp   chttp.Responder
-	users  UsersSvc
-	logger clogger.Logger
+	req            chttp.BodyReader
+	resp           chttp.Responder
+	users          UsersSvc
+	authMiddleware AuthMiddleware
+	logger         clogger.Logger
 }
 
-func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, logger clogger.Logger) *router {
+func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, authMiddleware AuthMiddleware, logger clogger.Logger) *router {
 	return &router{
-		req:    req,
-		resp:   resp,
-		users:  users,
-		logger: logger,
+		req:            req,
+		resp:           resp,
+		users:          users,
+		authMiddleware: authMiddleware,
+		logger:         logger,
 	}
+}
+
+func newVerifyUserRoute(ro *router) chttp.RouteResult {
+	route := chttp.Route{
+		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},
+		Path:            "/user/verify",
+		Methods:         []string{http.MethodPost},
+		Handler:         http.HandlerFunc(ro.verifyUser),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) verifyUser(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		VerificationCode string `valid:"printableascii"`
+	}
+
+	if !ro.req.Read(w, r, &body) {
+		return
+	}
+
+	err := ro.users.VerifyUser(r.Context(), GetCurrentUser(r.Context()).ID, body.VerificationCode)
+	if err != nil && err != ErrInvalidCredentials {
+		ro.logger.Error("Failed to verify user", err)
+		ro.resp.InternalErr(w)
+		return
+	} else if err == ErrInvalidCredentials {
+		ro.resp.BadRequest(w, err)
+		return
+	}
+
+	ro.resp.OK(w, nil)
 }
 
 func newLoginRoute(ro *router) chttp.RouteResult {

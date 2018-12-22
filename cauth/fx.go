@@ -15,6 +15,9 @@ var Fx = fx.Provide(
 	newRouter,
 	newSignupRoute,
 	newLoginRoute,
+	newVerifyUserRoute,
+
+	newAuthMiddleware,
 )
 
 // RunMigrations can be used with fx.Invoke to run the db migrations for SQL implementation of cauth services.

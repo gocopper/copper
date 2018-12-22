@@ -31,6 +31,7 @@ type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Signup(ctx context.Context, email, password string) (*user, error)
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
+	VerifyUser(ctx context.Context, userID uint, verificationCode string) error
 }
 
 type usersSvc struct {
@@ -47,6 +48,28 @@ func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger cl
 		config: config,
 		logger: logger,
 	}
+}
+
+func (s *usersSvc) VerifyUser(ctx context.Context, userID uint, verificationCode string) error {
+	u, err := s.users.GetByID(ctx, userID)
+	if err != nil {
+		return cerror.New(err, "failed to find user by id", map[string]string{
+			"id": strconv.Itoa(int(userID)),
+		})
+	}
+
+	if u.VerificationCode != verificationCode {
+		return ErrInvalidCredentials
+	}
+
+	u.Verified = true
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		return cerror.New(err, "failed to verify user", nil)
+	}
+
+	return nil
 }
 
 func (s *usersSvc) VerifySessionToken(ctx context.Context, email, token string) (*user, error) {

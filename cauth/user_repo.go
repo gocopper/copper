@@ -2,6 +2,7 @@ package cauth
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/csql"
@@ -14,6 +15,7 @@ var ErrUserNotFound = gorm.ErrRecordNotFound
 
 // UserRepo provides methods to query and update users.
 type UserRepo interface {
+	GetByID(ctx context.Context, id uint) (*user, error)
 	FindByEmail(ctx context.Context, email string) (*user, error)
 	Add(ctx context.Context, user *user) error
 }
@@ -28,6 +30,22 @@ func newSQLUserRepo(db *gorm.DB) UserRepo {
 	}
 }
 
+func (r *sqlUserRepo) GetByID(ctx context.Context, id uint) (*user, error) {
+	var u user
+
+	err := csql.GetConn(ctx, r.db).
+		Where(user{ID: id}).
+		Find(&u).
+		Error
+	if err != nil {
+		return nil, cerror.New(err, "failed to query user by id", map[string]string{
+			"id": strconv.Itoa(int(id)),
+		})
+	}
+
+	return &u, nil
+}
+
 func (r *sqlUserRepo) FindByEmail(ctx context.Context, email string) (*user, error) {
 	var u user
 
@@ -36,7 +54,7 @@ func (r *sqlUserRepo) FindByEmail(ctx context.Context, email string) (*user, err
 		Find(&u).
 		Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query u by email", map[string]string{
+		return nil, cerror.New(err, "failed to query user by email", map[string]string{
 			"email": email,
 		})
 	}
