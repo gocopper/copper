@@ -24,7 +24,7 @@ type VerificationEmailConfig struct {
 func GetDefaultConfig() Config {
 	return Config{
 		VerificationCodeLen: 6,
-		SessionTokenLen:     128,
+		SessionTokenLen:     72,
 		PasswordHashCost:    bcrypt.DefaultCost,
 		VerificationEmail: VerificationEmailConfig{
 			From:         "info@webmaster",
