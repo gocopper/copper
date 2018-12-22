@@ -26,6 +26,29 @@ func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, authM
 	}
 }
 
+func newResendVerificationCodeRoute(ro *router) chttp.RouteResult {
+	route := chttp.Route{
+		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},
+		Path:            "/user/resend-verification-code",
+		Methods:         []string{http.MethodPost},
+		Handler:         http.HandlerFunc(ro.resendVerificationCode),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) resendVerificationCode(w http.ResponseWriter, r *http.Request) {
+	user := GetCurrentUser(r.Context())
+
+	err := ro.users.ResendVerificationCode(r.Context(), user.ID)
+	if err != nil {
+		ro.logger.Error("Failed to resend verification code", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	ro.resp.OK(w, nil)
+}
+
 func newVerifyUserRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},

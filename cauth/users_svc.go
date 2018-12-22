@@ -32,6 +32,7 @@ type UsersSvc interface {
 	Signup(ctx context.Context, email, password string) (*user, error)
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
 	VerifyUser(ctx context.Context, userID uint, verificationCode string) error
+	ResendVerificationCode(ctx context.Context, userID uint) error
 }
 
 type usersSvc struct {
@@ -111,6 +112,20 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 	}
 
 	return u, sessionToken, nil
+}
+
+func (s *usersSvc) ResendVerificationCode(ctx context.Context, userID uint) error {
+	u, err := s.users.GetByID(ctx, userID)
+	if err != nil {
+		return cerror.New(err, "failed to get user by id", nil)
+	}
+
+	err = s.sendVerificationCodeEmail(u)
+	if err != nil {
+		return cerror.New(err, "failed to send verification code email", nil)
+	}
+
+	return nil
 }
 
 func (s *usersSvc) Signup(ctx context.Context, email, password string) (*user, error) {
