@@ -30,6 +30,7 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Signup(ctx context.Context, email, password string) (*user, error)
+	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
 }
 
 type usersSvc struct {
@@ -46,6 +47,26 @@ func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger cl
 		config: config,
 		logger: logger,
 	}
+}
+
+func (s *usersSvc) VerifySessionToken(ctx context.Context, email, token string) (*user, error) {
+	u, err := s.users.FindByEmail(ctx, email)
+	if err != nil && cerror.Cause(err) != ErrUserNotFound {
+		return nil, cerror.New(err, "failed to find user by email", nil)
+	} else if err == ErrUserNotFound {
+		return nil, ErrInvalidCredentials
+	}
+
+	if u.SessionToken == nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(*u.SessionToken), []byte(token))
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return u, nil
 }
 
 func (s *usersSvc) Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error) {
