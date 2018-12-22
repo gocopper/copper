@@ -26,6 +26,34 @@ func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, authM
 	}
 }
 
+func newResetPasswordRoute(ro *router) chttp.RouteResult {
+	route := chttp.Route{
+		Path:    "/user/reset-password",
+		Methods: []string{http.MethodPost},
+		Handler: http.HandlerFunc(ro.resetPassword),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) resetPassword(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email string `valid:"email"`
+	}
+
+	if !ro.req.Read(w, r, &body) {
+		return
+	}
+
+	err := ro.users.ResetPassword(r.Context(), body.Email)
+	if err != nil {
+		ro.logger.Error("Failed to reset password", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	ro.resp.OK(w, nil)
+}
+
 func newResendVerificationCodeRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},

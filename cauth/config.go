@@ -4,15 +4,17 @@ import "golang.org/x/crypto/bcrypt"
 
 // Config for services in the cauth package that can be provided using Fx.
 type Config struct {
-	VerificationCodeLen uint
-	PasswordHashCost    int
-	VerificationEmail   VerificationEmailConfig
-	SessionTokenLen     uint
+	VerificationCodeLen   uint
+	ResetPasswordTokenLen uint
+	PasswordHashCost      int
+	VerificationEmail     EmailConfig
+	ResetPasswordEmail    EmailConfig
+	SessionTokenLen       uint
 }
 
-// VerificationEmailConfig can be used to configure the email that is sent after a user signs up.
-// It can be provided as part of the Config.
-type VerificationEmailConfig struct {
+// EmailConfig can be used to configure the email that is sent during various authentication flows such as user
+// verification and reset password.
+type EmailConfig struct {
 	From         string
 	Subject      string
 	BodyTemplate string
@@ -23,13 +25,19 @@ type VerificationEmailConfig struct {
 // email address.
 func GetDefaultConfig() Config {
 	return Config{
-		VerificationCodeLen: 6,
-		SessionTokenLen:     72,
-		PasswordHashCost:    bcrypt.DefaultCost,
-		VerificationEmail: VerificationEmailConfig{
+		VerificationCodeLen:   6,
+		SessionTokenLen:       72,
+		ResetPasswordTokenLen: 72,
+		PasswordHashCost:      bcrypt.DefaultCost,
+		VerificationEmail: EmailConfig{
 			From:         "info@webmaster",
 			Subject:      "Verify your account",
 			BodyTemplate: "Your verification code is {{.VerificationCode}}",
+		},
+		ResetPasswordEmail: EmailConfig{
+			From:         "info@webmaster",
+			Subject:      "Reset password",
+			BodyTemplate: "{{.ResetToken}}",
 		},
 	}
 }

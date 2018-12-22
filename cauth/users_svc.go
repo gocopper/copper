@@ -33,6 +33,7 @@ type UsersSvc interface {
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
 	VerifyUser(ctx context.Context, userID uint, verificationCode string) error
 	ResendVerificationCode(ctx context.Context, userID uint) error
+	ResetPassword(ctx context.Context, email string) error
 }
 
 type usersSvc struct {
@@ -49,6 +50,40 @@ func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger cl
 		config: config,
 		logger: logger,
 	}
+}
+
+func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
+	u, err := s.users.FindByEmail(ctx, email)
+	if err != nil {
+		return cerror.New(err, "failed to find user by email", map[string]string{
+			"email": email,
+		})
+	}
+
+	resetPasswordToken := crandom.GenerateRandomString(s.config.ResetPasswordTokenLen)
+
+	resetPasswordTokenHash, err := bcrypt.GenerateFromPassword([]byte(resetPasswordToken), s.config.PasswordHashCost)
+	if err != nil {
+		return cerror.New(err, "failed to generate reset password token hash", map[string]string{
+			"token": resetPasswordToken,
+		})
+	}
+
+	u.Password = string(resetPasswordTokenHash)
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		return cerror.New(err, "failed to update user with reset password token", nil)
+	}
+
+	go func() {
+		err = s.sendResetPasswordTokenEmail(u, resetPasswordToken)
+		if err != nil {
+			s.logger.Error("Failed to send reset password token email", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *usersSvc) VerifyUser(ctx context.Context, userID uint, verificationCode string) error {
@@ -166,6 +201,40 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (*user, e
 	}()
 
 	return &u, nil
+}
+
+func (s *usersSvc) sendResetPasswordTokenEmail(u *user, resetToken string) error {
+	var body strings.Builder
+
+	t, err := template.New("cauth/resetPasswordTokenEmail").Parse(s.config.ResetPasswordEmail.BodyTemplate)
+	if err != nil {
+		return cerror.New(err, "failed to create reset password email template", map[string]string{
+			"template": s.config.ResetPasswordEmail.BodyTemplate,
+		})
+	}
+
+	resetPasswordEmailVars := struct {
+		ResetToken string
+	}{ResetToken: resetToken}
+
+	err = t.Execute(&body, &resetPasswordEmailVars)
+	if err != nil {
+		return cerror.New(err, "failed to create reset password email body", map[string]string{
+			"template": s.config.ResetPasswordEmail.BodyTemplate,
+		})
+	}
+
+	_, err = s.mailer.SendPlain(
+		s.config.ResetPasswordEmail.From,
+		u.Email,
+		s.config.ResetPasswordEmail.Subject,
+		body.String(),
+	)
+	if err != nil {
+		return cerror.New(err, "failed to send reset password email", nil)
+	}
+
+	return nil
 }
 
 func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
