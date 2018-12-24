@@ -34,6 +34,7 @@ type UsersSvc interface {
 	VerifyUser(ctx context.Context, userID uint, verificationCode string) error
 	ResendVerificationCode(ctx context.Context, userID uint) error
 	ResetPassword(ctx context.Context, email string) error
+	ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error
 }
 
 type usersSvc struct {
@@ -50,6 +51,36 @@ func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger cl
 		config: config,
 		logger: logger,
 	}
+}
+
+func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error {
+	u, err := s.users.FindByEmail(ctx, email)
+	if err != nil && cerror.Cause(err) != ErrUserNotFound {
+		return cerror.New(err, "failed to find user by email", map[string]string{
+			"email": email,
+		})
+	} else if cerror.Cause(err) == ErrUserNotFound {
+		return ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(oldPassword))
+	if err != nil {
+		return ErrInvalidCredentials
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), s.config.PasswordHashCost)
+	if err != nil {
+		return cerror.New(err, "failed to generate hash for new password", nil)
+	}
+
+	u.Password = string(newPasswordHash)
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		return cerror.New(err, "failed to update user with new password", nil)
+	}
+
+	return nil
 }
 
 func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {

@@ -26,6 +26,36 @@ func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, authM
 	}
 }
 
+func newChangePasswordRoute(ro *router) chttp.RouteResult {
+	route := chttp.Route{
+		Path:    "/user/change-password",
+		Methods: []string{http.MethodPost},
+		Handler: http.HandlerFunc(ro.changePassword),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) changePassword(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email       string `valid:"email"`
+		OldPassword string `valid:"printableascii"`
+		NewPassword string `valid:"printableascii"`
+	}
+
+	if !ro.req.Read(w, r, &body) {
+		return
+	}
+
+	err := ro.users.ChangePassword(r.Context(), body.Email, body.OldPassword, body.NewPassword)
+	if err != nil {
+		ro.logger.Error("Failed to change password", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	ro.resp.OK(w, nil)
+}
+
 func newResetPasswordRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		Path:    "/user/reset-password",
