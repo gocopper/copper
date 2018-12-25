@@ -1,4 +1,19 @@
 # Copper - Web Framework
+
+* [Introduction](#introduction)
+* [Status](#status)
+* [Quick Start](#quick-start)
+* [Dependency Injection](#dependency-injection)
+* [Modules](#modules)
+* [Configurations](#configurations)
+* [Routing](#routing)
+* [Middleware](#middleware)
+* [Reading JSON Body](#reading-json-body)
+* [Writing JSON Responses](#writing-json-responses)
+* [Errors](#errors)
+* [License](#license)
+
+
 ## Introduction
 Copper is a dependency injection based web framework written in Go (GoLang). It provides a solid foundation that is easily extensible. You get out-of-the-box support for routing, database, validations, user management, and more!
 
