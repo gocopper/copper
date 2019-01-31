@@ -24,6 +24,15 @@ func New(cause error, msg string, tags map[string]string) error {
 	}
 }
 
+// WithTags wraps the given error with tags
+func WithTags(err error, tags map[string]string) error {
+	return Error{
+		Message: err.Error(),
+		Tags:    tags,
+		Cause:   Cause(err),
+	}
+}
+
 // Error creates a log-friendly string of the error using the cause and tags.
 func (e Error) Error() string {
 	var err strings.Builder
