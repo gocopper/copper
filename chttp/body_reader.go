@@ -23,6 +23,8 @@ type bodyReader struct {
 }
 
 func newBodyReader(resp Responder, logger clogger.Logger) BodyReader {
+	govalidator.SetFieldsRequiredByDefault(true)
+
 	return &bodyReader{
 		resp:   resp,
 		logger: logger,
@@ -41,8 +43,6 @@ func (b *bodyReader) Read(w http.ResponseWriter, r *http.Request, body interface
 		b.resp.BadRequest(w, err)
 		return false
 	}
-
-	govalidator.SetFieldsRequiredByDefault(true)
 
 	ok, err := govalidator.ValidateStruct(body)
 	if !ok {
