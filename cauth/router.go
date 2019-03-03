@@ -108,7 +108,7 @@ func newResendVerificationCodeRoute(ro *router) chttp.RouteResult {
 func (ro *router) resendVerificationCode(w http.ResponseWriter, r *http.Request) {
 	user := GetCurrentUser(r.Context())
 
-	err := ro.users.ResendVerificationCode(r.Context(), user.ID)
+	err := ro.users.ResendVerificationCode(r.Context(), user.UUID)
 	if err != nil {
 		ro.logger.Error("Failed to resend verification code", err)
 		ro.resp.InternalErr(w)
@@ -137,7 +137,7 @@ func (ro *router) verifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := ro.users.VerifyUser(r.Context(), GetCurrentUser(r.Context()).ID, body.VerificationCode)
+	err := ro.users.VerifyUser(r.Context(), GetCurrentUser(r.Context()).UUID, body.VerificationCode)
 	if err != nil && err != ErrInvalidCredentials {
 		ro.logger.Error("Failed to verify user", err)
 		ro.resp.InternalErr(w)

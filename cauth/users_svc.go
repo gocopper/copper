@@ -3,7 +3,6 @@ package cauth
 import (
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -13,6 +12,7 @@ import (
 
 	"github.com/tusharsoni/copper/crandom"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/tusharsoni/copper/cerror"
@@ -31,8 +31,8 @@ type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Signup(ctx context.Context, email, password string) (*user, error)
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
-	VerifyUser(ctx context.Context, userID uint, verificationCode string) error
-	ResendVerificationCode(ctx context.Context, userID uint) error
+	VerifyUser(ctx context.Context, uuid string, verificationCode string) error
+	ResendVerificationCode(ctx context.Context, uuid string) error
 	ResetPassword(ctx context.Context, email string) error
 	ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error
 }
@@ -117,11 +117,11 @@ func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
 	return nil
 }
 
-func (s *usersSvc) VerifyUser(ctx context.Context, userID uint, verificationCode string) error {
-	u, err := s.users.GetByID(ctx, userID)
+func (s *usersSvc) VerifyUser(ctx context.Context, uuid string, verificationCode string) error {
+	u, err := s.users.GetByUUID(ctx, uuid)
 	if err != nil {
-		return cerror.New(err, "failed to find user by id", map[string]string{
-			"id": strconv.Itoa(int(userID)),
+		return cerror.New(err, "failed to find user by uuid", map[string]string{
+			"uuid": uuid,
 		})
 	}
 
@@ -163,7 +163,7 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 	u, err := s.users.FindByEmail(ctx, email)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
 		return nil, "", cerror.New(err, "failed to find user by email", nil)
-	} else if err == ErrUserNotFound {
+	} else if cerror.Cause(err) == ErrUserNotFound {
 		return nil, "", ErrInvalidCredentials
 	}
 
@@ -180,8 +180,8 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 	return u, sessionToken, nil
 }
 
-func (s *usersSvc) ResendVerificationCode(ctx context.Context, userID uint) error {
-	u, err := s.users.GetByID(ctx, userID)
+func (s *usersSvc) ResendVerificationCode(ctx context.Context, uuid string) error {
+	u, err := s.users.GetByUUID(ctx, uuid)
 	if err != nil {
 		return cerror.New(err, "failed to get user by id", nil)
 	}
@@ -210,7 +210,13 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (*user, e
 		})
 	}
 
+	userUUID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, cerror.New(err, "failed to generate random uuid", nil)
+	}
+
 	u := user{
+		UUID:             userUUID.String(),
 		Email:            email,
 		Password:         string(passwordHash),
 		VerificationCode: crandom.GenerateRandomString(s.config.VerificationCodeLen),
@@ -324,7 +330,7 @@ func (s *usersSvc) resetSessionToken(ctx context.Context, u *user) (string, erro
 	err = s.users.Add(ctx, u)
 	if err != nil {
 		return "", cerror.New(err, "failed to update user's session token", map[string]string{
-			"userId":       strconv.Itoa(int(u.ID)),
+			"userId":       u.UUID,
 			"sessionToken": newToken,
 		})
 	}

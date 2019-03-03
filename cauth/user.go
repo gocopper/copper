@@ -10,6 +10,7 @@ type user struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
+	UUID     string `gorm:"unique_index"`
 	Email    string `gorm:"unique_index"`
 	Password string
 
