@@ -29,3 +29,16 @@ type role struct {
 func (role) TableName() string {
 	return "cacl_roles"
 }
+
+type roleUserJoin struct {
+	ID uint `gorm:"primary_key"`
+
+	CreatedAt time.Time
+
+	UserUUID string
+	RoleUUID string
+}
+
+func (roleUserJoin) TableName() string {
+	return "cacl_role_user_joins"
+}
