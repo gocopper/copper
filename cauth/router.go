@@ -1,7 +1,9 @@
 package cauth
 
 import (
+	"encoding/base64"
 	"net/http"
+	"time"
 
 	"github.com/tusharsoni/copper/clogger"
 
@@ -13,15 +15,24 @@ type router struct {
 	resp           chttp.Responder
 	users          UsersSvc
 	authMiddleware AuthMiddleware
+	config         Config
 	logger         clogger.Logger
 }
 
-func newRouter(req chttp.BodyReader, resp chttp.Responder, users UsersSvc, authMiddleware AuthMiddleware, logger clogger.Logger) *router {
+func newRouter(
+	req chttp.BodyReader,
+	resp chttp.Responder,
+	users UsersSvc,
+	authMiddleware AuthMiddleware,
+	config Config,
+	logger clogger.Logger,
+) *router {
 	return &router{
 		req:            req,
 		resp:           resp,
 		users:          users,
 		authMiddleware: authMiddleware,
+		config:         config,
 		logger:         logger,
 	}
 }
@@ -174,6 +185,13 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 
 	resp.User = u
 	resp.SessionToken = sessionToken
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "Authorization",
+		Value:   base64.StdEncoding.EncodeToString([]byte(u.Email + ":" + sessionToken)),
+		Secure:  true,
+		Expires: time.Now().Add(ro.config.AuthCookieDuration),
+	})
 
 	ro.resp.OK(w, resp)
 }

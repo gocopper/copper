@@ -1,7 +1,9 @@
 package cauth
 
 import (
+	"encoding/base64"
 	"net/http"
+	"strings"
 
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
@@ -39,7 +41,7 @@ func (m *authMiddleware) AllowUnverified(next http.Handler) http.Handler {
 
 func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email, sessionToken, ok := r.BasicAuth()
+		email, sessionToken, ok := m.getAuthCredentials(r)
 		if !ok {
 			m.resp.Unauthorized(w)
 			return
@@ -64,4 +66,28 @@ func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) htt
 
 		next.ServeHTTP(w, r.WithContext(ctxWithUser(ctx, user)))
 	})
+}
+
+func (m *authMiddleware) getAuthCredentials(r *http.Request) (username, password string, ok bool) {
+	username, password, ok = r.BasicAuth()
+	if ok {
+		return
+	}
+
+	cookie, err := r.Cookie("Authorization")
+	if err != nil {
+		return "", "", false
+	}
+
+	raw, err := base64.StdEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		return "", "", false
+	}
+
+	rawParts := strings.Split(string(raw), ":")
+	if len(rawParts) != 2 {
+		return "", "", false
+	}
+
+	return rawParts[0], rawParts[1], true
 }
