@@ -39,7 +39,7 @@ func newRouter(
 
 func newChangePasswordRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
-		Path:    "/user/change-password",
+		Path:    "/api/user/change-password",
 		Methods: []string{http.MethodPost},
 		Handler: http.HandlerFunc(ro.changePassword),
 	}
@@ -69,7 +69,7 @@ func (ro *router) changePassword(w http.ResponseWriter, r *http.Request) {
 
 func newResetPasswordRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
-		Path:    "/user/reset-password",
+		Path:    "/api/user/reset-password",
 		Methods: []string{http.MethodPost},
 		Handler: http.HandlerFunc(ro.resetPassword),
 	}
@@ -98,7 +98,7 @@ func (ro *router) resetPassword(w http.ResponseWriter, r *http.Request) {
 func newResendVerificationCodeRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},
-		Path:            "/user/resend-verification-code",
+		Path:            "/api/user/resend-verification-code",
 		Methods:         []string{http.MethodPost},
 		Handler:         http.HandlerFunc(ro.resendVerificationCode),
 	}
@@ -121,7 +121,7 @@ func (ro *router) resendVerificationCode(w http.ResponseWriter, r *http.Request)
 func newVerifyUserRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMiddleware.AllowUnverified},
-		Path:            "/user/verify",
+		Path:            "/api/user/verify",
 		Methods:         []string{http.MethodPost},
 		Handler:         http.HandlerFunc(ro.verifyUser),
 	}
@@ -152,7 +152,7 @@ func (ro *router) verifyUser(w http.ResponseWriter, r *http.Request) {
 
 func newLoginRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
-		Path:    "/login",
+		Path:    "/api/login",
 		Methods: []string{http.MethodPost},
 		Handler: http.HandlerFunc(ro.login),
 	}
@@ -198,7 +198,7 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 
 func newSignupRoute(ro *router) chttp.RouteResult {
 	route := chttp.Route{
-		Path:    "/signup",
+		Path:    "/api/signup",
 		Methods: []string{http.MethodPost},
 		Handler: http.HandlerFunc(ro.signup),
 	}
