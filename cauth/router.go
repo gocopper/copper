@@ -3,7 +3,6 @@ package cauth
 import (
 	"encoding/base64"
 	"net/http"
-	"time"
 
 	"github.com/tusharsoni/copper/clogger"
 
@@ -187,10 +186,9 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 	resp.SessionToken = sessionToken
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    "Authorization",
-		Value:   base64.StdEncoding.EncodeToString([]byte(u.Email + ":" + sessionToken)),
-		Secure:  true,
-		Expires: time.Now().Add(ro.config.AuthCookieDuration),
+		Name:  "Authorization",
+		Value: base64.StdEncoding.EncodeToString([]byte(u.Email + ":" + sessionToken)),
+		Path:  "/",
 	})
 
 	ro.resp.OK(w, resp)

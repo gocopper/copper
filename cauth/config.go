@@ -1,8 +1,6 @@
 package cauth
 
 import (
-	"time"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,7 +12,6 @@ type Config struct {
 	VerificationEmail     EmailConfig
 	ResetPasswordEmail    EmailConfig
 	SessionTokenLen       uint
-	AuthCookieDuration    time.Duration
 }
 
 // EmailConfig can be used to configure the email that is sent during various authentication flows such as user
@@ -34,7 +31,6 @@ func GetDefaultConfig() Config {
 		SessionTokenLen:       72,
 		ResetPasswordTokenLen: 72,
 		PasswordHashCost:      bcrypt.DefaultCost,
-		AuthCookieDuration:    24 * time.Hour,
 		VerificationEmail: EmailConfig{
 			From:         "info@webmaster",
 			Subject:      "Verify your account",
