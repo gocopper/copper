@@ -15,6 +15,7 @@ var Fx = fx.Provide(
 	newRouter,
 	newSignupRoute,
 	newLoginRoute,
+	newLogoutRoute,
 	newVerifyUserRoute,
 	newResendVerificationCodeRoute,
 	newResetPasswordRoute,

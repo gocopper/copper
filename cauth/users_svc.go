@@ -29,6 +29,7 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 // UsersSvc provides high level methods to manage users.
 type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
+	Logout(ctx context.Context, uuid string) error
 	Signup(ctx context.Context, email, password string) (*user, error)
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
 	VerifyUser(ctx context.Context, uuid string, verificationCode string) error
@@ -178,6 +179,26 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 	}
 
 	return u, sessionToken, nil
+}
+
+func (s *usersSvc) Logout(ctx context.Context, uuid string) error {
+	u, err := s.users.GetByUUID(ctx, uuid)
+	if err != nil {
+		return cerror.New(err, "failed to get user by id", map[string]string{
+			"uuid": uuid,
+		})
+	}
+
+	u.SessionToken = nil
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		return cerror.New(err, "failed to upsert usert", map[string]string{
+			"uuid": uuid,
+		})
+	}
+
+	return nil
 }
 
 func (s *usersSvc) ResendVerificationCode(ctx context.Context, uuid string) error {

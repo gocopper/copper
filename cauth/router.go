@@ -3,6 +3,7 @@ package cauth
 import (
 	"encoding/base64"
 	"net/http"
+	"time"
 
 	"github.com/tusharsoni/copper/clogger"
 
@@ -147,6 +148,35 @@ func (ro *router) verifyUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ro.resp.OK(w, nil)
+}
+
+func newLogoutRoute(ro *router, auth AuthMiddleware) chttp.RouteResult {
+	route := chttp.Route{
+		Path:            "/api/logout",
+		MiddlewareFuncs: []chttp.MiddlewareFunc{auth.AllowUnverified},
+		Methods:         []string{http.MethodPost},
+		Handler:         http.HandlerFunc(ro.logout),
+	}
+	return chttp.RouteResult{Route: route}
+}
+
+func (ro *router) logout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user := GetCurrentUser(ctx)
+
+	err := ro.users.Logout(ctx, user.UUID)
+	if err != nil {
+		ro.logger.Error("Failed to logout user", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "Authorization",
+		Value:   "",
+		Path:    "/",
+		Expires: time.Unix(0, 0),
+	})
 }
 
 func newLoginRoute(ro *router) chttp.RouteResult {
