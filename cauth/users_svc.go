@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/tusharsoni/copper/clogger"
 
@@ -176,6 +177,16 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 	sessionToken, err = s.resetSessionToken(ctx, u)
 	if err != nil {
 		return nil, "", cerror.New(err, "failed to reset user's session token", nil)
+	}
+
+	now := time.Now()
+	u.LastLoginAt = &now
+
+	err = s.users.Add(ctx, u)
+	if err != nil {
+		s.logger.Warn("Failed to update user's last login at", cerror.WithTags(err, map[string]string{
+			"userID": u.UUID,
+		}))
 	}
 
 	return u, sessionToken, nil

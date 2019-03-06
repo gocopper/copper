@@ -18,6 +18,7 @@ type user struct {
 	Verified         bool   `gorm:"not null;default:false"`
 
 	SessionToken *string
+	LastLoginAt  *time.Time
 }
 
 func (user) TableName() string {
