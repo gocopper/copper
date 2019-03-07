@@ -193,10 +193,6 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 		Email    string `json:"email" valid:"email"`
 		Password string `json:"password" valid:"runelength(4|32)"`
 	}
-	var resp struct {
-		User         *user  `json:"user"`
-		SessionToken string `json:"session_token"`
-	}
 
 	if !ro.req.Read(w, r, &body) {
 		return
@@ -212,16 +208,16 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.User = u
-	resp.SessionToken = sessionToken
-
 	http.SetCookie(w, &http.Cookie{
 		Name:  "Authorization",
 		Value: base64.StdEncoding.EncodeToString([]byte(u.Email + ":" + sessionToken)),
 		Path:  "/",
 	})
 
-	ro.resp.OK(w, resp)
+	ro.resp.OK(w, session{
+		User:         u,
+		SessionToken: sessionToken,
+	})
 }
 
 func newSignupRoute(ro *router) chttp.RouteResult {
@@ -243,7 +239,7 @@ func (ro *router) signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ro.users.Signup(r.Context(), body.Email, body.Password)
+	user, sessionToken, err := ro.users.Signup(r.Context(), body.Email, body.Password)
 	if err != nil && err != ErrUserAlreadyExists {
 		ro.logger.Error("Failed to signup user with email and password", err)
 		ro.resp.InternalErr(w)
@@ -253,5 +249,14 @@ func (ro *router) signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ro.resp.Created(w, user)
+	http.SetCookie(w, &http.Cookie{
+		Name:  "Authorization",
+		Value: base64.StdEncoding.EncodeToString([]byte(user.Email + ":" + sessionToken)),
+		Path:  "/",
+	})
+
+	ro.resp.Created(w, session{
+		User:         user,
+		SessionToken: sessionToken,
+	})
 }

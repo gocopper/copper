@@ -31,7 +31,7 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Logout(ctx context.Context, uuid string) error
-	Signup(ctx context.Context, email, password string) (*user, error)
+	Signup(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
 	VerifyUser(ctx context.Context, uuid string, verificationCode string) error
 	ResendVerificationCode(ctx context.Context, uuid string) error
@@ -226,50 +226,57 @@ func (s *usersSvc) ResendVerificationCode(ctx context.Context, uuid string) erro
 	return nil
 }
 
-func (s *usersSvc) Signup(ctx context.Context, email, password string) (*user, error) {
-	_, err := s.users.FindByEmail(ctx, email)
+func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user, sessionToken string, err error) {
+	_, err = s.users.FindByEmail(ctx, email)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
-		return nil, cerror.New(err, "failed to find user by email", nil)
+		return nil, "", cerror.New(err, "failed to find user by email", nil)
 	}
 	if err == nil {
-		return nil, ErrUserAlreadyExists
+		return nil, "", ErrUserAlreadyExists
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), s.config.PasswordHashCost)
 	if err != nil {
-		return nil, cerror.New(err, "failed to generate password hash", map[string]string{
+		return nil, "", cerror.New(err, "failed to generate password hash", map[string]string{
 			"email": email,
 		})
 	}
 
 	userUUID, err := uuid.NewRandom()
 	if err != nil {
-		return nil, cerror.New(err, "failed to generate random uuid", nil)
+		return nil, "", cerror.New(err, "failed to generate random uuid", nil)
 	}
 
-	u := user{
+	u = &user{
 		UUID:             userUUID.String(),
 		Email:            email,
 		Password:         string(passwordHash),
 		VerificationCode: crandom.GenerateRandomString(s.config.VerificationCodeLen),
 	}
 
-	err = s.users.Add(ctx, &u)
+	err = s.users.Add(ctx, u)
 	if err != nil {
-		return nil, cerror.New(err, "failed to create new user", map[string]string{
+		return nil, "", cerror.New(err, "failed to create new user", map[string]string{
 			"email":            u.Email,
 			"verificationCode": u.VerificationCode,
 		})
 	}
 
 	go func() {
-		err = s.sendVerificationCodeEmail(&u)
+		err = s.sendVerificationCodeEmail(u)
 		if err != nil {
 			s.logger.Error("Failed to send verification code email", err)
 		}
 	}()
 
-	return &u, nil
+	sessionToken, err = s.resetSessionToken(ctx, u)
+	if err != nil {
+		return nil, "", cerror.New(err, "failed to reset user's session token", map[string]string{
+			"userUUID": u.UUID,
+		})
+	}
+
+	return u, sessionToken, nil
 }
 
 func (s *usersSvc) sendResetPasswordTokenEmail(u *user, resetToken string) error {
