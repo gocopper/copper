@@ -21,8 +21,9 @@ func Register(server *http.ServeMux, handler http.Handler) {
 type routerParams struct {
 	fx.In
 
-	Routes []Route `group:"routes"`
-	Logger clogger.Logger
+	Routes                []Route          `group:"routes"`
+	GlobalMiddlewareFuncs []MiddlewareFunc `group:"global_middleware_funcs"`
+	Logger                clogger.Logger
 }
 
 // newRouter creates a http.Handler by registering all routes that have been provided in the application container.
@@ -40,6 +41,10 @@ func newRouter(p routerParams) http.Handler {
 		})
 
 		handlerFunc := route.Handler
+
+		for _, f := range p.GlobalMiddlewareFuncs {
+			handlerFunc = f(route.Handler)
+		}
 
 		for _, f := range route.MiddlewareFuncs {
 			handlerFunc = f(route.Handler)
