@@ -6,7 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-const connCtxKey = "csql/tx"
+type ctxKey string
+
+const connCtxKey = ctxKey("csql/tx")
 
 // GetConn returns a db connection from the context or the given default connection if context is empty.
 func GetConn(ctx context.Context, db *gorm.DB) *gorm.DB {
