@@ -48,9 +48,9 @@ func newChangePasswordRoute(ro *router) chttp.RouteResult {
 
 func (ro *router) changePassword(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Email       string `valid:"email"`
-		OldPassword string `valid:"printableascii"`
-		NewPassword string `valid:"printableascii"`
+		Email       string `json:"email" valid:"email"`
+		OldPassword string `json:"old_password" valid:"printableascii"`
+		NewPassword string `json:"new_password" valid:"printableascii"`
 	}
 
 	if !ro.req.Read(w, r, &body) {
@@ -78,7 +78,7 @@ func newResetPasswordRoute(ro *router) chttp.RouteResult {
 
 func (ro *router) resetPassword(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Email string `valid:"email"`
+		Email string `json:"email" valid:"email"`
 	}
 
 	if !ro.req.Read(w, r, &body) {
@@ -130,7 +130,7 @@ func newVerifyUserRoute(ro *router) chttp.RouteResult {
 
 func (ro *router) verifyUser(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		VerificationCode string `valid:"printableascii"`
+		VerificationCode string `json:"verification_code" valid:"printableascii"`
 	}
 
 	if !ro.req.Read(w, r, &body) {
