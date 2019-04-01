@@ -29,7 +29,7 @@ func GetDefaultConfig() Config {
 	return Config{
 		VerificationCodeLen:   6,
 		SessionTokenLen:       72,
-		ResetPasswordTokenLen: 72,
+		ResetPasswordTokenLen: 8,
 		PasswordHashCost:      bcrypt.DefaultCost,
 		VerificationEmail: EmailConfig{
 			From:         "info@webmaster",
@@ -39,7 +39,7 @@ func GetDefaultConfig() Config {
 		ResetPasswordEmail: EmailConfig{
 			From:         "info@webmaster",
 			Subject:      "Reset password",
-			BodyTemplate: "{{.ResetToken}}",
+			BodyTemplate: "Your password has been reset to {{.ResetToken}}. Please login and change your password immediately.",
 		},
 	}
 }
