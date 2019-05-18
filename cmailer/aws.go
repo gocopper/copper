@@ -34,6 +34,14 @@ func NewAWSMailer(config AWSConfig) (Mailer, error) {
 }
 
 func (m *AWSMailer) SendPlain(from, to, subject, body string) (confirmation string, err error) {
+	return m.send(from, to, subject, body, false)
+}
+
+func (m *AWSMailer) SendHTML(from, to, subject, body string) (confirmation string, err error) {
+	return m.send(from, to, subject, body, true)
+}
+
+func (m *AWSMailer) send(from, to, subject, body string, html bool) (confirmation string, err error) {
 	input := &ses.SendEmailInput{
 		Source: aws.String(from),
 		Destination: &ses.Destination{
@@ -44,18 +52,24 @@ func (m *AWSMailer) SendPlain(from, to, subject, body string) (confirmation stri
 				Charset: aws.String(charset),
 				Data:    aws.String(subject),
 			},
-			Body: &ses.Body{
-				Text: &ses.Content{
-					Charset: aws.String(charset),
-					Data:    aws.String(body),
-				},
-			},
+			Body: &ses.Body{},
 		},
+	}
+
+	content := &ses.Content{
+		Charset: aws.String(charset),
+		Data:    aws.String(body),
+	}
+
+	if html {
+		input.Message.Body.Html = content
+	} else {
+		input.Message.Body.Text = content
 	}
 
 	result, err := m.sess.SendEmail(input)
 	if err != nil {
-		return "", cerror.New(err, "failed to send plain email", map[string]string{
+		return "", cerror.New(err, "failed to send email", map[string]string{
 			"from":    from,
 			"to":      to,
 			"subject": subject,
