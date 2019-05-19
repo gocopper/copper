@@ -7,6 +7,10 @@ import (
 	"text/template"
 	"time"
 
+	"go.uber.org/fx"
+
+	"github.com/tusharsoni/copper/cpubsub"
+
 	"github.com/tusharsoni/copper/clogger"
 
 	"github.com/tusharsoni/copper/cmailer"
@@ -42,16 +46,28 @@ type UsersSvc interface {
 type usersSvc struct {
 	users  UserRepo
 	mailer cmailer.Mailer
+	pubsub cpubsub.PubSub
 	config Config
 	logger clogger.Logger
 }
 
-func newUsersSvc(users UserRepo, mailer cmailer.Mailer, config Config, logger clogger.Logger) UsersSvc {
+type usersSvcParams struct {
+	fx.In
+
+	Users  UserRepo
+	Mailer cmailer.Mailer
+	PubSub *cpubsub.LocalPubSub
+	Config Config
+	Logger clogger.Logger
+}
+
+func newUsersSvc(p usersSvcParams) UsersSvc {
 	return &usersSvc{
-		users:  users,
-		mailer: mailer,
-		config: config,
-		logger: logger,
+		users:  p.Users,
+		mailer: p.Mailer,
+		pubsub: p.PubSub,
+		config: p.Config,
+		logger: p.Logger,
 	}
 }
 
@@ -137,6 +153,13 @@ func (s *usersSvc) VerifyUser(ctx context.Context, uuid string, verificationCode
 	if err != nil {
 		return cerror.New(err, "failed to verify user", nil)
 	}
+
+	go func() {
+		err = s.pubsub.Publish(UserVerifyTopic, []byte(u.UUID))
+		if err != nil {
+			s.logger.Warn("Failed to publish user verify success update", err)
+		}
+	}()
 
 	return nil
 }
@@ -275,6 +298,13 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 			"userUUID": u.UUID,
 		})
 	}
+
+	go func() {
+		err = s.pubsub.Publish(UserSignupTopic, []byte(u.UUID))
+		if err != nil {
+			s.logger.Warn("Failed to publish user signup success update", err)
+		}
+	}()
 
 	return u, sessionToken, nil
 }
