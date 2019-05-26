@@ -12,6 +12,7 @@ type Config struct {
 	VerificationEmail     EmailConfig
 	ResetPasswordEmail    EmailConfig
 	SessionTokenLen       uint
+	AdminEmail            string
 }
 
 // EmailConfig can be used to configure the email that is sent during various authentication flows such as user
@@ -41,5 +42,6 @@ func GetDefaultConfig() Config {
 			Subject:      "Reset password",
 			BodyTemplate: "Your password has been reset to {{.ResetToken}}. Please login and change your password immediately.",
 		},
+		AdminEmail: "admin@webmaster",
 	}
 }
