@@ -42,8 +42,9 @@ func (e Error) Error() string {
 	err.WriteString(e.Message)
 
 	for tag, val := range e.Tags {
-		if reflect.ValueOf(val).Kind() == reflect.Ptr && val.(*interface{}) != nil {
-			tags = append(tags, fmt.Sprintf("%s=%+v", tag, *(val.(*interface{}))))
+		reflectVal := reflect.ValueOf(val)
+		if reflectVal.Kind() == reflect.Ptr && !reflectVal.IsNil() {
+			tags = append(tags, fmt.Sprintf("%s=%+v", tag, reflectVal.Elem()))
 		} else {
 			tags = append(tags, fmt.Sprintf("%s=%+v", tag, val))
 		}
