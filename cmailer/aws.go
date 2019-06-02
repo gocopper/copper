@@ -69,7 +69,7 @@ func (m *AWSMailer) send(from, to, subject, body string, html bool) (confirmatio
 
 	result, err := m.sess.SendEmail(input)
 	if err != nil {
-		return "", cerror.New(err, "failed to send email", map[string]string{
+		return "", cerror.New(err, "failed to send email", map[string]interface{}{
 			"from":    from,
 			"to":      to,
 			"subject": subject,

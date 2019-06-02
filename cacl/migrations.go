@@ -16,7 +16,7 @@ func runMigrations(db *gorm.DB) error {
 		AddUniqueIndex("idx_cacl_permissions_grantee_id_resource_action", "grantee_id", "resource", "action").
 		Error
 	if err != nil {
-		return cerror.New(err, "failed to add unique index to cacl_permissions", map[string]string{
+		return cerror.New(err, "failed to add unique index to cacl_permissions", map[string]interface{}{
 			"idx": "idx_cacl_permissions_grantee_id_resource_action",
 		})
 	}
@@ -26,7 +26,7 @@ func runMigrations(db *gorm.DB) error {
 		AddUniqueIndex("idx_cacl_role_user_joins_user_uuid_role_uuid", "user_uuid", "role_uuid").
 		Error
 	if err != nil {
-		return cerror.New(err, "failed to add unique index to cacl_role_user_joins", map[string]string{
+		return cerror.New(err, "failed to add unique index to cacl_role_user_joins", map[string]interface{}{
 			"idx": "idx_cacl_role_user_joins_user_uuid_role_uuid",
 		})
 	}

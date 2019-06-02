@@ -36,7 +36,7 @@ func (b *bodyReader) Read(w http.ResponseWriter, r *http.Request, body interface
 
 	err := json.NewDecoder(r.Body).Decode(body)
 	if err != nil {
-		b.logger.Warn("Failed to read body", cerror.New(err, "invalid json", map[string]string{
+		b.logger.Warn("Failed to read body", cerror.New(err, "invalid json", map[string]interface{}{
 			"url": url,
 		}))
 
@@ -46,7 +46,7 @@ func (b *bodyReader) Read(w http.ResponseWriter, r *http.Request, body interface
 
 	ok, err := govalidator.ValidateStruct(body)
 	if !ok {
-		b.logger.Warn("Failed to read body", cerror.New(err, "data validation failed", map[string]string{
+		b.logger.Warn("Failed to read body", cerror.New(err, "data validation failed", map[string]interface{}{
 			"url": url,
 		}))
 

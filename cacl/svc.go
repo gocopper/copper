@@ -34,7 +34,7 @@ func newSvcImpl(repo repo) Svc {
 func (s *svcImpl) UserHasPermission(ctx context.Context, userUUID string, resource, action string) (bool, error) {
 	has, err := s.HasPermission(ctx, userUUID, resource, action)
 	if err != nil {
-		return false, cerror.New(err, "failed to check permission", map[string]string{
+		return false, cerror.New(err, "failed to check permission", map[string]interface{}{
 			"userUUID": userUUID,
 			"resource": resource,
 			"action":   action,
@@ -47,7 +47,7 @@ func (s *svcImpl) UserHasPermission(ctx context.Context, userUUID string, resour
 
 	roles, err := s.repo.FindRolesForUserUUID(ctx, userUUID)
 	if err != nil {
-		return false, cerror.New(err, "failed to find roles for user", map[string]string{
+		return false, cerror.New(err, "failed to find roles for user", map[string]interface{}{
 			"userUUID": userUUID,
 		})
 	}
@@ -55,7 +55,7 @@ func (s *svcImpl) UserHasPermission(ctx context.Context, userUUID string, resour
 	for _, r := range roles {
 		has, err := s.HasPermission(ctx, r.UUID, resource, action)
 		if err != nil {
-			return false, cerror.New(err, "failed to check permission", map[string]string{
+			return false, cerror.New(err, "failed to check permission", map[string]interface{}{
 				"roleUUID": r.UUID,
 				"resource": resource,
 				"action":   action,
@@ -73,7 +73,7 @@ func (s *svcImpl) UserHasPermission(ctx context.Context, userUUID string, resour
 func (s *svcImpl) HasPermission(ctx context.Context, granteeID, resource, action string) (bool, error) {
 	_, err := s.repo.GetPermissionForGrantee(ctx, granteeID, resource, action)
 	if err != nil && cerror.Cause(err) != gorm.ErrRecordNotFound {
-		return false, cerror.New(err, "failed to get permission for grantte", map[string]string{
+		return false, cerror.New(err, "failed to get permission for grantte", map[string]interface{}{
 			"granteeID": granteeID,
 			"resource":  resource,
 			"action":    action,
@@ -101,7 +101,7 @@ func (s *svcImpl) GrantPermissions(ctx context.Context, granteeID, resource stri
 
 		err = s.repo.AddPermission(ctx, &p)
 		if err != nil {
-			return cerror.New(err, "failed to upsert permission", map[string]string{
+			return cerror.New(err, "failed to upsert permission", map[string]interface{}{
 				"uuid":      pUUID.String(),
 				"granteeID": granteeID,
 				"resource":  resource,
@@ -116,7 +116,7 @@ func (s *svcImpl) GrantPermissions(ctx context.Context, granteeID, resource stri
 func (s *svcImpl) RevokePermission(ctx context.Context, granteeID, resource, action string) error {
 	p, err := s.repo.GetPermissionForGrantee(ctx, granteeID, resource, action)
 	if err != nil && cerror.Cause(err) != gorm.ErrRecordNotFound {
-		return cerror.New(err, "failed to get permission for grantte", map[string]string{
+		return cerror.New(err, "failed to get permission for grantte", map[string]interface{}{
 			"granteeID": granteeID,
 			"resource":  resource,
 			"action":    action,
@@ -125,7 +125,7 @@ func (s *svcImpl) RevokePermission(ctx context.Context, granteeID, resource, act
 
 	err = s.repo.DeletePermission(ctx, p.UUID)
 	if err != nil {
-		return cerror.New(err, "failed to delete permission", map[string]string{
+		return cerror.New(err, "failed to delete permission", map[string]interface{}{
 			"uuid": p.UUID,
 		})
 	}
@@ -146,7 +146,7 @@ func (s *svcImpl) CreateRole(ctx context.Context, name string) error {
 
 	err = s.repo.AddRole(ctx, &r)
 	if err != nil {
-		return cerror.New(err, "failed to upsert role", map[string]string{
+		return cerror.New(err, "failed to upsert role", map[string]interface{}{
 			"uuid": rUUID.String(),
 			"name": name,
 		})

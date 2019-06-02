@@ -37,7 +37,7 @@ func (r *sqlUserRepo) GetByUUID(ctx context.Context, uuid string) (*user, error)
 		Find(&u).
 		Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query user by uuid", map[string]string{
+		return nil, cerror.New(err, "failed to query user by uuid", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
@@ -49,11 +49,11 @@ func (r *sqlUserRepo) FindByEmail(ctx context.Context, email string) (*user, err
 	var u user
 
 	err := csql.GetConn(ctx, r.db).
-		Where(user{Email: email}).
+		Where(user{Email: &email}).
 		Find(&u).
 		Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query user by email", map[string]string{
+		return nil, cerror.New(err, "failed to query user by email", map[string]interface{}{
 			"email": email,
 		})
 	}

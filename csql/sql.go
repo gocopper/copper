@@ -27,7 +27,7 @@ func newGormDB(p gormDBParams) (*gorm.DB, error) {
 		p.Config.User,
 		p.Config.Name,
 	)
-	p.Logger.Info("Connecting to database..", map[string]string{
+	p.Logger.Info("Connecting to database..", map[string]interface{}{
 		"connection": conn,
 	})
 

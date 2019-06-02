@@ -85,7 +85,7 @@ func (s *usersSvc) FindByEmail(ctx context.Context, email string) (*user, error)
 func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error {
 	u, err := s.users.FindByEmail(ctx, email)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
-		return cerror.New(err, "failed to find user by email", map[string]string{
+		return cerror.New(err, "failed to find user by email", map[string]interface{}{
 			"email": email,
 		})
 	} else if cerror.Cause(err) == ErrUserNotFound {
@@ -115,7 +115,7 @@ func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPa
 func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
 	u, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
-		return cerror.New(err, "failed to find user by email", map[string]string{
+		return cerror.New(err, "failed to find user by email", map[string]interface{}{
 			"email": email,
 		})
 	}
@@ -124,7 +124,7 @@ func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
 
 	resetPasswordTokenHash, err := bcrypt.GenerateFromPassword([]byte(resetPasswordToken), s.config.PasswordHashCost)
 	if err != nil {
-		return cerror.New(err, "failed to generate reset password token hash", map[string]string{
+		return cerror.New(err, "failed to generate reset password token hash", map[string]interface{}{
 			"token": resetPasswordToken,
 		})
 	}
@@ -149,7 +149,7 @@ func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
 func (s *usersSvc) VerifyUser(ctx context.Context, uuid string, verificationCode string) error {
 	u, err := s.users.GetByUUID(ctx, uuid)
 	if err != nil {
-		return cerror.New(err, "failed to find user by uuid", map[string]string{
+		return cerror.New(err, "failed to find user by uuid", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
@@ -178,7 +178,9 @@ func (s *usersSvc) VerifyUser(ctx context.Context, uuid string, verificationCode
 func (s *usersSvc) VerifySessionToken(ctx context.Context, email, token string) (*user, error) {
 	u, err := s.users.FindByEmail(ctx, email)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
-		return nil, cerror.New(err, "failed to find user by email", nil)
+		return nil, cerror.New(err, "failed to find user by uuid", map[string]interface{}{
+			"uuid": uuid,
+		})
 	} else if err == ErrUserNotFound {
 		return nil, ErrInvalidCredentials
 	}
@@ -218,7 +220,7 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
-		s.logger.Warn("Failed to update user's last login at", cerror.WithTags(err, map[string]string{
+		s.logger.Warn("Failed to update user's last login at", cerror.WithTags(err, map[string]interface{}{
 			"userID": u.UUID,
 		}))
 	}
@@ -229,7 +231,7 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 func (s *usersSvc) Logout(ctx context.Context, uuid string) error {
 	u, err := s.users.GetByUUID(ctx, uuid)
 	if err != nil {
-		return cerror.New(err, "failed to get user by id", map[string]string{
+		return cerror.New(err, "failed to get user by id", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
@@ -238,7 +240,7 @@ func (s *usersSvc) Logout(ctx context.Context, uuid string) error {
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
-		return cerror.New(err, "failed to upsert usert", map[string]string{
+		return cerror.New(err, "failed to upsert usert", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
@@ -271,7 +273,7 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), s.config.PasswordHashCost)
 	if err != nil {
-		return nil, "", cerror.New(err, "failed to generate password hash", map[string]string{
+		return nil, "", cerror.New(err, "failed to generate password hash", map[string]interface{}{
 			"email": email,
 		})
 	}
@@ -290,7 +292,7 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
-		return nil, "", cerror.New(err, "failed to create new user", map[string]string{
+		return nil, "", cerror.New(err, "failed to create new user", map[string]interface{}{
 			"email":            u.Email,
 			"verificationCode": u.VerificationCode,
 		})
@@ -305,7 +307,7 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 
 	sessionToken, err = s.resetSessionToken(ctx, u)
 	if err != nil {
-		return nil, "", cerror.New(err, "failed to reset user's session token", map[string]string{
+		return nil, "", cerror.New(err, "failed to reset user's session token", map[string]interface{}{
 			"userUUID": u.UUID,
 		})
 	}
@@ -325,7 +327,7 @@ func (s *usersSvc) sendResetPasswordTokenEmail(u *user, resetToken string) error
 
 	t, err := template.New("cauth/resetPasswordTokenEmail").Parse(s.config.ResetPasswordEmail.BodyTemplate)
 	if err != nil {
-		return cerror.New(err, "failed to create reset password email template", map[string]string{
+		return cerror.New(err, "failed to create reset password email template", map[string]interface{}{
 			"template": s.config.ResetPasswordEmail.BodyTemplate,
 		})
 	}
@@ -336,7 +338,7 @@ func (s *usersSvc) sendResetPasswordTokenEmail(u *user, resetToken string) error
 
 	err = t.Execute(&body, &resetPasswordEmailVars)
 	if err != nil {
-		return cerror.New(err, "failed to create reset password email body", map[string]string{
+		return cerror.New(err, "failed to create reset password email body", map[string]interface{}{
 			"template": s.config.ResetPasswordEmail.BodyTemplate,
 		})
 	}
@@ -359,7 +361,7 @@ func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
 
 	t, err := template.New("cauth/verificationEmail").Parse(s.config.VerificationEmail.BodyTemplate)
 	if err != nil {
-		return cerror.New(err, "failed to create verification email template", map[string]string{
+		return cerror.New(err, "failed to create verification email template", map[string]interface{}{
 			"template": s.config.VerificationEmail.BodyTemplate,
 		})
 	}
@@ -370,7 +372,7 @@ func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
 
 	err = t.Execute(&body, &verificationEmailVars)
 	if err != nil {
-		return cerror.New(err, "failed to create verification email body", map[string]string{
+		return cerror.New(err, "failed to create verification email body", map[string]interface{}{
 			"template":         s.config.VerificationEmail.BodyTemplate,
 			"verificationCode": u.VerificationCode,
 		})
@@ -383,7 +385,7 @@ func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
 		body.String(),
 	)
 	if err != nil {
-		return cerror.New(err, "failed to send verification email", map[string]string{
+		return cerror.New(err, "failed to send verification email", map[string]interface{}{
 			"from":    s.config.VerificationEmail.From,
 			"to":      u.Email,
 			"subject": s.config.VerificationEmail.Subject,
@@ -399,7 +401,7 @@ func (s *usersSvc) resetSessionToken(ctx context.Context, u *user) (string, erro
 
 	hashedTokenData, err := bcrypt.GenerateFromPassword([]byte(newToken), s.config.PasswordHashCost)
 	if err != nil {
-		return "", cerror.New(err, "failed to generate hashed session token", map[string]string{
+		return "", cerror.New(err, "failed to generate hashed session token", map[string]interface{}{
 			"sessionToken": newToken,
 		})
 	}
@@ -409,7 +411,7 @@ func (s *usersSvc) resetSessionToken(ctx context.Context, u *user) (string, erro
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
-		return "", cerror.New(err, "failed to update user's session token", map[string]string{
+		return "", cerror.New(err, "failed to update user's session token", map[string]interface{}{
 			"userId":       u.UUID,
 			"sessionToken": newToken,
 		})

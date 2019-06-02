@@ -4,19 +4,20 @@ package cerror
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
 // Error is a custom error type that can hold tags and cause of an error for better debugging and logging.
 type Error struct {
 	Message string
-	Tags    map[string]string
+	Tags    map[string]interface{}
 	Cause   error
 }
 
 // New is used to create a new Error with a cause, message, tags.
 // Cause and tags are optional and can be nil.
-func New(cause error, msg string, tags map[string]string) error {
+func New(cause error, msg string, tags map[string]interface{}) error {
 	return Error{
 		Message: msg,
 		Tags:    tags,
@@ -25,7 +26,7 @@ func New(cause error, msg string, tags map[string]string) error {
 }
 
 // WithTags wraps the given error with tags
-func WithTags(err error, tags map[string]string) error {
+func WithTags(err error, tags map[string]interface{}) error {
 	return Error{
 		Message: err.Error(),
 		Tags:    tags,
@@ -41,7 +42,11 @@ func (e Error) Error() string {
 	err.WriteString(e.Message)
 
 	for tag, val := range e.Tags {
-		tags = append(tags, fmt.Sprintf("%s=%s", tag, val))
+		if reflect.ValueOf(val).Kind() == reflect.Ptr && val.(*interface{}) != nil {
+			tags = append(tags, fmt.Sprintf("%s=%+v", tag, *(val.(*interface{}))))
+		} else {
+			tags = append(tags, fmt.Sprintf("%s=%+v", tag, val))
+		}
 	}
 
 	if len(tags) > 0 {

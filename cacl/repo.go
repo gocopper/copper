@@ -42,7 +42,7 @@ func (r *sqlRepo) DeletePermission(ctx context.Context, uuid string) error {
 		Delete(permission{}, permission{UUID: uuid}).
 		Error
 	if err != nil {
-		return cerror.New(err, "failed to delete permission", map[string]string{
+		return cerror.New(err, "failed to delete permission", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
@@ -58,7 +58,7 @@ func (r *sqlRepo) GetPermissionForGrantee(ctx context.Context, granteeID, resour
 		Find(&p).
 		Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query permission by grantee, resource, action", map[string]string{
+		return nil, cerror.New(err, "failed to query permission by grantee, resource, action", map[string]interface{}{
 			"granteeID": granteeID,
 			"resource":  resource,
 			"action":    action,
@@ -85,7 +85,7 @@ func (r *sqlRepo) AddUserRole(ctx context.Context, userUUID, roleUUID string) er
 
 	err := csql.GetConn(ctx, r.db).Save(&j).Error
 	if err != nil {
-		return cerror.New(err, "failed to add user role join", map[string]string{
+		return cerror.New(err, "failed to add user role join", map[string]interface{}{
 			"userUUID": userUUID,
 			"roleUUID": roleUUID,
 		})
@@ -104,7 +104,7 @@ func (r *sqlRepo) FindRolesForUserUUID(ctx context.Context, userUUID string) ([]
 		Find(&roles).
 		Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query roles by user uuid", map[string]string{
+		return nil, cerror.New(err, "failed to query roles by user uuid", map[string]interface{}{
 			"userUUID": userUUID,
 		})
 	}

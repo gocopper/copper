@@ -30,13 +30,13 @@ func NewRedisPubSub(config RedisConfig, lc fx.Lifecycle, logger clogger.Logger) 
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.Info("[cpubsub] Connecting to Redis..", map[string]string{
+			logger.Info("[cpubsub] Connecting to Redis..", map[string]interface{}{
 				"addr": config.Addr,
 			})
 
 			_, err := pubsub.redis.Ping().Result()
 			if err != nil {
-				return cerror.New(err, "failed to connect to redis", map[string]string{
+				return cerror.New(err, "failed to connect to redis", map[string]interface{}{
 					"addr": config.Addr,
 				})
 			}
@@ -51,7 +51,7 @@ func NewRedisPubSub(config RedisConfig, lc fx.Lifecycle, logger clogger.Logger) 
 				}
 			}
 
-			logger.Info("[cpubsub] Closing Redis connection..", map[string]string{
+			logger.Info("[cpubsub] Closing Redis connection..", map[string]interface{}{
 				"addr": config.Addr,
 			})
 

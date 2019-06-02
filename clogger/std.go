@@ -12,11 +12,11 @@ func newStdLogger() Logger {
 	return &stdLogger{}
 }
 
-func (s *stdLogger) Debug(msg string, tags map[string]string) {
+func (s *stdLogger) Debug(msg string, tags map[string]interface{}) {
 	s.log(levelDebug, cerror.New(nil, msg, tags))
 }
 
-func (s *stdLogger) Info(msg string, tags map[string]string) {
+func (s *stdLogger) Info(msg string, tags map[string]interface{}) {
 	s.log(levelInfo, cerror.New(nil, msg, tags))
 }
 
