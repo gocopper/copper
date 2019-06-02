@@ -189,7 +189,7 @@ func (s *usersSvc) VerifySessionToken(ctx context.Context, uuid, token string) (
 		return nil, cerror.New(err, "failed to find user by uuid", map[string]interface{}{
 			"uuid": uuid,
 		})
-	} else if err == ErrUserNotFound {
+	} else if cerror.Cause(err) == ErrUserNotFound {
 		return nil, ErrInvalidCredentials
 	}
 
