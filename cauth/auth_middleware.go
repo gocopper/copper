@@ -20,30 +20,27 @@ type AuthMiddleware interface {
 }
 
 type authMiddleware struct {
-	resp      chttp.Responder
-	users     UsersSvc
-	usersRepo UserRepo
-	config    Config
-	logger    clogger.Logger
+	resp   chttp.Responder
+	users  UsersSvc
+	config Config
+	logger clogger.Logger
 }
 
 type authMiddlewareParams struct {
 	fx.In
 
-	Resp      chttp.Responder
-	Users     UsersSvc
-	UsersRepo UserRepo
-	Config    Config
-	Logger    clogger.Logger
+	Resp   chttp.Responder
+	Users  UsersSvc
+	Config Config
+	Logger clogger.Logger
 }
 
 func newAuthMiddleware(p authMiddlewareParams) AuthMiddleware {
 	return &authMiddleware{
-		resp:      p.Resp,
-		users:     p.Users,
-		usersRepo: p.UsersRepo,
-		config:    p.Config,
-		logger:    p.Logger,
+		resp:   p.Resp,
+		users:  p.Users,
+		config: p.Config,
+		logger: p.Logger,
 	}
 }
 
@@ -87,7 +84,7 @@ func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) htt
 			return
 		}
 
-		user, err = m.usersRepo.FindByEmail(ctx, impersonateEmail)
+		user, err = m.users.FindByEmail(ctx, impersonateEmail)
 		if err != nil {
 			m.logger.Error("Failed to find impersonation user by email", err)
 			m.resp.InternalErr(w)

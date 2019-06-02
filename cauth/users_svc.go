@@ -33,6 +33,9 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 
 // UsersSvc provides high level methods to manage users.
 type UsersSvc interface {
+	GetByUUID(ctx context.Context, uuid string) (*user, error)
+	FindByEmail(ctx context.Context, email string) (*user, error)
+
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Logout(ctx context.Context, uuid string) error
 	Signup(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
@@ -44,7 +47,7 @@ type UsersSvc interface {
 }
 
 type usersSvc struct {
-	users  UserRepo
+	users  userRepo
 	mailer cmailer.Mailer
 	pubsub cpubsub.PubSub
 	config Config
@@ -54,7 +57,7 @@ type usersSvc struct {
 type usersSvcParams struct {
 	fx.In
 
-	Users  UserRepo
+	Users  userRepo
 	Mailer cmailer.Mailer
 	PubSub *cpubsub.LocalPubSub
 	Config Config
@@ -69,6 +72,14 @@ func newUsersSvc(p usersSvcParams) UsersSvc {
 		config: p.Config,
 		logger: p.Logger,
 	}
+}
+
+func (s *usersSvc) GetByUUID(ctx context.Context, uuid string) (*user, error) {
+	return s.users.GetByUUID(ctx, uuid)
+}
+
+func (s *usersSvc) FindByEmail(ctx context.Context, email string) (*user, error) {
+	return s.users.FindByEmail(ctx, email)
 }
 
 func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error {

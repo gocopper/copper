@@ -12,8 +12,8 @@ import (
 // ErrUserNotFound is returned when the user is not found when queried by a unique attribute such as id or email.
 var ErrUserNotFound = gorm.ErrRecordNotFound
 
-// UserRepo provides methods to query and update users.
-type UserRepo interface {
+// userRepo provides methods to query and update users.
+type userRepo interface {
 	GetByUUID(ctx context.Context, uuid string) (*user, error)
 	FindByEmail(ctx context.Context, email string) (*user, error)
 	Add(ctx context.Context, user *user) error
@@ -23,7 +23,7 @@ type sqlUserRepo struct {
 	db *gorm.DB
 }
 
-func newSQLUserRepo(db *gorm.DB) UserRepo {
+func newSQLUserRepo(db *gorm.DB) userRepo {
 	return &sqlUserRepo{
 		db: db,
 	}
