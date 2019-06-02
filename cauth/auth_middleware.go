@@ -54,7 +54,7 @@ func (m *authMiddleware) AllowUnverified(next http.Handler) http.Handler {
 
 func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email, sessionToken, ok := m.getAuthCredentials(r)
+		uuid, sessionToken, ok := m.getAuthCredentials(r)
 		if !ok {
 			m.resp.Unauthorized(w)
 			return
@@ -62,7 +62,7 @@ func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) htt
 
 		ctx := r.Context()
 
-		user, err := m.users.VerifySessionToken(ctx, email, sessionToken)
+		user, err := m.users.VerifySessionToken(ctx, uuid, sessionToken)
 		if err != nil && err != ErrInvalidCredentials {
 			m.logger.Error("Failed to verify user session token", err)
 			m.resp.InternalErr(w)
@@ -79,7 +79,7 @@ func (m *authMiddleware) verifyAuth(next http.Handler, allowUnverified bool) htt
 
 		// todo: instead of 'config.AdminEmail', use cacl and check for impersonation permission
 		impersonateEmail := r.Header.Get("x-auth-email")
-		if impersonateEmail == "" || user.Email != m.config.AdminEmail {
+		if impersonateEmail == "" || user.Email == nil || *user.Email != m.config.AdminEmail {
 			next.ServeHTTP(w, r.WithContext(ctxWithUser(ctx, user)))
 			return
 		}

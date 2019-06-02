@@ -6,13 +6,13 @@ import (
 )
 
 type user struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uint      `gorm:"primary_key"`
+	CreatedAt time.Time `gorm:"not null"`
+	UpdatedAt time.Time `gorm:"not null"`
 
-	UUID     string `gorm:"unique_index"`
-	Email    string `gorm:"unique_index"`
-	Password string
+	UUID     string  `gorm:"unique_index;not null"`
+	Email    *string `gorm:"unique_index"`
+	Password *string
 
 	VerificationCode string `gorm:"not null"`
 	Verified         bool   `gorm:"not null;default:false"`
@@ -27,8 +27,8 @@ func (user) TableName() string {
 
 func (u *user) MarshalJSON() ([]byte, error) {
 	var user struct {
-		Email    string `json:"email"`
-		Verified bool   `json:"verified"`
+		Email    *string `json:"email,omitempty"`
+		Verified bool    `json:"verified"`
 	}
 
 	user.Email = u.Email

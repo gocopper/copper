@@ -210,7 +210,7 @@ func (ro *router) login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:  "Authorization",
-		Value: base64.StdEncoding.EncodeToString([]byte(u.Email + ":" + sessionToken)),
+		Value: base64.StdEncoding.EncodeToString([]byte(u.UUID + ":" + sessionToken)),
 		Path:  "/",
 	})
 
@@ -251,7 +251,7 @@ func (ro *router) signup(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:  "Authorization",
-		Value: base64.StdEncoding.EncodeToString([]byte(user.Email + ":" + sessionToken)),
+		Value: base64.StdEncoding.EncodeToString([]byte(user.UUID + ":" + sessionToken)),
 		Path:  "/",
 	})
 

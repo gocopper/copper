@@ -39,7 +39,7 @@ type UsersSvc interface {
 	Login(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
 	Logout(ctx context.Context, uuid string) error
 	Signup(ctx context.Context, email, password string) (user *user, sessionToken string, err error)
-	VerifySessionToken(ctx context.Context, email, token string) (*user, error)
+	VerifySessionToken(ctx context.Context, uuid, token string) (*user, error)
 	VerifyUser(ctx context.Context, uuid string, verificationCode string) error
 	ResendVerificationCode(ctx context.Context, uuid string) error
 	ResetPassword(ctx context.Context, email string) error
@@ -92,7 +92,13 @@ func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPa
 		return ErrInvalidCredentials
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(oldPassword))
+	if u.Password == nil {
+		return cerror.New(nil, "user has no password set", map[string]interface{}{
+			"email": email,
+		})
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(oldPassword))
 	if err != nil {
 		return ErrInvalidCredentials
 	}
@@ -102,7 +108,8 @@ func (s *usersSvc) ChangePassword(ctx context.Context, email, oldPassword, newPa
 		return cerror.New(err, "failed to generate hash for new password", nil)
 	}
 
-	u.Password = string(newPasswordHash)
+	newPasswordHashStr := string(newPasswordHash)
+	u.Password = &newPasswordHashStr
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
@@ -129,7 +136,8 @@ func (s *usersSvc) ResetPassword(ctx context.Context, email string) error {
 		})
 	}
 
-	u.Password = string(resetPasswordTokenHash)
+	resetPasswordTokenHashStr := string(resetPasswordTokenHash)
+	u.Password = &resetPasswordTokenHashStr
 
 	err = s.users.Add(ctx, u)
 	if err != nil {
@@ -175,8 +183,8 @@ func (s *usersSvc) VerifyUser(ctx context.Context, uuid string, verificationCode
 	return nil
 }
 
-func (s *usersSvc) VerifySessionToken(ctx context.Context, email, token string) (*user, error) {
-	u, err := s.users.FindByEmail(ctx, email)
+func (s *usersSvc) VerifySessionToken(ctx context.Context, uuid, token string) (*user, error) {
+	u, err := s.users.GetByUUID(ctx, uuid)
 	if err != nil && cerror.Cause(err) != ErrUserNotFound {
 		return nil, cerror.New(err, "failed to find user by uuid", map[string]interface{}{
 			"uuid": uuid,
@@ -205,7 +213,13 @@ func (s *usersSvc) Login(ctx context.Context, email, password string) (user *use
 		return nil, "", ErrInvalidCredentials
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if u.Password == nil {
+		return nil, "", cerror.New(nil, "user has no password set", map[string]interface{}{
+			"email": email,
+		})
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(password))
 	if err != nil {
 		return nil, "", ErrInvalidCredentials
 	}
@@ -277,6 +291,7 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 			"email": email,
 		})
 	}
+	passwordHashStr := string(passwordHash)
 
 	userUUID, err := uuid.NewRandom()
 	if err != nil {
@@ -285,8 +300,8 @@ func (s *usersSvc) Signup(ctx context.Context, email, password string) (u *user,
 
 	u = &user{
 		UUID:             userUUID.String(),
-		Email:            email,
-		Password:         string(passwordHash),
+		Email:            &email,
+		Password:         &passwordHashStr,
 		VerificationCode: crandom.GenerateRandomString(s.config.VerificationCodeLen),
 	}
 
@@ -343,9 +358,15 @@ func (s *usersSvc) sendResetPasswordTokenEmail(u *user, resetToken string) error
 		})
 	}
 
+	if u.Email == nil {
+		return cerror.New(nil, "user does not have an email", map[string]interface{}{
+			"uuid": u.UUID,
+		})
+	}
+
 	_, err = s.mailer.SendPlain(
 		s.config.ResetPasswordEmail.From,
-		u.Email,
+		*u.Email,
 		s.config.ResetPasswordEmail.Subject,
 		body.String(),
 	)
@@ -378,9 +399,15 @@ func (s *usersSvc) sendVerificationCodeEmail(u *user) error {
 		})
 	}
 
+	if u.Email == nil {
+		return cerror.New(nil, "user does not have an email", map[string]interface{}{
+			"uuid": u.UUID,
+		})
+	}
+
 	_, err = s.mailer.SendPlain(
 		s.config.VerificationEmail.From,
-		u.Email,
+		*u.Email,
 		s.config.VerificationEmail.Subject,
 		body.String(),
 	)
