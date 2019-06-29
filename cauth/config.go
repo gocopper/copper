@@ -1,6 +1,8 @@
 package cauth
 
 import (
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -12,6 +14,7 @@ type Config struct {
 	VerificationEmail     EmailConfig
 	ResetPasswordEmail    EmailConfig
 	SessionTokenLen       uint
+	SessionTokenValidity  time.Duration
 	AdminEmail            string
 }
 
@@ -30,6 +33,7 @@ func GetDefaultConfig() Config {
 	return Config{
 		VerificationCodeLen:   6,
 		SessionTokenLen:       72,
+		SessionTokenValidity:  24 * time.Hour,
 		ResetPasswordTokenLen: 8,
 		PasswordHashCost:      bcrypt.DefaultCost,
 		VerificationEmail: EmailConfig{

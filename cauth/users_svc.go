@@ -202,6 +202,10 @@ func (s *usersSvc) VerifySessionToken(ctx context.Context, uuid, token string) (
 		return nil, ErrInvalidCredentials
 	}
 
+	if u.LastLoginAt != nil && time.Now().Sub(*u.LastLoginAt) >= s.config.SessionTokenValidity {
+		return nil, ErrInvalidCredentials
+	}
+
 	return u, nil
 }
 
