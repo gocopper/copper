@@ -7,6 +7,6 @@ import (
 )
 
 func runMigrations(db *gorm.DB, logger clogger.Logger) error {
-	logger.Info("Running cauth migrations..", nil)
+	logger.Info("Running cauth migrations..")
 	return db.AutoMigrate(user{}).Error
 }

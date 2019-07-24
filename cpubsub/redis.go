@@ -23,16 +23,16 @@ type RedisPubSub struct {
 
 func NewRedisPubSub(config RedisConfig, lc fx.Lifecycle, logger clogger.Logger) PubSub {
 	pubsub := &RedisPubSub{
-		redis:         redis.NewClient(&redis.Options{Addr: config.Addr}),
-		logger:        logger,
+		redis: redis.NewClient(&redis.Options{Addr: config.Addr}),
+		logger: logger.WithTags(map[string]interface{}{
+			"addr": config.Addr,
+		}),
 		subscriptions: make(map[string]*subscription),
 	}
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			logger.Info("[cpubsub] Connecting to Redis..", map[string]interface{}{
-				"addr": config.Addr,
-			})
+			pubsub.logger.Info("[cpubsub] Connecting to Redis..")
 
 			_, err := pubsub.redis.Ping().Result()
 			if err != nil {
@@ -45,15 +45,13 @@ func NewRedisPubSub(config RedisConfig, lc fx.Lifecycle, logger clogger.Logger) 
 
 		OnStop: func(ctx context.Context) error {
 			for _, sub := range pubsub.subscriptions {
-				logger.Info("[cpubsub] Closing Redis pub sub connection..", nil)
+				pubsub.logger.Info("[cpubsub] Closing Redis pub sub connection..")
 				if err := sub.redis.Close(); err != nil {
 					return err
 				}
 			}
 
-			logger.Info("[cpubsub] Closing Redis connection..", map[string]interface{}{
-				"addr": config.Addr,
-			})
+			pubsub.logger.Info("[cpubsub] Closing Redis connection..")
 
 			return pubsub.redis.Close()
 		},
