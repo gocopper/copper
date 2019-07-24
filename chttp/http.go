@@ -35,10 +35,10 @@ func newRouter(p routerParams) http.Handler {
 	}
 
 	for _, route := range p.Routes {
-		p.Logger.Info("Registering route..", map[string]interface{}{
+		p.Logger.WithTags(map[string]interface{}{
 			"path":    route.Path,
 			"methods": strings.Join(route.Methods, ", "),
-		})
+		}).Info("Registering route..")
 
 		handlerFunc := route.Handler
 

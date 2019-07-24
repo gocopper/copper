@@ -27,9 +27,10 @@ func newGormDB(p gormDBParams) (*gorm.DB, error) {
 		p.Config.User,
 		p.Config.Name,
 	)
-	p.Logger.Info("Connecting to database..", map[string]interface{}{
+
+	p.Logger.WithTags(map[string]interface{}{
 		"connection": conn,
-	})
+	}).Info("Connecting to database...")
 
 	if p.Config.Password != "" {
 		conn = fmt.Sprintf("%s password=%s", conn, p.Config.Password)
@@ -43,7 +44,7 @@ func newGormDB(p gormDBParams) (*gorm.DB, error) {
 
 	p.Lifecycle.Append(fx.Hook{
 		OnStop: func(context context.Context) error {
-			p.Logger.Info("Closing connection to database..", nil)
+			p.Logger.Info("Closing connection to database..")
 			return db.Close()
 		},
 	})

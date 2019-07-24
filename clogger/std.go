@@ -1,6 +1,7 @@
 package clogger
 
 import (
+	"errors"
 	"log"
 
 	"go.uber.org/fx"
@@ -15,6 +16,7 @@ type stdLoggerParams struct {
 }
 
 type stdLogger struct {
+	tags   map[string]interface{}
 	config Config
 }
 
@@ -28,12 +30,29 @@ func newStdLogger(p stdLoggerParams) Logger {
 	}
 }
 
-func (s *stdLogger) Debug(msg string, tags map[string]interface{}) {
-	s.log(LevelDebug, cerror.New(nil, msg, tags))
+func (s *stdLogger) WithTags(tags map[string]interface{}) Logger {
+	newLogger := &stdLogger{
+		tags:   make(map[string]interface{}),
+		config: s.config,
+	}
+
+	for k, v := range s.tags {
+		newLogger.tags[k] = v
+	}
+
+	for k, v := range tags {
+		newLogger.tags[k] = v
+	}
+
+	return newLogger
 }
 
-func (s *stdLogger) Info(msg string, tags map[string]interface{}) {
-	s.log(LevelInfo, cerror.New(nil, msg, tags))
+func (s *stdLogger) Debug(msg string) {
+	s.log(LevelDebug, errors.New(msg))
+}
+
+func (s *stdLogger) Info(msg string) {
+	s.log(LevelInfo, errors.New(msg))
 }
 
 func (s *stdLogger) Warn(msg string, err error) {
@@ -49,5 +68,5 @@ func (s *stdLogger) log(lvl Level, err error) {
 		return
 	}
 
-	log.Printf("[%s] %s", lvl.String(), err.Error())
+	log.Printf("[%s] %s", lvl.String(), cerror.WithTags(err, s.tags).Error())
 }
