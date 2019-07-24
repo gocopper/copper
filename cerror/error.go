@@ -27,6 +27,14 @@ func New(cause error, msg string, tags map[string]interface{}) error {
 
 // WithTags wraps the given error with tags
 func WithTags(err error, tags map[string]interface{}) error {
+	if cerr, ok := err.(Error); ok {
+		return Error{
+			Message: cerr.Message,
+			Tags:    tags,
+			Cause:   cerr.Cause,
+		}
+	}
+
 	return Error{
 		Message: err.Error(),
 		Tags:    tags,
