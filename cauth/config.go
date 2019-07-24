@@ -33,7 +33,7 @@ func GetDefaultConfig() Config {
 	return Config{
 		VerificationCodeLen:   6,
 		SessionTokenLen:       72,
-		SessionTokenValidity:  24 * time.Hour,
+		SessionTokenValidity:  20 * time.Hour,
 		ResetPasswordTokenLen: 8,
 		PasswordHashCost:      bcrypt.DefaultCost,
 		VerificationEmail: EmailConfig{
