@@ -109,7 +109,7 @@ func (s *sentryLogger) log(level Level, msg string, err error) {
 			}
 		}
 		if err != nil {
-			scope.SetTag("_error", err.Error())
+			scope.SetExtra("_error", err.Error())
 		}
 		sentry.CaptureMessage(msg)
 	})
