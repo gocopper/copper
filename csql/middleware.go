@@ -38,6 +38,12 @@ func (m *dbTxnMiddleware) WrapInTxn(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(rw, r.WithContext(ctx))
+
+		err := rw.commitIfNeeded()
+		if err != nil {
+			m.logger.Error("Failed to commit db transaction", err)
+			return
+		}
 	})
 }
 
@@ -45,6 +51,8 @@ type txnrw struct {
 	internal http.ResponseWriter
 	db       *gorm.DB
 	logger   clogger.Logger
+
+	didCommit bool
 }
 
 func (w *txnrw) Header() http.Header {
@@ -62,7 +70,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 		return
 	}
 
-	err := w.db.Commit().Error
+	err := w.commitIfNeeded()
 	if err != nil {
 		w.logger.Error("Failed to commit db transaction", err)
 		w.internal.WriteHeader(http.StatusInternalServerError)
@@ -70,4 +78,13 @@ func (w *txnrw) WriteHeader(statusCode int) {
 	}
 
 	w.internal.WriteHeader(statusCode)
+}
+
+func (w *txnrw) commitIfNeeded() error {
+	if w.didCommit {
+		return nil
+	}
+
+	w.didCommit = true
+	return w.db.Commit().Error
 }
