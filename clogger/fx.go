@@ -7,3 +7,8 @@ import "go.uber.org/fx"
 var StdFx = fx.Provide(
 	newStdLogger,
 )
+
+// SentryFx provides a logger implementation that sends messages to Sentry
+var SentryFx = fx.Provide(
+	newSentryLogger,
+)

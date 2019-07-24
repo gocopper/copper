@@ -12,39 +12,30 @@ import (
 type stdLoggerParams struct {
 	fx.In
 
-	Config Config `optional:"true"`
+	Config StdConfig `optional:"true"`
 }
 
 type stdLogger struct {
 	tags   map[string]interface{}
-	config Config
+	config StdConfig
 }
 
 func newStdLogger(p stdLoggerParams) Logger {
 	if !p.Config.isValid() {
-		p.Config = GetDefaultConfig()
+		p.Config = GetDefaultStdConfig()
 	}
 
 	return &stdLogger{
+		tags:   make(map[string]interface{}),
 		config: p.Config,
 	}
 }
 
 func (s *stdLogger) WithTags(tags map[string]interface{}) Logger {
-	newLogger := &stdLogger{
-		tags:   make(map[string]interface{}),
+	return &stdLogger{
+		tags:   mergeTags(s.tags, tags),
 		config: s.config,
 	}
-
-	for k, v := range s.tags {
-		newLogger.tags[k] = v
-	}
-
-	for k, v := range tags {
-		newLogger.tags[k] = v
-	}
-
-	return newLogger
 }
 
 func (s *stdLogger) Debug(msg string) {
