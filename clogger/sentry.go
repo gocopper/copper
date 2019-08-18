@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
 	"reflect"
 	"time"
+
+	"github.com/getsentry/sentry-go"
 
 	"github.com/tusharsoni/copper/cerror"
 	"go.uber.org/fx"
@@ -94,7 +95,7 @@ func (s *sentryLogger) log(level Level, msg string, err error) {
 		}
 	}
 
-	if level < s.config.MinLevelForCapture {
+	if level < s.config.MinLevelForCapture || s.isErrIgnored(err) {
 		return
 	}
 
@@ -113,6 +114,16 @@ func (s *sentryLogger) log(level Level, msg string, err error) {
 		}
 		sentry.CaptureMessage(msg)
 	})
+}
+
+func (s *sentryLogger) isErrIgnored(err error) bool {
+	for _, ignoredErr := range s.config.IgnoredErrsForCapture {
+		if cerror.Message(err) == ignoredErr.Error() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (l Level) toSentryLevel() sentry.Level {

@@ -42,6 +42,15 @@ func WithTags(err error, tags map[string]interface{}) error {
 	}
 }
 
+// Message returns the top level error's message
+func Message(err error) string {
+	if cerr, ok := err.(Error); ok {
+		return cerr.Message
+	}
+
+	return err.Error()
+}
+
 // Error creates a log-friendly string of the error using the cause and tags.
 func (e Error) Error() string {
 	var err strings.Builder

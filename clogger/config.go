@@ -20,9 +20,10 @@ func GetDefaultStdConfig() StdConfig {
 
 // SentryConfig holds the config values for the sentry logger
 type SentryConfig struct {
-	Dsn                string
-	MinLevelForStd     Level
-	MinLevelForCapture Level
+	Dsn                   string
+	MinLevelForStd        Level
+	MinLevelForCapture    Level
+	IgnoredErrsForCapture []error
 }
 
 func (c SentryConfig) isValid() bool {
@@ -34,8 +35,9 @@ func (c SentryConfig) isValid() bool {
 // GetDefaultSentryConfig provides a default set of config values for sentry logger
 func GetDefaultSentryConfig() SentryConfig {
 	return SentryConfig{
-		Dsn:                os.Getenv("Sentry_DSN"),
-		MinLevelForStd:     LevelDebug,
-		MinLevelForCapture: LevelWarn,
+		Dsn:                   os.Getenv("Sentry_DSN"),
+		MinLevelForStd:        LevelDebug,
+		MinLevelForCapture:    LevelWarn,
+		IgnoredErrsForCapture: []error{},
 	}
 }
