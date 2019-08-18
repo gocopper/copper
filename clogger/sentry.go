@@ -95,7 +95,7 @@ func (s *sentryLogger) log(level Level, msg string, err error) {
 		}
 	}
 
-	if level < s.config.MinLevelForCapture || s.isErrIgnored(err) {
+	if level < s.config.MinLevelForCapture || s.isMsgIgnored(msg) {
 		return
 	}
 
@@ -116,9 +116,9 @@ func (s *sentryLogger) log(level Level, msg string, err error) {
 	})
 }
 
-func (s *sentryLogger) isErrIgnored(err error) bool {
-	for _, ignoredErr := range s.config.IgnoredErrsForCapture {
-		if cerror.Message(err) == ignoredErr.Error() {
+func (s *sentryLogger) isMsgIgnored(msg string) bool {
+	for _, ignoredMsg := range s.config.IgnoredMsgsForCapture {
+		if msg == ignoredMsg {
 			return true
 		}
 	}

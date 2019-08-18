@@ -23,7 +23,7 @@ type SentryConfig struct {
 	Dsn                   string
 	MinLevelForStd        Level
 	MinLevelForCapture    Level
-	IgnoredErrsForCapture []error
+	IgnoredMsgsForCapture []string
 }
 
 func (c SentryConfig) isValid() bool {
@@ -38,6 +38,6 @@ func GetDefaultSentryConfig() SentryConfig {
 		Dsn:                   os.Getenv("Sentry_DSN"),
 		MinLevelForStd:        LevelDebug,
 		MinLevelForCapture:    LevelWarn,
-		IgnoredErrsForCapture: []error{},
+		IgnoredMsgsForCapture: []string{},
 	}
 }
