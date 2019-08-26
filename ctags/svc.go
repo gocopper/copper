@@ -9,6 +9,7 @@ import (
 // Svc provides methods to manage tags on entities
 type Svc interface {
 	AddTag(ctx context.Context, tag, entityID string) error
+	RemoveTag(ctx context.Context, t, entityID string) error
 	ListTags(ctx context.Context, entityID string) ([]string, error)
 	HasTag(ctx context.Context, entityID, tag string) (bool, error)
 	ListEntityIDs(ctx context.Context, tag string) ([]string, error)
@@ -29,6 +30,10 @@ func (s *svcImpl) AddTag(ctx context.Context, t, entityID string) error {
 		Tag:      t,
 		EntityID: entityID,
 	})
+}
+
+func (s *svcImpl) RemoveTag(ctx context.Context, t, entityID string) error {
+	return s.tags.Delete(ctx, t, entityID)
 }
 
 func (s *svcImpl) ListTags(ctx context.Context, entityID string) ([]string, error) {

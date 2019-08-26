@@ -10,6 +10,7 @@ import (
 
 type repo interface {
 	Add(ctx context.Context, t *tag) error
+	Delete(ctx context.Context, tag, entityID string) error
 	FindByEntityID(ctx context.Context, entityID string) ([]tag, error)
 	FindByTag(ctx context.Context, tag string) ([]tag, error)
 }
@@ -31,6 +32,24 @@ func (r *sqlRepo) Add(ctx context.Context, t *tag) error {
 	}).Error
 	if err != nil {
 		return cerror.New(err, "failed to upsert tag", nil)
+	}
+
+	return nil
+}
+
+func (r *sqlRepo) Delete(ctx context.Context, t, entityID string) error {
+	if t == "" || entityID == "" {
+		return cerror.New(nil, "tag or entityID is missing", map[string]interface{}{
+			"tag":      t,
+			"entityID": entityID,
+		})
+	}
+
+	err := csql.GetConn(ctx, r.db).
+		Delete(tag{}, tag{Tag: t, EntityID: entityID}).
+		Error
+	if err != nil {
+		return cerror.New(err, "failed to delete tag", nil)
 	}
 
 	return nil
