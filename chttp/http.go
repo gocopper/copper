@@ -43,11 +43,11 @@ func newRouter(p routerParams) http.Handler {
 		handlerFunc := route.Handler
 
 		for _, f := range p.GlobalMiddlewareFuncs {
-			handlerFunc = f(route.Handler)
+			handlerFunc = f(handlerFunc)
 		}
 
 		for _, f := range route.MiddlewareFuncs {
-			handlerFunc = f(route.Handler)
+			handlerFunc = f(handlerFunc)
 		}
 
 		muxRoute := r.Handle(route.Path, handlerFunc)
