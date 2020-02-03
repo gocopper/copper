@@ -34,6 +34,10 @@ func newRouter(p routerParams) http.Handler {
 		p.Logger.Warn("No routes to register", nil)
 	}
 
+	for _, f := range p.GlobalMiddlewareFuncs {
+		r.Use(mux.MiddlewareFunc(f))
+	}
+
 	for _, route := range p.Routes {
 		p.Logger.WithTags(map[string]interface{}{
 			"path":    route.Path,
@@ -41,10 +45,6 @@ func newRouter(p routerParams) http.Handler {
 		}).Info("Registering route..")
 
 		handlerFunc := route.Handler
-
-		for _, f := range p.GlobalMiddlewareFuncs {
-			handlerFunc = f(handlerFunc)
-		}
 
 		for _, f := range route.MiddlewareFuncs {
 			handlerFunc = f(handlerFunc)
