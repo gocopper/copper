@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	sentry "github.com/getsentry/sentry-go"
+
 	"github.com/tusharsoni/copper/cerror"
 	"go.uber.org/fx"
 )
