@@ -8,6 +8,8 @@ import (
 func main() {
 	app := copper.NewHTTPApp(
 		clogger.StdFx,
+
+		RouterFx,
 	)
 
 	app.Run()
