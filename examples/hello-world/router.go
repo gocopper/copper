@@ -1,10 +1,11 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
 	"go.uber.org/fx"
-	"net/http"
 )
 
 type Router struct {
