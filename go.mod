@@ -1,5 +1,7 @@
 module github.com/tusharsoni/copper
 
+go 1.14
+
 require (
 	cloud.google.com/go v0.34.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
