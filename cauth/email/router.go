@@ -71,8 +71,8 @@ func (ro *Router) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ro.resp.Created(w, map[string]string{
-		"UserUUID":     c.UserUUID,
-		"SessionToken": sessionToken,
+		"user_uuid":     c.UserUUID,
+		"session_token": sessionToken,
 	})
 }
 
@@ -106,8 +106,8 @@ func (ro *Router) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ro.resp.OK(w, map[string]string{
-		"UserUUID":     c.UserUUID,
-		"SessionToken": sessionToken,
+		"user_uuid":     c.UserUUID,
+		"session_token": sessionToken,
 	})
 }
 
