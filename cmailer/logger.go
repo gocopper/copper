@@ -21,7 +21,7 @@ func (m *LogMailer) SendPlain(from, to, subject, body string) (confirmation stri
 		"to":      to,
 		"subject": subject,
 		"body":    body,
-	}).Info("Send plan email")
+	}).Info("Send plain email")
 
 	return crandom.GenerateRandomString(6), nil
 }
