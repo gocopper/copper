@@ -3,7 +3,8 @@ package email
 import (
 	"net/http"
 
-	"github.com/tusharsoni/copper/cauth2"
+	"github.com/tusharsoni/copper/cauth"
+
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
 	"go.uber.org/fx"
@@ -60,12 +61,12 @@ func (ro *Router) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c, sessionToken, err := ro.auth.Signup(r.Context(), body.Email, body.Password)
-	if err != nil && err != cauth2.ErrUserAlreadyExists {
+	if err != nil && err != cauth.ErrUserAlreadyExists {
 		ro.logger.Error("Failed to signup user with email and password", err)
 		ro.resp.InternalErr(w)
 		return
-	} else if err == cauth2.ErrUserAlreadyExists {
-		ro.resp.BadRequest(w, cauth2.ErrUserAlreadyExists)
+	} else if err == cauth.ErrUserAlreadyExists {
+		ro.resp.BadRequest(w, cauth.ErrUserAlreadyExists)
 		return
 	}
 
@@ -95,11 +96,11 @@ func (ro *Router) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c, sessionToken, err := ro.auth.Login(r.Context(), body.Email, body.Password)
-	if err != nil && err != cauth2.ErrInvalidCredentials {
+	if err != nil && err != cauth.ErrInvalidCredentials {
 		ro.logger.Error("Failed to login user with email and password", err)
 		ro.resp.InternalErr(w)
 		return
-	} else if err == cauth2.ErrInvalidCredentials {
+	} else if err == cauth.ErrInvalidCredentials {
 		ro.resp.Unauthorized(w)
 		return
 	}
@@ -110,7 +111,7 @@ func (ro *Router) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func NewVerifyUserRoute(ro *Router, mw cauth2.Middleware) chttp.RouteResult {
+func NewVerifyUserRoute(ro *Router, mw cauth.Middleware) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{mw.VerifySessionToken},
 		Path:            "/api/auth/email/verify",
@@ -129,14 +130,14 @@ func (ro *Router) VerifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userUUID := cauth2.GetCurrentUserUUID(r.Context())
+	userUUID := cauth.GetCurrentUserUUID(r.Context())
 
 	err := ro.auth.VerifyUser(r.Context(), userUUID, body.VerificationCode)
-	if err != nil && err != cauth2.ErrInvalidCredentials {
+	if err != nil && err != cauth.ErrInvalidCredentials {
 		ro.logger.Error("Failed to verify user", err)
 		ro.resp.InternalErr(w)
 		return
-	} else if err == cauth2.ErrInvalidCredentials {
+	} else if err == cauth.ErrInvalidCredentials {
 		ro.resp.BadRequest(w, err)
 		return
 	}
@@ -144,7 +145,7 @@ func (ro *Router) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	ro.resp.OK(w, nil)
 }
 
-func NewResendVerificationCodeRoute(ro *Router, mw cauth2.Middleware) chttp.RouteResult {
+func NewResendVerificationCodeRoute(ro *Router, mw cauth.Middleware) chttp.RouteResult {
 	route := chttp.Route{
 		MiddlewareFuncs: []chttp.MiddlewareFunc{mw.VerifySessionToken},
 		Path:            "/api/auth/email/resend-verification-code",
@@ -155,7 +156,7 @@ func NewResendVerificationCodeRoute(ro *Router, mw cauth2.Middleware) chttp.Rout
 }
 
 func (ro *Router) ResendVerificationCode(w http.ResponseWriter, r *http.Request) {
-	userUUID := cauth2.GetCurrentUserUUID(r.Context())
+	userUUID := cauth.GetCurrentUserUUID(r.Context())
 
 	err := ro.auth.ResendVerificationCode(r.Context(), userUUID)
 	if err != nil {

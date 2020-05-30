@@ -1,4 +1,4 @@
-package cauth2
+package cauth
 
 import "time"
 

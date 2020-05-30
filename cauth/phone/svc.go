@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/tusharsoni/copper/cauth"
+
 	"github.com/jinzhu/gorm"
-	"github.com/tusharsoni/copper/cauth2"
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/crandom"
 	"github.com/tusharsoni/copper/ctexter"
@@ -17,12 +18,12 @@ type Svc interface {
 }
 
 type svc struct {
-	auth   cauth2.Svc
+	auth   cauth.Svc
 	repo   Repo
 	texter ctexter.Svc
 }
 
-func NewSvc(auth cauth2.Svc, repo Repo, texter ctexter.Svc) Svc {
+func NewSvc(auth cauth.Svc, repo Repo, texter ctexter.Svc) Svc {
 	return &svc{
 		auth:   auth,
 		repo:   repo,

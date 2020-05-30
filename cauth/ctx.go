@@ -2,23 +2,13 @@ package cauth
 
 import "context"
 
-type ctxKey string
+const ctxKeySession = "auth/session"
 
-const (
-	userCtxKey = ctxKey("cauth/user")
-)
-
-// GetCurrentUser returns the current authenticated user from the context.
-// Returns nil if there is no user in the context.
-func GetCurrentUser(ctx context.Context) *user {
-	user, ok := ctx.Value(userCtxKey).(*user)
-	if !ok {
-		return nil
+func GetCurrentUserUUID(ctx context.Context) string {
+	userUUID, ok := ctx.Value(ctxKeySession).(string)
+	if !ok || userUUID == "" {
+		panic("user uuid not found in context")
 	}
 
-	return user
-}
-
-func ctxWithUser(ctx context.Context, user *user) context.Context {
-	return context.WithValue(ctx, userCtxKey, user)
+	return userUUID
 }

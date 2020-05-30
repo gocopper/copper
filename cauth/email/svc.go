@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/tusharsoni/copper/cauth"
-	"github.com/tusharsoni/copper/cauth2"
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/clogger"
 	"github.com/tusharsoni/copper/cmailer"
@@ -25,7 +24,7 @@ type Svc interface {
 }
 
 type svc struct {
-	auth   cauth2.Svc
+	auth   cauth.Svc
 	repo   Repo
 	mailer cmailer.Mailer
 	config Config
@@ -35,7 +34,7 @@ type svc struct {
 type SvcParams struct {
 	fx.In
 
-	Auth   cauth2.Svc
+	Auth   cauth.Svc
 	Repo   Repo
 	Mailer cmailer.Mailer
 	Config Config
