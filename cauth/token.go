@@ -7,7 +7,7 @@ import (
 )
 
 func generateSessionToken() (rawToken string, encryptedToken string, err error) {
-	rawToken = crandom.GenerateRandomString(128)
+	rawToken = crandom.GenerateRandomString(64)
 	encryptedTokenData, err := bcrypt.GenerateFromPassword([]byte(rawToken), bcrypt.DefaultCost)
 	if err != nil {
 		return "", "", cerror.New(err, "failed to generate encrypted session token", nil)
