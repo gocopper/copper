@@ -1,6 +1,8 @@
 package cmailer
 
+import "context"
+
 type Mailer interface {
-	SendPlain(from, to, subject, body string) (confirmation string, err error)
-	SendHTML(from, to, subject, body string) (confirmation string, err error)
+	SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error)
+	SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error)
 }

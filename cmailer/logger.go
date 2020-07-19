@@ -1,6 +1,8 @@
 package cmailer
 
 import (
+	"context"
+
 	"github.com/tusharsoni/copper/clogger"
 	"github.com/tusharsoni/copper/crandom"
 )
@@ -15,7 +17,7 @@ func NewLogMailer(logger clogger.Logger) Mailer {
 	}
 }
 
-func (m *LogMailer) SendPlain(from, to, subject, body string) (confirmation string, err error) {
+func (m *LogMailer) SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
 	m.logger.WithTags(map[string]interface{}{
 		"from":    from,
 		"to":      to,
@@ -26,7 +28,7 @@ func (m *LogMailer) SendPlain(from, to, subject, body string) (confirmation stri
 	return crandom.GenerateRandomString(6), nil
 }
 
-func (m *LogMailer) SendHTML(from, to, subject, body string) (confirmation string, err error) {
+func (m *LogMailer) SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
 	m.logger.WithTags(map[string]interface{}{
 		"from":    from,
 		"to":      to,

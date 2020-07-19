@@ -1,6 +1,8 @@
 package cmailer
 
 import (
+	"context"
+
 	"github.com/tusharsoni/copper/cerror"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,15 +35,15 @@ func NewAWSMailer(config AWSConfig) (Mailer, error) {
 	}, nil
 }
 
-func (m *AWSMailer) SendPlain(from, to, subject, body string) (confirmation string, err error) {
-	return m.send(from, to, subject, body, false)
+func (m *AWSMailer) SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
+	return m.send(ctx, from, to, subject, body, false)
 }
 
-func (m *AWSMailer) SendHTML(from, to, subject, body string) (confirmation string, err error) {
-	return m.send(from, to, subject, body, true)
+func (m *AWSMailer) SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
+	return m.send(ctx, from, to, subject, body, true)
 }
 
-func (m *AWSMailer) send(from, to, subject, body string, html bool) (confirmation string, err error) {
+func (m *AWSMailer) send(ctx context.Context, from, to, subject, body string, html bool) (confirmation string, err error) {
 	input := &ses.SendEmailInput{
 		Source: aws.String(from),
 		Destination: &ses.Destination{
@@ -67,7 +69,7 @@ func (m *AWSMailer) send(from, to, subject, body string, html bool) (confirmatio
 		input.Message.Body.Text = content
 	}
 
-	result, err := m.sess.SendEmail(input)
+	result, err := m.sess.SendEmailWithContext(ctx, input)
 	if err != nil {
 		return "", cerror.New(err, "failed to send email", map[string]interface{}{
 			"from":    from,
