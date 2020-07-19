@@ -7,5 +7,5 @@ import "go.uber.org/fx"
 var Fx = fx.Provide(
 	newGormDB,
 
-	newDBTxnMiddleware,
+	NewDBTxnMiddleware,
 )

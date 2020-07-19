@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/tusharsoni/copper/chttp"
+
 	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/clogger"
 )
@@ -19,10 +21,14 @@ type dbTxnMiddleware struct {
 	logger clogger.Logger
 }
 
-func newDBTxnMiddleware(db *gorm.DB, logger clogger.Logger) DBTxnMiddleware {
-	return &dbTxnMiddleware{
+func NewDBTxnMiddleware(db *gorm.DB, logger clogger.Logger) chttp.GlobalMiddlewareFuncResult {
+	mw := dbTxnMiddleware{
 		db:     db,
 		logger: logger,
+	}
+
+	return chttp.GlobalMiddlewareFuncResult{
+		GlobalMiddlewareFunc: mw.WrapInTxn,
 	}
 }
 
