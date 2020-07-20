@@ -70,7 +70,7 @@ func (w *txnrw) Write(b []byte) (int, error) {
 }
 
 func (w *txnrw) WriteHeader(statusCode int) {
-	if statusCode < 200 || statusCode > 299 {
+	if statusCode >= 400 {
 		w.didCommit = true
 		w.db.Rollback()
 		w.internal.WriteHeader(statusCode)
