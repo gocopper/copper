@@ -38,6 +38,8 @@ func newRouter(p routerParams) http.Handler {
 		r.Use(mux.MiddlewareFunc(f))
 	}
 
+	sortRoutes(p.Routes)
+
 	for _, route := range p.Routes {
 		p.Logger.WithTags(map[string]interface{}{
 			"path":    route.Path,

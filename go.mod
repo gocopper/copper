@@ -25,7 +25,7 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/testify v1.2.2 // indirect
+	github.com/stretchr/testify v1.2.2
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/dig v1.6.0 // indirect
 	go.uber.org/fx v1.8.0
