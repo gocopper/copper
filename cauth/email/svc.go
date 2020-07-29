@@ -98,7 +98,7 @@ func (s *svc) Signup(ctx context.Context, email, password string) (c *Credential
 	}
 
 	go func() {
-		err = s.sendVerificationCodeEmail(c)
+		err = s.sendVerificationCodeEmail(context.Background(), c)
 		if err != nil {
 			s.logger.WithTags(map[string]interface{}{
 				"userUUID": c.UserUUID,
@@ -166,7 +166,7 @@ func (s *svc) ResendVerificationCode(ctx context.Context, uuid string) error {
 		})
 	}
 
-	err = s.sendVerificationCodeEmail(c)
+	err = s.sendVerificationCodeEmail(ctx, c)
 	if err != nil {
 		return cerror.New(err, "failed to send verification code email", map[string]interface{}{
 			"userUUID": uuid,
@@ -203,7 +203,7 @@ func (s *svc) ResetPassword(ctx context.Context, email string) error {
 	}
 
 	go func() {
-		err = s.sendResetPasswordTokenEmail(c, resetPasswordToken)
+		err = s.sendResetPasswordTokenEmail(context.Background(), c, resetPasswordToken)
 		if err != nil {
 			s.logger.WithTags(map[string]interface{}{
 				"userUUID": c.UserUUID,
@@ -244,7 +244,7 @@ func (s *svc) ChangePassword(ctx context.Context, email, oldPassword, newPasswor
 	return nil
 }
 
-func (s *svc) sendResetPasswordTokenEmail(u *Credentials, resetToken string) error {
+func (s *svc) sendResetPasswordTokenEmail(ctx context.Context, u *Credentials, resetToken string) error {
 	var body strings.Builder
 
 	t, err := template.New("cauth/resetPasswordTokenEmail").Parse(s.config.ResetPasswordEmail.BodyTemplate)
@@ -266,6 +266,7 @@ func (s *svc) sendResetPasswordTokenEmail(u *Credentials, resetToken string) err
 	}
 
 	_, err = s.mailer.SendPlain(
+		ctx,
 		s.config.ResetPasswordEmail.From,
 		u.Email,
 		s.config.ResetPasswordEmail.Subject,
@@ -278,7 +279,7 @@ func (s *svc) sendResetPasswordTokenEmail(u *Credentials, resetToken string) err
 	return nil
 }
 
-func (s *svc) sendVerificationCodeEmail(u *Credentials) error {
+func (s *svc) sendVerificationCodeEmail(ctx context.Context, u *Credentials) error {
 	var body strings.Builder
 
 	t, err := template.New("cauth/verificationEmail").Parse(s.config.VerificationEmail.BodyTemplate)
@@ -301,6 +302,7 @@ func (s *svc) sendVerificationCodeEmail(u *Credentials) error {
 	}
 
 	_, err = s.mailer.SendPlain(
+		ctx,
 		s.config.VerificationEmail.From,
 		u.Email,
 		s.config.VerificationEmail.Subject,
