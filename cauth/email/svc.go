@@ -15,12 +15,14 @@ import (
 )
 
 type Svc interface {
+	AddCredentials(ctx context.Context, userUUID, email, password string) error
 	Signup(ctx context.Context, email, password string) (c *Credentials, sessionToken string, err error)
 	Login(ctx context.Context, email, password string) (c *Credentials, sessionToken string, err error)
 	VerifyUser(ctx context.Context, uuid string, verificationCode string) error
 	ResendVerificationCode(ctx context.Context, uuid string) error
 	ResetPassword(ctx context.Context, email string) error
 	ChangePassword(ctx context.Context, email, oldPassword, newPassword string) error
+	ChangeEmail(ctx context.Context, userUUID, new string) error
 }
 
 type svc struct {
@@ -49,6 +51,73 @@ func NewSvc(p SvcParams) Svc {
 		config: p.Config,
 		logger: p.Logger,
 	}
+}
+
+func (s *svc) ChangeEmail(ctx context.Context, userUUID, newEmail string) error {
+	c, err := s.repo.GetCredentialsByUserUUID(ctx, userUUID)
+	if err != nil {
+		return cerror.New(err, "failed to find credentials", map[string]interface{}{
+			"userUUID": userUUID,
+		})
+	}
+
+	c.Email = newEmail
+	c.Verified = false
+	c.VerificationCode = crandom.GenerateRandomString(s.config.VerificationCodeLen)
+
+	err = s.repo.AddCredentials(ctx, c)
+	if err != nil {
+		return cerror.New(err, "failed to update credentials", map[string]interface{}{
+			"email": c.Email,
+		})
+	}
+
+	go func() {
+		err = s.sendVerificationCodeEmail(context.Background(), c)
+		if err != nil {
+			s.logger.WithTags(map[string]interface{}{
+				"userUUID": c.UserUUID,
+			}).Error("Failed to send verification code email", err)
+		}
+	}()
+
+	return nil
+}
+
+func (s *svc) AddCredentials(ctx context.Context, userUUID, email, password string) error {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), s.config.PasswordHashCost)
+	if err != nil {
+		return cerror.New(err, "failed to generate password hash", map[string]interface{}{
+			"email": email,
+		})
+	}
+
+	c := &Credentials{
+		UserUUID:         userUUID,
+		Email:            email,
+		Password:         string(passwordHash),
+		Verified:         false,
+		VerificationCode: crandom.GenerateRandomString(s.config.VerificationCodeLen),
+	}
+
+	err = s.repo.AddCredentials(ctx, c)
+	if err != nil {
+		return cerror.New(err, "failed to insert credentials", map[string]interface{}{
+			"email":            c.Email,
+			"verificationCode": c.VerificationCode,
+		})
+	}
+
+	go func() {
+		err = s.sendVerificationCodeEmail(context.Background(), c)
+		if err != nil {
+			s.logger.WithTags(map[string]interface{}{
+				"userUUID": c.UserUUID,
+			}).Error("Failed to send verification code email", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *svc) Signup(ctx context.Context, email, password string) (c *Credentials, sessionToken string, err error) {

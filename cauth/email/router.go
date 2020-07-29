@@ -225,3 +225,64 @@ func (ro *Router) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	ro.resp.OK(w, nil)
 }
+
+func NewAddCredentialsRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
+	return chttp.RouteResult{Route: chttp.Route{
+		Path:            "/api/auth/email/credentials",
+		MiddlewareFuncs: []chttp.MiddlewareFunc{auth.VerifySessionToken},
+		Methods:         []string{http.MethodPost},
+		Handler:         http.HandlerFunc(ro.HandleAddCredentials),
+	}}
+}
+
+func (ro *Router) HandleAddCredentials(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx      = r.Context()
+		userUUID = cauth.GetCurrentUserUUID(ctx)
+		body     struct {
+			Email    string `json:"email" valid:"required,email"`
+			Password string `json:"password" valid:"runelength(4|32)"`
+		}
+	)
+
+	if !ro.req.Read(w, r, &body) {
+		return
+	}
+
+	err := ro.auth.AddCredentials(r.Context(), userUUID, body.Email, body.Password)
+	if err != nil {
+		ro.logger.Error("Failed to add credentials", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	ro.resp.OK(w, nil)
+}
+
+func NewChangeEmailRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
+	return chttp.RouteResult{Route: chttp.Route{
+		Path:            "/api/auth/email/change-email",
+		MiddlewareFuncs: []chttp.MiddlewareFunc{auth.VerifySessionToken},
+		Methods:         []string{http.MethodPost},
+		Handler:         http.HandlerFunc(ro.HandleChangeEmail),
+	}}
+}
+
+func (ro *Router) HandleChangeEmail(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx      = r.Context()
+		userUUID = cauth.GetCurrentUserUUID(ctx)
+		body     struct {
+			NewEmail string `json:"new_email" valid:"required,email"`
+		}
+	)
+
+	err := ro.auth.ChangeEmail(ctx, userUUID, body.NewEmail)
+	if err != nil {
+		ro.logger.Error("Failed to change email", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	ro.resp.OK(w, nil)
+}
