@@ -15,6 +15,7 @@ import (
 )
 
 type Svc interface {
+	GetCredentials(ctx context.Context, userUUID string) (*Credentials, error)
 	AddCredentials(ctx context.Context, userUUID, email, password string) error
 	Signup(ctx context.Context, email, password string) (c *Credentials, sessionToken string, err error)
 	Login(ctx context.Context, email, password string) (c *Credentials, sessionToken string, err error)
@@ -51,6 +52,10 @@ func NewSvc(p SvcParams) Svc {
 		config: p.Config,
 		logger: p.Logger,
 	}
+}
+
+func (s *svc) GetCredentials(ctx context.Context, userUUID string) (*Credentials, error) {
+	return s.repo.GetCredentialsByUserUUID(ctx, userUUID)
 }
 
 func (s *svc) ChangeEmail(ctx context.Context, userUUID, newEmail string) error {

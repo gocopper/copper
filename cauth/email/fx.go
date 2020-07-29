@@ -15,6 +15,7 @@ var Fx = fx.Provide(
 	NewResetPasswordRoute,
 	NewAddCredentialsRoute,
 	NewChangeEmailRoute,
+	NewGetCredentialsRoute,
 )
 
 var FxMigrations = fx.Invoke(

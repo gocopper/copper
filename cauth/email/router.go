@@ -3,6 +3,9 @@ package email
 import (
 	"net/http"
 
+	"github.com/jinzhu/gorm"
+	"github.com/tusharsoni/copper/cerror"
+
 	"github.com/tusharsoni/copper/cauth"
 
 	"github.com/tusharsoni/copper/chttp"
@@ -285,4 +288,34 @@ func (ro *Router) HandleChangeEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ro.resp.OK(w, nil)
+}
+
+func NewGetCredentialsRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
+	return chttp.RouteResult{Route: chttp.Route{
+		Path:            "/api/auth/email/credentials",
+		MiddlewareFuncs: []chttp.MiddlewareFunc{auth.VerifySessionToken},
+		Methods:         []string{http.MethodGet},
+		Handler:         http.HandlerFunc(ro.HandleGetCredentials),
+	}}
+}
+
+func (ro *Router) HandleGetCredentials(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx      = r.Context()
+		userUUID = cauth.GetCurrentUserUUID(ctx)
+	)
+
+	c, err := ro.auth.GetCredentials(ctx, userUUID)
+	if err != nil && !cerror.HasCause(err, gorm.ErrRecordNotFound) {
+		ro.logger.Error("Failed to get credentials", err)
+		ro.resp.InternalErr(w)
+		return
+	}
+
+	if c == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	ro.resp.OK(w, c)
 }
