@@ -9,8 +9,7 @@ import (
 )
 
 type Router struct {
-	resp   chttp.Responder
-	req    chttp.BodyReader
+	rw     chttp.ReaderWriter
 	logger clogger.Logger
 
 	auth Svc
@@ -19,8 +18,7 @@ type Router struct {
 type RouterParams struct {
 	fx.In
 
-	Resp   chttp.Responder
-	Req    chttp.BodyReader
+	RW     chttp.ReaderWriter
 	Logger clogger.Logger
 
 	Auth Svc
@@ -28,8 +26,7 @@ type RouterParams struct {
 
 func NewRouter(p RouterParams) *Router {
 	return &Router{
-		resp:   p.Resp,
-		req:    p.Req,
+		rw:     p.RW,
 		logger: p.Logger,
 
 		auth: p.Auth,
@@ -49,18 +46,18 @@ func (ro *Router) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email" valid:"email,required"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	c, token, err := ro.auth.Signup(r.Context(), body.Email)
 	if err != nil {
 		ro.logger.Error("Failed to sign up with email", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, map[string]interface{}{
+	ro.rw.OK(w, map[string]interface{}{
 		"user_uuid":     c.UserUUID,
 		"session_token": token,
 	})
@@ -80,7 +77,7 @@ func (ro *Router) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		VerificationCode uint   `json:"verification_code" valid:"required"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
@@ -89,11 +86,11 @@ func (ro *Router) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		ro.logger.WithTags(map[string]interface{}{
 			"email": body.Email,
 		}).Error("Failed to login with email", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, map[string]string{
+	ro.rw.OK(w, map[string]string{
 		"user_uuid":     c.UserUUID,
 		"session_token": sessionToken,
 	})

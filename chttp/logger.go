@@ -7,7 +7,7 @@ import (
 	"github.com/tusharsoni/copper/clogger"
 )
 
-func newRequestLogger(logger clogger.Logger) GlobalMiddlewareFuncResult {
+func NewRequestLogger(logger clogger.Logger) GlobalMiddlewareFuncResult {
 	var mw = func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var (

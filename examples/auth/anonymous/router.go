@@ -10,16 +10,16 @@ import (
 )
 
 type Router struct {
-	resp   chttp.Responder
-	req    chttp.BodyReader
+	resp   chttp.ReaderWriter
+	req    chttp.JSONBodyReader
 	logger clogger.Logger
 }
 
 type RouterParams struct {
 	fx.In
 
-	Resp   chttp.Responder
-	Req    chttp.BodyReader
+	Resp   chttp.ReaderWriter
+	Req    chttp.JSONBodyReader
 	Logger clogger.Logger
 }
 

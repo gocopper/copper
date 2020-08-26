@@ -6,15 +6,15 @@ import (
 	"go.uber.org/fx"
 )
 
-// healthRouteParams holds the dependencies needed to create the Health route using newHealthRoute.
-type healthRouteParams struct {
+// HealthRouteParams holds the dependencies needed to create the Health route using NewHealthRoute.
+type HealthRouteParams struct {
 	fx.In
 
 	Config Config `optional:"true"`
 }
 
-// newHealthRoute provides a route that responds OK to signify the health of the server.
-func newHealthRoute(p healthRouteParams) RouteResult {
+// NewHealthRoute provides a route that responds OK to signify the health of the server.
+func NewHealthRoute(p HealthRouteParams) RouteResult {
 	config := p.Config
 	if !config.isValid() {
 		config = GetDefaultConfig()

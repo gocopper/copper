@@ -5,7 +5,7 @@ import "go.uber.org/fx"
 
 // StdFx provides a logger implementation using the stdlib log package
 var StdFx = fx.Provide(
-	newStdLogger,
+	NewStdLoggerWithParams,
 )
 
 // SentryFx provides a logger implementation that sends messages to Sentry

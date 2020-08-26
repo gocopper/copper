@@ -6,9 +6,11 @@ import (
 )
 
 func main() {
-	params := copper.HTTPAppParams{
-		Logger: clogger.NewStdLogger(),
-	}
+	app := copper.NewHTTPApp(
+		clogger.StdFx,
 
-	copper.RunHTTPApp(params)
+		RouterFx,
+	)
+
+	app.Run()
 }

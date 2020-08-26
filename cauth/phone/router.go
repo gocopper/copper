@@ -9,8 +9,7 @@ import (
 )
 
 type Router struct {
-	resp   chttp.Responder
-	req    chttp.BodyReader
+	rw     chttp.ReaderWriter
 	logger clogger.Logger
 
 	auth Svc
@@ -19,8 +18,7 @@ type Router struct {
 type RouterParams struct {
 	fx.In
 
-	Resp   chttp.Responder
-	Req    chttp.BodyReader
+	RW     chttp.ReaderWriter
 	Logger clogger.Logger
 
 	Auth Svc
@@ -28,8 +26,7 @@ type RouterParams struct {
 
 func NewRouter(p RouterParams) *Router {
 	return &Router{
-		resp:   p.Resp,
-		req:    p.Req,
+		rw:     p.RW,
 		logger: p.Logger,
 
 		auth: p.Auth,
@@ -50,18 +47,18 @@ func (ro *Router) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber string `json:"phone_number" valid:"auth.PhoneNumber,required"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	err := ro.auth.Signup(r.Context(), body.PhoneNumber)
 	if err != nil {
 		ro.logger.Error("Failed to sign up with phone number", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewLogin(ro *Router) chttp.RouteResult {
@@ -79,7 +76,7 @@ func (ro *Router) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		VerificationCode uint   `json:"verification_code" valid:"required"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
@@ -88,11 +85,11 @@ func (ro *Router) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		ro.logger.WithTags(map[string]interface{}{
 			"phoneNumber": body.PhoneNumber,
 		}).Error("Failed to login with phone number", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, &struct {
+	ro.rw.OK(w, &struct {
 		UserUUID     string `json:"user_uuid"`
 		SessionToken string `json:"session_token"`
 	}{

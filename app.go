@@ -3,8 +3,8 @@ package copper
 
 import (
 	"github.com/tusharsoni/copper/chttp"
+	"github.com/tusharsoni/copper/clogger"
 	"github.com/tusharsoni/copper/crandom"
-
 	"go.uber.org/fx"
 )
 
@@ -20,4 +20,43 @@ func NewHTTPApp(opts ...fx.Option) *fx.App {
 	}, opts...)
 
 	return fx.New(combined...)
+}
+
+type HTTPAppParams struct {
+	Logger            clogger.Logger
+	Routes            []chttp.Route
+	GlobalMiddlewares []chttp.MiddlewareFunc
+}
+
+func RunHTTPApp(p HTTPAppParams) {
+	var (
+		router = chttp.NewRouter(chttp.RouterParams{
+			Routes: append(
+				p.Routes,
+				chttp.NewHealthRoute(chttp.HealthRouteParams{}).Route,
+			),
+			GlobalMiddlewareFuncs: append(
+				p.GlobalMiddlewares,
+				chttp.NewRequestLogger(p.Logger).GlobalMiddlewareFunc,
+			),
+			Logger: p.Logger,
+		})
+		server = chttp.NewServer(chttp.ServerParams{
+			Logger: p.Logger,
+		})
+	)
+
+	crandom.Seed()
+
+	err := chttp.Register(server, router)
+	if err != nil {
+		p.Logger.Error("Failed to register http router to the server", err)
+		return
+	}
+
+	err = server.ListenAndServe()
+	if err != nil {
+		p.Logger.Error("Failed to start the server", err)
+		return
+	}
 }

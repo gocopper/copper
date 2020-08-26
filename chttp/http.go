@@ -2,6 +2,7 @@ package chttp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,12 +14,19 @@ import (
 )
 
 // Register can be used with fx.Invoke to register the root handler with the server.
-func Register(server *http.ServeMux, handler http.Handler) {
-	server.Handle("/", handler)
+func Register(server *http.Server, handler http.Handler) error {
+	muxHandler, ok := server.Handler.(*http.ServeMux)
+	if !ok {
+		return errors.New("http server does not have a *http.ServeMux handler")
+	}
+
+	muxHandler.Handle("/", handler)
+
+	return nil
 }
 
-// routerParams holds the dependencies needed to create a router using newRouter.
-type routerParams struct {
+// RouterParams holds the dependencies needed to create a router using NewRouter.
+type RouterParams struct {
 	fx.In
 
 	Routes                []Route          `group:"routes"`
@@ -26,8 +34,8 @@ type routerParams struct {
 	Logger                clogger.Logger
 }
 
-// newRouter creates a http.Handler by registering all routes that have been provided in the application container.
-func newRouter(p routerParams) http.Handler {
+// NewRouter creates a http.Handler by registering all routes that have been provided in the application container.
+func NewRouter(p RouterParams) http.Handler {
 	r := mux.NewRouter()
 
 	if len(p.Routes) == 0 {
@@ -62,23 +70,27 @@ func newRouter(p routerParams) http.Handler {
 	return r
 }
 
-// serverParams holds the dependencies needed to create a http server using newServer.
-type serverParams struct {
+// ServerParams holds the dependencies needed to create a http server using NewServer.
+type ServerParams struct {
 	fx.In
 
-	Lifecycle fx.Lifecycle
-	Logger    clogger.Logger
+	Logger clogger.Logger
 
-	Config Config `optional:"true"`
+	Config    Config       `optional:"true"`
+	Lifecycle fx.Lifecycle `optional:"true"`
 }
 
-// newServer creates a http request mux. This server starts when the application starts and stops gracefully when
+// NewServer creates a http server. This server starts when the application starts and stops gracefully when
 // the application stops.
-func newServer(p serverParams) *http.ServeMux {
+func NewServer(p ServerParams) *http.Server {
 	config := p.Config
 	if !config.isValid() {
 		config = GetDefaultConfig()
 	}
+
+	p.Logger.WithTags(map[string]interface{}{
+		"port": config.Port,
+	}).Info("Setting up HTTP server..")
 
 	serveMux := http.NewServeMux()
 	server := &http.Server{
@@ -86,20 +98,22 @@ func newServer(p serverParams) *http.ServeMux {
 		Handler: serveMux,
 	}
 
-	p.Lifecycle.Append(fx.Hook{
-		OnStart: func(context.Context) error {
-			go func() {
-				err := server.ListenAndServe()
-				if err != nil && err != http.ErrServerClosed {
-					p.Logger.Error("Failed to start http server", err)
-				}
-			}()
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			return server.Shutdown(ctx)
-		},
-	})
+	if p.Lifecycle != nil {
+		p.Lifecycle.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					err := server.ListenAndServe()
+					if err != nil && err != http.ErrServerClosed {
+						p.Logger.Error("Failed to start http server", err)
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return server.Shutdown(ctx)
+			},
+		})
+	}
 
-	return serveMux
+	return server
 }

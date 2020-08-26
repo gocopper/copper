@@ -6,12 +6,11 @@ import "go.uber.org/fx"
 // Fx provides the module for chttp that can be used to create a copper app.
 // This module is provided by default when creating a http copper app.
 var Fx = fx.Provide(
-	newRequestLogger,
-	newBodyReader,
-	newResponder,
+	NewRequestLogger,
+	NewJSONReaderWriter,
 
-	newServer,
-	newRouter,
+	NewServer,
+	NewRouter,
 
-	newHealthRoute,
+	NewHealthRoute,
 )

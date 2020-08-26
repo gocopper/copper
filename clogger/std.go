@@ -9,7 +9,7 @@ import (
 	"github.com/tusharsoni/copper/cerror"
 )
 
-type stdLoggerParams struct {
+type StdLoggerParams struct {
 	fx.In
 
 	Config StdConfig `optional:"true"`
@@ -20,7 +20,13 @@ type stdLogger struct {
 	config StdConfig
 }
 
-func newStdLogger(p stdLoggerParams) Logger {
+func NewStdLogger() Logger {
+	return NewStdLoggerWithParams(StdLoggerParams{
+		Config: StdConfig{},
+	})
+}
+
+func NewStdLoggerWithParams(p StdLoggerParams) Logger {
 	if !p.Config.isValid() {
 		p.Config = GetDefaultStdConfig()
 	}

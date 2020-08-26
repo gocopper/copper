@@ -14,7 +14,7 @@ type Middleware interface {
 }
 
 type middleware struct {
-	resp   chttp.Responder
+	resp   chttp.ReaderWriter
 	svc    Svc
 	logger clogger.Logger
 }
@@ -22,7 +22,7 @@ type middleware struct {
 type MiddlewareParams struct {
 	fx.In
 
-	Resp   chttp.Responder
+	Resp   chttp.ReaderWriter
 	Svc    Svc
 	Logger clogger.Logger
 }

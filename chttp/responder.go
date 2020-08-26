@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
+	"github.com/tusharsoni/copper/cerror"
+
 	"github.com/tusharsoni/copper/clogger"
 )
 
-// Responder provides methods to write an http response with JSON easily.
-type Responder interface {
+// ReaderWriter provides methods to read request body and write an http response easily.
+type ReaderWriter interface {
+	Read(w http.ResponseWriter, r *http.Request, body interface{}) bool
+
 	OK(w http.ResponseWriter, o interface{})
 	Created(w http.ResponseWriter, o interface{})
 	InternalErr(w http.ResponseWriter)
@@ -21,10 +26,38 @@ type responder struct {
 	logger clogger.Logger
 }
 
-func newResponder(logger clogger.Logger) Responder {
+func NewJSONReaderWriter(logger clogger.Logger) ReaderWriter {
+	govalidator.SetFieldsRequiredByDefault(true)
+
 	return &responder{
 		logger: logger,
 	}
+}
+
+func (r *responder) Read(w http.ResponseWriter, req *http.Request, body interface{}) bool {
+	url := req.URL.String()
+
+	err := json.NewDecoder(req.Body).Decode(body)
+	if err != nil {
+		r.logger.Warn("Failed to read body", cerror.New(err, "invalid json", map[string]interface{}{
+			"url": url,
+		}))
+
+		r.BadRequest(w, err)
+		return false
+	}
+
+	ok, err := govalidator.ValidateStruct(body)
+	if !ok {
+		r.logger.Warn("Failed to read body", cerror.New(err, "data validation failed", map[string]interface{}{
+			"url": url,
+		}))
+
+		r.BadRequest(w, err)
+		return false
+	}
+
+	return true
 }
 
 func (r *responder) OK(w http.ResponseWriter, o interface{}) {

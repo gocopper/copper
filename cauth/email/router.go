@@ -14,8 +14,7 @@ import (
 )
 
 type Router struct {
-	resp   chttp.Responder
-	req    chttp.BodyReader
+	rw     chttp.ReaderWriter
 	logger clogger.Logger
 
 	auth   Svc
@@ -25,8 +24,7 @@ type Router struct {
 type RouterParams struct {
 	fx.In
 
-	Resp   chttp.Responder
-	Req    chttp.BodyReader
+	RW     chttp.ReaderWriter
 	Logger clogger.Logger
 
 	Auth   Svc
@@ -35,8 +33,7 @@ type RouterParams struct {
 
 func NewRouter(p RouterParams) *Router {
 	return &Router{
-		resp:   p.Resp,
-		req:    p.Req,
+		rw:     p.RW,
 		logger: p.Logger,
 
 		auth:   p.Auth,
@@ -59,21 +56,21 @@ func (ro *Router) Signup(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password" valid:"runelength(4|32)"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	c, sessionToken, err := ro.auth.Signup(r.Context(), body.Email, body.Password)
 	if err != nil && err != cauth.ErrUserAlreadyExists {
 		ro.logger.Error("Failed to signup user with email and password", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	} else if err == cauth.ErrUserAlreadyExists {
-		ro.resp.BadRequest(w, cauth.ErrUserAlreadyExists)
+		ro.rw.BadRequest(w, cauth.ErrUserAlreadyExists)
 		return
 	}
 
-	ro.resp.Created(w, map[string]string{
+	ro.rw.Created(w, map[string]string{
 		"user_uuid":     c.UserUUID,
 		"session_token": sessionToken,
 	})
@@ -94,21 +91,21 @@ func (ro *Router) Login(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password" valid:"runelength(4|32)"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	c, sessionToken, err := ro.auth.Login(r.Context(), body.Email, body.Password)
 	if err != nil && err != cauth.ErrInvalidCredentials {
 		ro.logger.Error("Failed to login user with email and password", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	} else if err == cauth.ErrInvalidCredentials {
-		ro.resp.Unauthorized(w)
+		ro.rw.Unauthorized(w)
 		return
 	}
 
-	ro.resp.OK(w, map[string]string{
+	ro.rw.OK(w, map[string]string{
 		"user_uuid":     c.UserUUID,
 		"session_token": sessionToken,
 	})
@@ -129,7 +126,7 @@ func (ro *Router) VerifyUser(w http.ResponseWriter, r *http.Request) {
 		VerificationCode string `json:"verification_code" valid:"printableascii"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
@@ -138,14 +135,14 @@ func (ro *Router) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	err := ro.auth.VerifyUser(r.Context(), userUUID, body.VerificationCode)
 	if err != nil && err != cauth.ErrInvalidCredentials {
 		ro.logger.Error("Failed to verify user", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	} else if err == cauth.ErrInvalidCredentials {
-		ro.resp.BadRequest(w, err)
+		ro.rw.BadRequest(w, err)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewResendVerificationCodeRoute(ro *Router, mw cauth.Middleware) chttp.RouteResult {
@@ -164,11 +161,11 @@ func (ro *Router) ResendVerificationCode(w http.ResponseWriter, r *http.Request)
 	err := ro.auth.ResendVerificationCode(r.Context(), userUUID)
 	if err != nil {
 		ro.logger.Error("Failed to resend verification code", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewChangePasswordRoute(ro *Router) chttp.RouteResult {
@@ -187,18 +184,18 @@ func (ro *Router) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		NewPassword string `json:"new_password" valid:"printableascii"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	err := ro.auth.ChangePassword(r.Context(), body.Email, body.OldPassword, body.NewPassword)
 	if err != nil {
 		ro.logger.Error("Failed to change password", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewResetPasswordRoute(ro *Router) chttp.RouteResult {
@@ -215,18 +212,18 @@ func (ro *Router) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email" valid:"email"`
 	}
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	err := ro.auth.ResetPassword(r.Context(), body.Email)
 	if err != nil {
 		ro.logger.Error("Failed to reset password", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewAddCredentialsRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
@@ -248,18 +245,18 @@ func (ro *Router) HandleAddCredentials(w http.ResponseWriter, r *http.Request) {
 		}
 	)
 
-	if !ro.req.Read(w, r, &body) {
+	if !ro.rw.Read(w, r, &body) {
 		return
 	}
 
 	err := ro.auth.AddCredentials(r.Context(), userUUID, body.Email, body.Password)
 	if err != nil {
 		ro.logger.Error("Failed to add credentials", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewChangeEmailRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
@@ -283,11 +280,11 @@ func (ro *Router) HandleChangeEmail(w http.ResponseWriter, r *http.Request) {
 	err := ro.auth.ChangeEmail(ctx, userUUID, body.NewEmail)
 	if err != nil {
 		ro.logger.Error("Failed to change email", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
-	ro.resp.OK(w, nil)
+	ro.rw.OK(w, nil)
 }
 
 func NewGetCredentialsRoute(ro *Router, auth cauth.Middleware) chttp.RouteResult {
@@ -308,7 +305,7 @@ func (ro *Router) HandleGetCredentials(w http.ResponseWriter, r *http.Request) {
 	c, err := ro.auth.GetCredentials(ctx, userUUID)
 	if err != nil && !cerror.HasCause(err, gorm.ErrRecordNotFound) {
 		ro.logger.Error("Failed to get credentials", err)
-		ro.resp.InternalErr(w)
+		ro.rw.InternalErr(w)
 		return
 	}
 
@@ -317,5 +314,5 @@ func (ro *Router) HandleGetCredentials(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ro.resp.OK(w, c)
+	ro.rw.OK(w, c)
 }
