@@ -22,19 +22,17 @@ type ReaderWriter interface {
 	BadRequest(w http.ResponseWriter, err error)
 }
 
-type responder struct {
+type jsonRW struct {
 	logger clogger.Logger
 }
 
 func NewJSONReaderWriter(logger clogger.Logger) ReaderWriter {
-	govalidator.SetFieldsRequiredByDefault(true)
-
-	return &responder{
+	return &jsonRW{
 		logger: logger,
 	}
 }
 
-func (r *responder) Read(w http.ResponseWriter, req *http.Request, body interface{}) bool {
+func (r *jsonRW) Read(w http.ResponseWriter, req *http.Request, body interface{}) bool {
 	url := req.URL.String()
 
 	err := json.NewDecoder(req.Body).Decode(body)
@@ -60,27 +58,27 @@ func (r *responder) Read(w http.ResponseWriter, req *http.Request, body interfac
 	return true
 }
 
-func (r *responder) OK(w http.ResponseWriter, o interface{}) {
+func (r *jsonRW) OK(w http.ResponseWriter, o interface{}) {
 	r.json(w, o, http.StatusOK)
 }
 
-func (r *responder) Created(w http.ResponseWriter, o interface{}) {
+func (r *jsonRW) Created(w http.ResponseWriter, o interface{}) {
 	r.json(w, o, http.StatusCreated)
 }
 
-func (*responder) InternalErr(w http.ResponseWriter) {
+func (*jsonRW) InternalErr(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-func (*responder) Unauthorized(w http.ResponseWriter) {
+func (*jsonRW) Unauthorized(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusUnauthorized)
 }
 
-func (*responder) Forbidden(w http.ResponseWriter) {
+func (*jsonRW) Forbidden(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusForbidden)
 }
 
-func (r *responder) BadRequest(w http.ResponseWriter, err error) {
+func (r *jsonRW) BadRequest(w http.ResponseWriter, err error) {
 	var resp struct {
 		Error string `json:"error"`
 	}
@@ -88,7 +86,7 @@ func (r *responder) BadRequest(w http.ResponseWriter, err error) {
 	r.json(w, &resp, http.StatusBadRequest)
 }
 
-func (r *responder) json(w http.ResponseWriter, o interface{}, status int) {
+func (r *jsonRW) json(w http.ResponseWriter, o interface{}, status int) {
 	j, err := json.Marshal(o)
 	if err != nil {
 		r.logger.Error("Failed to marshal response as json", err)
