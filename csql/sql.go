@@ -11,15 +11,15 @@ import (
 	"go.uber.org/fx"
 )
 
-type gormDBParams struct {
+type GormDBParams struct {
 	fx.In
 
-	Lifecycle fx.Lifecycle
 	Config    Config
 	Logger    clogger.Logger
+	Lifecycle fx.Lifecycle `optional:"true"`
 }
 
-func newGormDB(p gormDBParams) (*gorm.DB, error) {
+func NewGormDB(p GormDBParams) (*gorm.DB, error) {
 	conn := fmt.Sprintf(
 		"host=%s port=%d user=%s dbname=%s sslmode=disable",
 		p.Config.Host,
@@ -42,12 +42,14 @@ func newGormDB(p gormDBParams) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	p.Lifecycle.Append(fx.Hook{
-		OnStop: func(context context.Context) error {
-			p.Logger.Info("Closing connection to database..")
-			return db.Close()
-		},
-	})
+	if p.Lifecycle != nil {
+		p.Lifecycle.Append(fx.Hook{
+			OnStop: func(context context.Context) error {
+				p.Logger.Info("Closing connection to database..")
+				return db.Close()
+			},
+		})
+	}
 
 	db.LogMode(false)
 

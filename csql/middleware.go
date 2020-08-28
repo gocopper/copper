@@ -11,7 +11,7 @@ import (
 )
 
 // DBTxnMiddleware provides a middleware that wraps the http request in a database transaction. If the response status
-// code is 2xx, the transaction is committed, else a rollback is performed.
+// code is between 100-399, the transaction is committed, else a rollback is performed.
 type DBTxnMiddleware interface {
 	WrapInTxn(next http.Handler) http.Handler
 }
@@ -21,14 +21,16 @@ type dbTxnMiddleware struct {
 	logger clogger.Logger
 }
 
-func NewDBTxnMiddleware(db *gorm.DB, logger clogger.Logger) chttp.GlobalMiddlewareFuncResult {
-	mw := dbTxnMiddleware{
+func NewDBTxnMiddleware(db *gorm.DB, logger clogger.Logger) chttp.MiddlewareFunc {
+	return dbTxnMiddleware{
 		db:     db,
 		logger: logger,
-	}
+	}.WrapInTxn
+}
 
+func NewDBTxnMiddlewareFx(db *gorm.DB, logger clogger.Logger) chttp.GlobalMiddlewareFuncResult {
 	return chttp.GlobalMiddlewareFuncResult{
-		GlobalMiddlewareFunc: mw.WrapInTxn,
+		GlobalMiddlewareFunc: NewDBTxnMiddleware(db, logger),
 	}
 }
 

@@ -1,6 +1,6 @@
 package csql
 
-// Config holds the parameters to connect to a Postgres database. Provide this config using Fx.
+// Config holds the parameters to connect to a Postgres database
 type Config struct {
 	Host     string
 	Port     uint

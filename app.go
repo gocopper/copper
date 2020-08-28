@@ -26,6 +26,7 @@ type HTTPAppParams struct {
 	Logger            clogger.Logger
 	Routes            []chttp.Route
 	GlobalMiddlewares []chttp.MiddlewareFunc
+	Config            chttp.Config
 }
 
 func RunHTTPApp(p HTTPAppParams) {
@@ -43,6 +44,7 @@ func RunHTTPApp(p HTTPAppParams) {
 		})
 		server = chttp.NewServer(chttp.ServerParams{
 			Logger: p.Logger,
+			Config: p.Config,
 		})
 	)
 
