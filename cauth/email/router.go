@@ -18,6 +18,7 @@ type Router struct {
 	logger clogger.Logger
 
 	auth   Svc
+	authMW cauth.Middleware
 	config Config
 }
 
@@ -28,6 +29,7 @@ type RouterParams struct {
 	Logger clogger.Logger
 
 	Auth   Svc
+	AuthMW cauth.Middleware
 	Config Config
 }
 
@@ -37,7 +39,22 @@ func NewRouter(p RouterParams) *Router {
 		logger: p.Logger,
 
 		auth:   p.Auth,
+		authMW: p.AuthMW,
 		config: p.Config,
+	}
+}
+
+func (ro *Router) Routes() []chttp.Route {
+	return []chttp.Route{
+		NewSignupRoute(ro).Route,
+		NewLoginRoute(ro).Route,
+		NewVerifyUserRoute(ro, ro.authMW).Route,
+		NewResendVerificationCodeRoute(ro, ro.authMW).Route,
+		NewChangePasswordRoute(ro).Route,
+		NewResetPasswordRoute(ro).Route,
+		NewAddCredentialsRoute(ro, ro.authMW).Route,
+		NewChangeEmailRoute(ro, ro.authMW).Route,
+		NewGetCredentialsRoute(ro, ro.authMW).Route,
 	}
 }
 

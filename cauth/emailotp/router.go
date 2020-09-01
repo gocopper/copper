@@ -33,6 +33,13 @@ func NewRouter(p RouterParams) *Router {
 	}
 }
 
+func (ro *Router) Routes() []chttp.Route {
+	return []chttp.Route{
+		NewSignup(ro).Route,
+		NewLogin(ro).Route,
+	}
+}
+
 func NewSignup(ro *Router) chttp.RouteResult {
 	return chttp.RouteResult{Route: chttp.Route{
 		Path:    "/api/auth/email-otp/signup",

@@ -14,7 +14,7 @@ type Middleware interface {
 }
 
 type middleware struct {
-	resp   chttp.ReaderWriter
+	rw     chttp.ReaderWriter
 	svc    Svc
 	logger clogger.Logger
 }
@@ -22,14 +22,14 @@ type middleware struct {
 type MiddlewareParams struct {
 	fx.In
 
-	Resp   chttp.ReaderWriter
+	RW     chttp.ReaderWriter
 	Svc    Svc
 	Logger clogger.Logger
 }
 
 func NewAuthMiddleware(p MiddlewareParams) Middleware {
 	return &middleware{
-		resp:   p.Resp,
+		rw:     p.RW,
 		svc:    p.Svc,
 		logger: p.Logger,
 	}
@@ -39,7 +39,7 @@ func (m *middleware) VerifySessionToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userUUID, sessionToken, ok := r.BasicAuth()
 		if !ok || userUUID == "" || sessionToken == "" {
-			m.resp.Unauthorized(w)
+			m.rw.Unauthorized(w)
 			return
 		}
 
@@ -48,11 +48,11 @@ func (m *middleware) VerifySessionToken(next http.Handler) http.Handler {
 			m.logger.WithTags(map[string]interface{}{
 				"userUUID": userUUID,
 			}).Error("Failed to verify session token", err)
-			m.resp.InternalErr(w)
+			m.rw.InternalErr(w)
 			return
 		}
 		if !ok {
-			m.resp.Unauthorized(w)
+			m.rw.Unauthorized(w)
 			return
 		}
 
