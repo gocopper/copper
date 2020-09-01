@@ -35,49 +35,45 @@ func NewAWSMailer(config AWSConfig) (Mailer, error) {
 	}, nil
 }
 
-func (m *AWSMailer) SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
-	return m.send(ctx, from, to, subject, body, false)
-}
-
-func (m *AWSMailer) SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
-	return m.send(ctx, from, to, subject, body, true)
-}
-
-func (m *AWSMailer) send(ctx context.Context, from, to, subject, body string, html bool) (confirmation string, err error) {
+func (m *AWSMailer) Send(ctx context.Context, p SendParams) error {
 	input := &ses.SendEmailInput{
-		Source: aws.String(from),
+		Source: aws.String(p.From),
 		Destination: &ses.Destination{
-			ToAddresses: []*string{&to},
+			ToAddresses: []*string{&p.To},
 		},
 		Message: &ses.Message{
 			Subject: &ses.Content{
 				Charset: aws.String(charset),
-				Data:    aws.String(subject),
+				Data:    aws.String(p.Subject),
 			},
 			Body: &ses.Body{},
 		},
 	}
 
-	content := &ses.Content{
-		Charset: aws.String(charset),
-		Data:    aws.String(body),
+	if p.HTMLBody != nil {
+		input.Message.Body.Html = &ses.Content{
+			Charset: aws.String(charset),
+			Data:    p.HTMLBody,
+		}
 	}
 
-	if html {
-		input.Message.Body.Html = content
-	} else {
-		input.Message.Body.Text = content
+	if p.PlainBody != nil {
+		input.Message.Body.Text = &ses.Content{
+			Charset: aws.String(charset),
+			Data:    p.PlainBody,
+		}
 	}
 
-	result, err := m.sess.SendEmailWithContext(ctx, input)
+	_, err := m.sess.SendEmailWithContext(ctx, input)
 	if err != nil {
-		return "", cerror.New(err, "failed to send email", map[string]interface{}{
-			"from":    from,
-			"to":      to,
-			"subject": subject,
-			"body":    body,
+		return cerror.New(err, "failed to send email", map[string]interface{}{
+			"from":      p.From,
+			"to":        p.To,
+			"subject":   p.Subject,
+			"plainBody": p.PlainBody,
+			"htmlBody":  p.HTMLBody,
 		})
 	}
 
-	return *result.MessageId, nil
+	return nil
 }

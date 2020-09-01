@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/tusharsoni/copper/clogger"
-	"github.com/tusharsoni/copper/crandom"
 )
 
 type LogMailer struct {
@@ -17,24 +16,14 @@ func NewLogMailer(logger clogger.Logger) Mailer {
 	}
 }
 
-func (m *LogMailer) SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
+func (m *LogMailer) Send(ctx context.Context, p SendParams) error {
 	m.logger.WithTags(map[string]interface{}{
-		"from":    from,
-		"to":      to,
-		"subject": subject,
-		"body":    body,
+		"from":      p.From,
+		"to":        p.To,
+		"subject":   p.Subject,
+		"htmlBody":  p.HTMLBody,
+		"plainBody": p.PlainBody,
 	}).Info("Send plain email")
 
-	return crandom.GenerateRandomString(6), nil
-}
-
-func (m *LogMailer) SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error) {
-	m.logger.WithTags(map[string]interface{}{
-		"from":    from,
-		"to":      to,
-		"subject": subject,
-		"body":    body,
-	}).Info("Send HTML email")
-
-	return crandom.GenerateRandomString(6), nil
+	return nil
 }

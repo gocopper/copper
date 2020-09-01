@@ -2,7 +2,15 @@ package cmailer
 
 import "context"
 
+type SendParams struct {
+	From    string
+	To      string
+	Subject string
+
+	HTMLBody  *string
+	PlainBody *string
+}
+
 type Mailer interface {
-	SendPlain(ctx context.Context, from, to, subject, body string) (confirmation string, err error)
-	SendHTML(ctx context.Context, from, to, subject, body string) (confirmation string, err error)
+	Send(ctx context.Context, p SendParams) error
 }
