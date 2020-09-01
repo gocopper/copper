@@ -22,10 +22,12 @@ type dbTxnMiddleware struct {
 }
 
 func NewDBTxnMiddleware(db *gorm.DB, logger clogger.Logger) chttp.MiddlewareFunc {
-	return dbTxnMiddleware{
+	mw := dbTxnMiddleware{
 		db:     db,
 		logger: logger,
-	}.WrapInTxn
+	}
+
+	return mw.WrapInTxn
 }
 
 func NewDBTxnMiddlewareFx(db *gorm.DB, logger clogger.Logger) chttp.GlobalMiddlewareFuncResult {
