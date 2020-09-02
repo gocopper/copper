@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Copper is a set of Go packages that help you build backend APIs quickly and with less boilerplate.">
+
+    <title>Copper - Go toolkit for building APIs with less boilerplate</title>
+
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+
+    <link rel="stylesheet" href="prism-nord.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/line-numbers/prism-line-numbers.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/command-line/prism-command-line.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/treeview/prism-treeview.min.css">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="side-nav">
+        <div class="logo">
+            <a href="#">
+                <img alt="Copper Logo" src="logo.svg">
+            </a>
+        </div>
+
+        <div class="nav-heading">Getting Started</div>
+        <ul class="nav-items">
+            <li><a href="#introduction">Introduction</a></li>
+            <li><a href="#installation">Installation</a></li>
+            <li><a href="#directory-structure">Directory Structure</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+
+        <div class="nav-heading">The Basics</div>
+        <ul class="nav-items">
+            <li><a href="#routing">Routing</a></li>
+            <li><a href="#reading-writing-json">Reading & Writing JSON</a></li>
+            <li><a href="#middleware">Middleware</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+
+        <div class="nav-heading">Database</div>
+        <ul class="nav-items">
+            <li><a href="#database-sql">SQL</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+
+        <div class="nav-heading">Security</div>
+        <ul class="nav-items">
+            <li><a href="#authentication">Authentication</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+
+        <div class="nav-heading">Messaging</div>
+        <ul class="nav-items">
+            <li><a href="#emails">Emails</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+
+        <div class="nav-heading">Utilities</div>
+        <ul class="nav-items">
+            <li><a href="#logger">Logger</a></li>
+            <li><a href="#errors">Errors</a></li>
+        </ul>
+
+        <div class="spacer-40"></div>
+    </div>
+
+    <div class="content">
+        <div class="logo">
+            <a href="#">
+                <img alt="Copper Logo" src="logo.svg">
+            </a>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="introduction" href="#introduction"><h1>Introduction</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper is a set of small Go packages that help you build APIs quickly. All of the packages are designed to work well together but are optional to use. You can start with a single package and add others as you need them.
+                    </p>
+                    <p>
+                        Copper's goal is to make it <strong>easy</strong> and <strong>fast</strong> to build APIs with <strong>idiomatic</strong> Go. Copper makes full use of the already powerful Go standard library and exposes the primitives in a way where you have to write <strong>less boilerplate</strong>.
+                    </p>
+                    <p>
+                        <a class="github-button" href="https://github.com/tusharsoni/copper" data-size="large" aria-label="View tusharsoni/copper on GitHub">View on GitHub</a>
+                    </p>
+                </div>
+                <div></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="installation" href="#installation"><h1>Installation</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        To get started, create your project directory, initialize it as a new Go module, and "go get" the Copper package.
+                    </p>
+                    <p>
+                        In the project directory, create a <code>main.go</code> file and start the Copper HTTP app, as shown in the example.
+                    </p>
+                    <p>
+                        That's it! You are now running an HTTP server on the port <code>7450</code>. It comes with a default health endpoint on <code>/_health</code>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            Bash
+                        </div>
+                        <pre class="command-line" data-filter-output=">>" data-prompt="$"><code class="language-bash">mkdir my-project
+cd my-project
+go mod init github.com/my-user/my-project
+go get github.com/tusharsoni/copper</code></pre>
+                    </div>
+                    <div class="spacer-20"></div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                    <pre class="line-numbers"><code class="language-go">package main
+
+import (
+    "github.com/tusharsoni/copper"
+    "github.com/tusharsoni/copper/clogger"
+)
+
+func main() {
+    params := copper.HTTPAppParams{
+        Logger: clogger.NewStdLogger(),
+    }
+
+    copper.RunHTTPApp(params)
+}</code></pre>
+                    </div>
+                    <div class="spacer-20"></div>
+                    <div class="code">
+                        <div class="code-header">
+                            Bash
+                        </div>
+                        <pre class="command-line" data-filter-output=">>" data-prompt="$"><code class="language-bash">curl -i :7450/_health
+>>HTTP/1.1 200 OK
+>>Date: Wed, 26 Aug 2020 23:01:09 GMT
+>>Content-Length: 2
+>>Content-Type: text/plain; charset=utf-8
+>>
+>>OK</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="directory-structure" href="#directory-structure"><h1>Directory Structure</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper has no requirement on the directory structure - you are free to organize your project however you like. This guide provides a <strong>recommendation</strong> that works best for this type of project.
+                    </p>
+                    <p>
+                        At the top level, split your project into <code>cmd</code> and <code>pkg</code>. The <code>cmd</code> directory contains the main files under different commands. For instance, for the API, put your <code>main.go</code> file at <code>cmd/api/main.go</code>.
+                    </p>
+                    <p>
+                        Most of your code is put under the <code>pkg</code> directory split into different modules. Think of these modules as different sections of your application logically separated. For instance, in a blogging app, you may have the <code>posts</code> and <code>comments</code> directories in <code>pkg</code>. Avoid creating global packages for <code>models</code>, <code>handlers</code>, and <code>components</code>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">File Tree</div>
+                        <pre class="language-treeview"><code>my-project/
+├── Makefile
+├── cmd/api/
+│   └── main.go
+└── pkg/
+    ├── module1/
+    │   ├── migrations.go
+    │   ├── models.go
+    │   ├── repo.go
+    │   ├── router.go
+    │   └── svc.go
+    └── module2/
+        ├── migrations.go
+        ├── models.go
+        ├── repo.go
+        ├── router.go
+        └── svc.go</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="routing" href="#routing"><h1>Routing</h1></a>
+            <h2>Basics</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>copper.HTTPAppParams</code> struct accepts an array of <code>chttp.Route</code>. Each <code>chttp.Route</code> defines its path, HTTP method, middlewares, and the handler.
+                    </p>
+                    <p>
+                        The example shows how you can create a route and register it to the server. If you were to create all of your routes here, the main function will get very large very quickly. Instead, follow the examples below to create distinct routers to split your routes.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+func main() {
+    params := copper.HTTPAppParams{
+        Logger: clogger.NewStdLogger(),
+
+        // This is an illustration of how routes are created.
+        // Refer to future examples on how best to organize these routes instead of creating them all here.
+        Routes: []chttp.Route{
+            {
+                Path:    "/",
+                Methods: []string{http.MethodGet},
+                Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+                    w.Write([]byte("Hello, World"))
+                }),
+            },
+        },
+    }
+
+    copper.RunHTTPApp(params)
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Routers</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        Instead of creating all your routes in the main function, you can create routers that group these routes. You should create multiple routers for your app - one for each significant part of your app. In a blogging application, you may have a separate router for posts and comments.
+                    </p>
+                    <p>
+                        A single router has multiple routes. It has a <code>Routes()</code> method that returns all of the routes. For each route, a handler of type <code>http.HandlerFunc</code> is created on the router. By convention, the handler method is named in the format <code>HandleX</code>.
+                    </p>
+                    <p>
+                        As your routers grow in complexity, the <code>Router</code> struct can hold its dependencies that can be accessed from all handlers.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+func main() {
+    // Initialize the router and pass dependencies (if any).
+    routerA := NewRouterA()
+
+    params := copper.HTTPAppParams{
+        Logger: clogger.NewStdLogger(),
+
+        // By convention, the router should have a Routes() method.
+        // Call it here to pass all of the routes to Copper.
+        Routes: routerA.Routes(),
+
+        // If you have multiple routers, you can register all of
+        // their routes:
+        // Routes: append(
+        //     routerA.Routes(),
+        //     routerB.Routes()...,
+        // ),
+    }
+
+    copper.RunHTTPApp(params)
+}
+    </code></pre>
+                    </div>
+                    <div class="spacer-40"></div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+type RouterA struct{}
+
+func NewRouterA() *RouterA {
+    return &RouterA{}
+}
+
+func (ro *RouterA) Routes() []chttp.Route {
+    return []chttp.Route{
+        {
+            Path:    "/foo",
+            Methods: []string{http.MethodGet},
+            Handler: http.HandlerFunc(ro.HandleFoo),
+        },
+        {
+            Path:    "/bar",
+            Methods: []string{http.MethodGet},
+            Handler: http.HandlerFunc(ro.HandleBar),
+        },
+    }
+}
+
+func (ro *RouterA) HandleFoo(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("Hello, Foo"))
+}
+
+func (ro *RouterA) HandleBar(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("Hello, Bar"))
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Path Variables & Query Parameters</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        You can embed variables in the URL using the <code>{variable}</code> pattern that can be later accessed in your handler using <code>mux.Vars(r)["variable"]</code>. These variables act as pattern matchers such that your handler will only be called if the variable exists. Additionally, you can limit the scope of this variable using regex: <code>{id:[0-9]+}</code>.
+                    </p>
+                    <p>
+                        For query parameters, you can use the existing methods on the request object. For instance, to fetch the "limit" parameter from the url <code>/posts?limit=10</code>, you can use <code>r.URL.Query().Get("limit")</code>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+type RouterA struct{}
+
+func NewRouterA() *RouterA {
+    return &RouterA{}
+}
+
+func (ro *RouterA) Routes() []chttp.Route {
+    return []chttp.Route{
+        {
+            // Use path variables to embed resource identifiers
+            Path:    "/api/posts/{id}",
+            Methods: []string{http.MethodGet},
+            Handler: http.HandlerFunc(ro.HandleGetPost),
+        },
+        {
+            Path:    "/api/posts",
+            Methods: []string{http.MethodGet},
+            Handler: http.HandlerFunc(ro.HandleGetAllPosts),
+        },
+    }
+}
+
+func (ro *RouterA) HandleGetPost(w http.ResponseWriter, r *http.Request) {
+    // Use the mux package to get the path variable
+    postID := mux.Vars(r)["id"]
+
+    ...
+}
+
+func (ro *RouterA) HandleGetAllPosts(w http.ResponseWriter, r *http.Request) {
+    // The request has the ability to parse query parameters
+    var (
+        limit  = r.URL.Query().Get("limit")
+        offset = r.URL.Query().Get("offset")
+    )
+
+    ...
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="reading-writing-json" href="#reading-writing-json"><h1>Reading & Writing JSON</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper provides utilities to easily read and respond JSON objects with less boilerplate. This is especially useful when building backend APIs. The <code>chttp</code> package has a <code>ReaderWriter</code> interface with a JSON implementation.
+                    </p>
+                    <p>
+                        Use the JSON implementation for <code>chttp.ReaderWriter</code> in your routers by adding a dependency in the router struct. The <code>chttp.ReaderWriter</code> provides methods to respond as well as consume and validate JSON.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+type RouterA struct {
+    // Add the ReaderWriter dependency to the router so
+    // all handlers can access it.
+    rw chttp.ReaderWriter
+}
+
+// The constructor for the router takes in an implementation for
+// chttp.ReaderWriter such as the one provided by
+// chttp.NewJSONReaderWriter()
+func NewRouterA(rw chttp.ReaderWriter) *RouterA {
+    return &RouterA{
+        rw: rw,
+    }
+}
+</code></pre>
+                    </div>
+    <div class="spacer-40"></div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">package main
+
+import "..."
+
+func main() {
+    logger := clogger.NewStdLogger()
+
+    // Initialize the router and pass the JSON Reader Writer to it
+    routerA := NewRouterA(chttp.NewJSONReaderWriter(logger))
+
+    params := copper.HTTPAppParams{
+        Logger: logger,
+        Routes: routerA.Routes(),
+    }
+
+    copper.RunHTTPApp(params)
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Reading JSON</h2>
+            <div class="content">
+                <div>
+                    <p>The <code>chttp.ReaderWriter</code> has several write methods, one for each HTTP status code. It reduces boilerplate by setting the correct status code, headers, and more. Some of the methods such as <code>OK</code> or <code>Created</code> take an empty interface parameter. These objects are marshaled into JSON. If they implement the <code>json.Marshaler</code> interface, that will be used.</p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func (ro *RouterA) HandleHelloWorld(w http.ResponseWriter, r *http.Request) {
+    // Define the body struct with JSON tags.
+    // Optionally, add validation tags from github.com/asaskevich/govalidator
+    var body struct {
+        Name  string `json:"name" valid:"required"`
+        Email string `json:"email" valid:"required,email"`
+    }
+
+    // rw.Read unmarshals the request body into the body struct.
+    // If there are any validation errors, it responds with a 400
+    // status code and logs the error.
+    if !ro.rw.Read(w, r, &body) {
+        return
+    }
+
+    ...
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Writing JSON</h2>
+            <div class="content">
+                <div>
+                    <p>The <code>chttp.ReaderWriter</code> has several write methods, one for each HTTP status code. It reduces boilerplate by setting the correct status code, headers, and more. Some of the methods such as <code>OK</code> or <code>Created</code> take an empty interface parameter. These objects are marshaled into JSON. If they implement the <code>json.Marshaler</code> interface, that will be used.</p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">type User struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+
+func (ro *RouterA) HandleHelloWorld(w http.ResponseWriter, r *http.Request) {
+    user := ...
+
+    // The OK method will respond with a 200 status code, set the proper
+    // content-type header and marshal the object as JSON
+    ro.rw.OK(w, &user)
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="middleware" href="#middleware"><h1>Middleware</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper supports route-level and global middleware. A middleware is a function that takes in <code>http.Handler</code> and returns another <code>http.Handler</code>. This is defined as <code>chttp.MiddlewareFunc</code> in the <code>chttp</code> package.
+                    </p>
+                    <p>
+                        The example shows how to create a middleware that logs the incoming request's path and HTTP method. This is a perfect fit for a global middleware. Copper provides a variation of this middleware in the <code>chttp</code> package and registers it for you when you run the app using <code>copper.RunHTTPApp()</code>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            Go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">// NewIncomingRequestLogger returns a middleware that logs each
+// request using the given logger.
+func NewIncomingRequestLogger(logger clogger.Logger) MiddlewareFunc {
+    // The given http.Handler is the "next" in chain.
+    // We can call the ServerHTTP method on it when ready.
+    return func(next http.Handler) http.Handler {
+        // This handler logs the incoming request's method and path.
+        // Then, it calls the next handler.
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            logger.WithTags(map[string]interface{}{
+                "method": r.Method,
+                "path":   r.URL.Path,
+            }).Info("New incoming request..")
+
+            next.ServeHTTP(w, r)
+        })
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Global Middleware</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>copper.HTTPAppParams</code> struct accepts an array of <code>chttp.MiddlewareFunc</code>. Copper registers this list globally and applies them to all routes. The example shows how you can register a middleware globally.
+                    </p>
+                </div>
+                <div>
+
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func main() {
+    ...
+
+    params := copper.HTTPAppParams{
+        ...
+        // Register all of the global middlewares here
+        GlobalMiddlewares: []chttp.MiddlewareFunc{
+            NewIncomingRequestLogger(logger),
+        },
+    }
+
+    ...
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Route-Level Middleware</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        You can register middleware on a per-route basis as well. This is done when creating a new <code>chttp.Route</code> object that accepts a list of middlewares in its <code>MiddlewareFuncs</code> field.
+                    </p>
+                    <p>
+                        Situations such as protecting a route with authentication works better at the route-level whereas logging each request works best at the global level.
+                    </p>
+                </div>
+                <div>
+
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func (ro *RouterA) Routes() []chttp.Route {
+    return []chttp.Route{
+        chttp.Route{
+            Path:            "/hello-world",
+            Methods:         []string{http.MethodGet},
+            MiddlewareFuncs: []chttp.MiddlewareFunc{
+                // This middleware will only be applied to this route
+                NewIncomingRequestLogger(),
+            },
+            Handler:         http.HandlerFunc(ro.HandleHelloWorld),
+        },
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="database-sql" href="#database-sql"><h1>Database / SQL</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper provides some utility wrappers around <a href="http://gorm.io/" target="_blank" rel="noopener noreferrer">GORM</a> to reduce boilerplate. Ultimately, it returns the <code>*gorm.DB</code> object for you to use throughout your app. Refer to the <a href="http://gorm.io/docs/" target="_blank" rel="noreferrer noopener">GORM docs</a> on how to use that.
+                    </p>
+                    <p>
+                        For now, Copper assumes Postgres as your default database driver.
+                    </p>
+                    <p>
+
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func main() {
+    ...
+
+    // Set up the database connection. If the connection
+    // fails, log the error and exit.
+    // Re-use this connection throughout your app.
+    db, err := csql.NewGormDB(csql.GormDBParams{
+        Config: csql.Config{
+            ...
+        },
+        Logger: logger,
+    })
+    if err != nil {
+        logger.Error("Failed to connect to the database", err)
+        return
+    }
+    defer db.Close()
+
+    postsRouter := NewPostsRouter(PostsRouterParams{
+        Svc: NewPostsSvc(
+            // Pass the database connection to your repositories
+            NewPostsRepo(db),
+        ),
+    })
+
+    ...
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Transaction Middleware</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        It is often useful to wrap every HTTP request in a single database transaction. If the request succeeds, the transaction is committed, else it is rolled back. The <code>csql</code> package provides <code>DBTxnMiddleware</code> that does exactly this.
+                    </p>
+                    <p>
+                        The example shows how to register this as a global middleware so it is applied to all of your routes.
+                    </p>
+                    <p>
+                        The middleware creates a transaction and sets it in the request's context. You can use the <code>csql.GetConn</code> method to fetch the active transaction in your repository layer.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">params := copper.HTTPAppParams{
+    ...
+
+    GlobalMiddlewares: []chttp.MiddlewareFunc{
+        csql.NewDBTxnMiddleware(db, logger),
+    },
+}</code></pre>
+                    </div>
+                    <div class="spacer-40"></div>
+                    <div class="code">
+                        <div class="code-header">
+                            repo.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">type PostsRepo struct {
+    db *gorm.DB
+}
+
+func NewPostsRepo(db *gorm.DB) *PostsRepo {
+    return &PostsRepo{
+        db: db,
+    }
+}
+
+func (r *PostsRepo) GetPostByID(ctx context.Context, id string) (*Post, error) {
+    // Use the csql.GetConn method to get an active transaction from the context object (if any).
+    db := csql.GetConn(ctx, r.db)
+
+    ...
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="authentication" href="#authentication"><h1>Authentication</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>cauth</code> package provides a core set of entities and business logic to manage users and sessions. In addition, it provides several extensions that provide everything you need for authentication:
+                    </p>
+                    <ul>
+                        <li>
+                            <code>cauth/email</code>
+                            <br />
+                            <span class="caption">Authenticate users using email & password. This package provides routes to signup, login, verify email, change/reset password, and more.</span>
+                        </li>
+                        <li>
+                            <code>cauth/emailotp</code>
+                            <br />
+                            <span class="caption">
+                                Authenticate users using their email and a one-time password.
+                            </span>
+                        </li>
+<!--                        <li>-->
+<!--                            <code>cauth/phone</code>-->
+<!--                            <br />-->
+<!--                            <span class="caption">-->
+<!--                                Authenticate users using their phone number and a one-time password.-->
+<!--                            </span>-->
+<!--                        </li>-->
+                    </ul>
+                    <p>
+                        All of the data is backed by Postgres and works best when using the <code>csql</code> package.
+                    </p>
+                </div>
+                <div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Session Middleware</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>cauth</code> module provides a middleware that can be used to protect your routes. The middleware verifies that a user has a valid session. If it fails, it returns a 401 status code.
+                    </p>
+                    <p>
+                        The middleware uses HTTP Basic Authentication where the username is the User UUID and the password is the session token that is returned by login endpoints.
+                    </p>
+                    <p>
+                        Once the session token is verified, the user uuid is set in the request's context and your handler is called. You can retrieve the user uuid using <code>cauth.GetCurrentUserUUID(r.Context())</code>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            router.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">type Router struct {
+	// Add the auth middleware as a dependency on the router
+	authMW cauth.Middleware
+}
+
+func NewRouter(authMW cauth.Middleware) *Router {
+	return &Router{
+		authMW: authMW,
+	}
+}
+
+func (ro *Router) Routes() []chttp.Route {
+	return []chttp.Route{
+		{
+			Path:    "/api/protected",
+			Methods: []string{http.MethodGet},
+			Handler: http.HandlerFunc(ro.HandleProtected),
+
+			// Register the VerifySessionToken middleware on the route
+			MiddlewareFuncs: []chttp.MiddlewareFunc{ro.authMW.VerifySessionToken},
+		},
+	}
+}
+
+func (ro *Router) HandleProtected(w http.ResponseWriter, r *http.Request) {
+	// Get the current user uuid from the request context
+	userUUID := cauth.GetCurrentUserUUID(r.Context())
+
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Email & Password</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>cauth/email</code> package allows users to register using an email and password. The email is verified by sending a verification code to their email.
+                    </p>
+                    <p>
+                    This is the list of HTTP routes made available by this package:
+                    </p>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-signup">
+                        <label for="accordion-signup"><code>POST /api/auth/email/signup</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com",
+    "password": "my-password"
+}' :7450/api/auth/email/signup</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-login">
+                        <label for="accordion-login"><code>POST /api/auth/email/login</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com",
+    "password": "my-password"
+}' :7450/api/auth/email/login</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-verify">
+                        <label for="accordion-verify">
+                            <code>POST /api/auth/email/verify</code>
+                        </label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -u user_uuid:session_token -X POST -d '{
+    "verification_code": "abc-123"
+}' :7450/api/auth/email/verify</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-resend-verification">
+                        <label for="accordion-resend-verification"><code>POST /api/auth/email/resend-verification-code</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -u user_uuid:session_token \
+-X POST :7450/api/auth/email/resend-verification-code</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-change-password">
+                        <label for="accordion-change-password"><code>POST /api/auth/email/change-password</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com",
+    "old_password": "old-password",
+    "new_password": "new-password"
+}' :7450/api/auth/email/change-password</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-reset-password">
+                        <label for="accordion-reset-password"><code>POST /api/auth/email/reset-password</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com"
+}' :7450/api/auth/email/reset-password</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-change-email">
+                        <label for="accordion-change-email"><code>POST /api/auth/email/change-email</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -u user_uuid:session_token -X POST -d '{
+    "new_email": "foo@bar.com"
+}' :7450/api/auth/email/change-email</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spacer-20"></div>
+
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">import (
+	cauthemail "github.com/tusharsoni/copper/cauth/email"
+    ...
+)
+
+func main() {
+	...
+
+	// Run database migrations for cauth & its email extension
+	err = cauth.RunMigrations(db)
+	err = cauthemail.RunMigrations(db)
+
+	// Create the core auth module
+	auth := cauth.NewModule(db, logger)
+
+	// Set up the email extension module
+	authEmail := cauthemail.NewModule(cauthemail.NewModuleParams{
+		Auth:   auth.Svc,
+		Mailer: cmailer.NewLogMailer(logger),
+		Config: cauthemail.GetDefaultConfig(),
+		Logger: logger,
+		DB:     db,
+	})
+
+	params := copper.HTTPAppParams{
+		// Register the routes for auth email
+		Routes: authEmail.Routes,
+		...
+	}
+
+	copper.RunHTTPApp(params)
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Email & One-time Password</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>cauth/emailotp</code> package allows users to register using an email and a one-time password. The one-time password is sent to the user's email on every login. Since it is fully password-less, this method is far simpler to implement and may provide better user experience in some applications.
+                    </p>
+                    <p>
+                        This package provides the login and signup endpoints:
+                    </p>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-email-otp-signup">
+                        <label for="accordion-email-otp-signup"><code>POST /api/auth/email-otp/signup</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com"
+}' :7450/api/auth/email-otp/signup</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <input type="checkbox" id="accordion-email-otp-login">
+                        <label for="accordion-email-otp-login"><code>POST /api/auth/email-otp/login</code></label>
+
+                        <div class="content">
+                            <div class="code">
+                                <div class="code-header">
+                                    Curl
+                                </div>
+                                <pre><code class="language-bash">curl -X POST -d '{
+    "email": "foo@bar.com",
+    "verification_code": "abc123"
+}' :7450/api/auth/email-otp/login</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="spacer-20"></div>
+
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">import (
+	cauthemailotp "github.com/tusharsoni/copper/cauth/emailotp"
+    ...
+)
+
+func main() {
+	...
+
+	// Run database migrations for cauth & its emailotp extension
+	err = cauth.RunMigrations(db)
+	err = cauthemailotp.RunMigrations(db)
+
+	// Set up the core auth module
+	auth := cauth.NewModule(db, logger)
+
+	// Set up the email extension module
+	authEmailOTP, err := cauthemailotp.NewModule(cauthemailotp.NewModuleParams{
+		Auth:   auth,
+		Mailer: cmailer.NewLogMailer(logger),
+		Logger: logger,
+		Config: cauthemailotp.GetDefaultConfig(),
+		DB:     db,
+	})
+
+	params := copper.HTTPAppParams{
+		// Register the routes for auth email otp
+		Routes: authEmailOTP.Routes,
+		...
+	}
+
+	copper.RunHTTPApp(params)
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="emails" href="#routing"><h1>Emails</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper provides the <code>cmailer.Mailer</code> interface and a few implementations to send emails. Other packages within Copper may depend on this interface to send an email.
+                    </p>
+                    <p>
+                        The example shows how to set up a mailer that simply logs each email send. This is super convenient during development, especially when you don't have your actual provider's configuration handy.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            main.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func main() {
+    // Create a standard logger that logs to the console
+	logger := clogger.NewStdLogger()
+
+    // Create a log mailer using the logger that logs each
+    // email send to the console. Useful during development.
+	mailer := cmailer.NewLogMailer(logger)
+
+    // The mailer can be used anywhere the cmailer.Mailer
+    // interface is required
+    svc := NewSvc(mailer)
+}</code></pre>
+                    </div>
+
+                    <div class="spacer-40"></div>
+
+                    <div class="code">
+                        <div class="code-header">
+                            svc.go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">type Svc struct {
+	mailer cmailer.Mailer
+}
+
+func NewSvc(mailer cmailer.Mailer) *Svc {
+	return &Svc{
+		mailer: mailer,
+	}
+}
+
+func (s *Svc) DoSomething(ctx context.Context) {
+	...
+
+	body := "This is a test email!"
+
+	err := s.mailer.Send(ctx, cmailer.SendParams{
+		From:      "copper@example.com",
+		To:        "user@example.com",
+		Subject:   "Hello There!",
+
+		PlainBody: &body,
+	})
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>AWS SES</h2>
+            <div class="content">
+                <div>
+                    <p>
+                        Copper provides an AWS implementation for the <code>cmailer.Mailer</code> interface. Use this to send emails using <a href="https://aws.amazon.com/ses/" target="_blank" rel="noopener noreferrer">AWS SES</a>.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            Go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">mailer, err := cmailer.NewAWSMailer(cmailer.AWSConfig{
+    Region:          "",
+    AccessKeyId:     "",
+    SecretAccessKey: "",
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="logger" href="#logger"><h1>Logger</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>clogger.Logger</code> interface provides a way to log messages in a structured manner. It provides the ability to tag messages with additional data and a level.
+                    </p>
+                    <p>
+                        The example shows how to set up a logger that logs to the console and how to log an error with a few tags of various types. The logger returned by <code>clogger.NewStdLogger()</code> works well with wrapped errors such as the ones used in the <code>cerrors</code> package.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            Go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">// Initialize a logger that outputs to the console
+logger := clogger.NewStdLogger()
+
+p := struct{ Foo string }{
+    Foo: "Bar",
+}
+
+// Log an error with structured tags
+logger.WithTags(map[string]interface{}{
+    "param1": "foo",
+    "param2": 100,
+    "param3": p,
+}).Error("Failed to complete task", errors.New("test error"))</code></pre>
+                    </div>
+
+                    <div class="spacer-40"></div>
+
+                    <div class="code">
+                        <div class="code-header">
+                            Console
+                        </div>
+                        <pre class="command-line" data-filter-output=">>" data-prompt="$"><code class="language-bash">>>2020/09/01 10:51:41 [ERROR] Failed to complete task where param1=foo,param2=100,param3={Foo:Bar} because
+>>> test error</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <a class="anchor" id="errors" href="#errors"><h1>Errors</h1></a>
+            <div class="content">
+                <div>
+                    <p>
+                        The <code>cerror</code> package provides an implementation of the <code>error</code> interface that includes structured tags and a cause error. This allows errors to be wrapped and keep the entire stack as they are propagated through the application stack.
+                    </p>
+                    <p>
+                        The example shows how an error wrapped with other errors is handled in the <code>main</code> function and logged properly. The logger provided by Copper unwraps and provides the full trace for the error.
+                    </p>
+                </div>
+                <div>
+                    <div class="code">
+                        <div class="code-header">
+                            Go
+                        </div>
+                        <pre class="line-numbers"><code class="language-go">func main() {
+	logger := clogger.NewStdLogger()
+
+	err := DoB()
+	if err != nil {
+		// Here, we want to handle the error by logging it.
+		// The StdLogger will unwrap the error stack properly.
+		logger.WithTags(map[string]interface{}{
+			"param": "b",
+		}).Error("Failed to do B", err)
+	}
+}
+
+func DoB() error {
+	err := DoA()
+	if err != nil {
+		// Wrap the error returned by DoA().
+		// Add contextual message and tags.
+		return cerror.New(err, "failed to do A", map[string]interface{}{
+			"param": "a",
+		})
+	}
+	return nil
+}
+
+func DoA() error {
+	// External code returns a normal error
+	return errors.New("failed to connect")
+}</code></pre>
+                    </div>
+
+                    <div class="spacer-40"></div>
+
+                    <div class="code">
+                        <div class="code-header">
+                            Console
+                        </div>
+                        <pre class="command-line" data-filter-output=">>" data-prompt="$"><code class="language-bash">>>2020/09/01 20:01:57 [ERROR] Failed to do B where param=b because
+>>> failed to do A where param=a because
+>>> failed to connect</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/components/prism-go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/command-line/prism-command-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/treeview/prism-treeview.min.js"></script>
+<script src="https://buttons.github.io/buttons.js"></script>
+</body>
+</html>
