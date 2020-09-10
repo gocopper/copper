@@ -89,12 +89,14 @@ func (s *svc) Signup(ctx context.Context, email string) (*Credentials, *string, 
 			return nil, nil, cerror.New(err, "failed to execute verification email template", nil)
 		}
 
-		_, err = s.mailer.SendHTML(ctx,
-			s.config.VerificationEmail.From,
-			c.Email,
-			s.config.VerificationEmail.Subject,
-			verificationEmailBody.String(),
-		)
+		emailBody := verificationEmailBody.String()
+
+		err = s.mailer.Send(ctx, cmailer.SendParams{
+			From:     s.config.VerificationEmail.From,
+			To:       c.Email,
+			Subject:  s.config.VerificationEmail.Subject,
+			HTMLBody: &emailBody,
+		})
 		if err != nil {
 			return nil, nil, cerror.New(err, "failed to email verification code", map[string]interface{}{
 				"userUUID": c.UserUUID,

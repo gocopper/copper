@@ -339,13 +339,14 @@ func (s *svc) sendResetPasswordTokenEmail(ctx context.Context, u *Credentials, r
 		})
 	}
 
-	_, err = s.mailer.SendPlain(
-		ctx,
-		s.config.ResetPasswordEmail.From,
-		u.Email,
-		s.config.ResetPasswordEmail.Subject,
-		body.String(),
-	)
+	emailBody := body.String()
+
+	err = s.mailer.Send(ctx, cmailer.SendParams{
+		From:     s.config.ResetPasswordEmail.From,
+		To:       u.Email,
+		Subject:  s.config.ResetPasswordEmail.Subject,
+		HTMLBody: &emailBody,
+	})
 	if err != nil {
 		return cerror.New(err, "failed to send reset password email", nil)
 	}
@@ -375,13 +376,14 @@ func (s *svc) sendVerificationCodeEmail(ctx context.Context, u *Credentials) err
 		})
 	}
 
-	_, err = s.mailer.SendPlain(
-		ctx,
-		s.config.VerificationEmail.From,
-		u.Email,
-		s.config.VerificationEmail.Subject,
-		body.String(),
-	)
+	emailBody := body.String()
+
+	err = s.mailer.Send(ctx, cmailer.SendParams{
+		From:     s.config.VerificationEmail.From,
+		To:       u.Email,
+		Subject:  s.config.VerificationEmail.Subject,
+		HTMLBody: &emailBody,
+	})
 	if err != nil {
 		return cerror.New(err, "failed to send verification email", map[string]interface{}{
 			"from":    s.config.VerificationEmail.From,
