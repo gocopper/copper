@@ -1069,7 +1069,7 @@ func main() {
 
 	// Set up the email extension module
 	authEmailOTP, err := cauthemailotp.NewModule(cauthemailotp.NewModuleParams{
-		Auth:   auth,
+		Auth:   auth.Svc,
 		Mailer: cmailer.NewLogMailer(logger),
 		Logger: logger,
 		Config: cauthemailotp.GetDefaultConfig(),
