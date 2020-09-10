@@ -6,10 +6,10 @@ import (
 
 	"github.com/tusharsoni/copper/cauth"
 
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/crandom"
 	"github.com/tusharsoni/copper/ctexter"
+	"gorm.io/gorm"
 )
 
 type Svc interface {

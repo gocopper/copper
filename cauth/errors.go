@@ -3,7 +3,7 @@ package cauth
 import (
 	"errors"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // ErrUserAlreadyExists is returned by UsersSvc when a user already exists. For example, signing up with an email

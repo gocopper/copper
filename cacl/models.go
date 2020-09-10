@@ -3,14 +3,14 @@ package cacl
 import "time"
 
 type permission struct {
-	ID        uint `gorm:"primary_key"`
+	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	UUID      string `gorm:"unique_index"`
-	GranteeID string // can be user or role uuid
-	Resource  string
-	Action    string
+	UUID      string `gorm:"uniqueIndex"`
+	GranteeID string `gorm:"uniqueIndex:idx_grantee_id_resource_action"` // can be user or role uuid
+	Resource  string `gorm:"uniqueIndex:idx_grantee_id_resource_action"`
+	Action    string `gorm:"uniqueIndex:idx_grantee_id_resource_action"`
 }
 
 func (permission) TableName() string {
@@ -18,11 +18,11 @@ func (permission) TableName() string {
 }
 
 type role struct {
-	ID        uint `gorm:"primary_key"`
+	ID        uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	UUID string `gorm:"unique_index"`
+	UUID string `gorm:"uniqueIndex"`
 	Name string
 }
 
@@ -31,12 +31,12 @@ func (role) TableName() string {
 }
 
 type roleUserJoin struct {
-	ID uint `gorm:"primary_key"`
+	ID uint `gorm:"primaryKey"`
 
 	CreatedAt time.Time
 
-	UserUUID string
-	RoleUUID string
+	UserUUID string `gorm:"uniqueIndex:idx_user_uuid_role_uuid"`
+	RoleUUID string `gorm:"uniqueIndex:idx_user_uuid_role_uuid"`
 }
 
 func (roleUserJoin) TableName() string {

@@ -7,8 +7,3 @@ var Fx = fx.Provide(
 	newSQLRepo,
 	newSvcImpl,
 )
-
-// RunMigrations can be used with fx.Invoke to run the db migrations for SQL implementation of cacl
-var RunMigrations = fx.Invoke(
-	runMigrations,
-)

@@ -6,8 +6,8 @@ import (
 
 	"github.com/tusharsoni/copper/chttp"
 
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/clogger"
+	"gorm.io/gorm"
 )
 
 // DBTxnMiddleware provides a middleware that wraps the http request in a database transaction. If the response status

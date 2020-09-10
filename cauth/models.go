@@ -3,11 +3,11 @@ package cauth
 import "time"
 
 type User struct {
-	ID        uint      `gorm:"primary_key"`
+	ID        uint      `gorm:"primaryKey"`
 	CreatedAt time.Time `gorm:"not null"`
 	UpdatedAt time.Time `gorm:"not null"`
 
-	UUID         string `gorm:"unique_index;not null"`
+	UUID         string `gorm:"uniqueIndex;not null"`
 	SessionToken string `gorm:"not null"`
 }
 

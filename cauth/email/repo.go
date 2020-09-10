@@ -3,9 +3,9 @@ package email
 import (
 	"context"
 
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/csql"
+	"gorm.io/gorm"
 )
 
 type Repo interface {

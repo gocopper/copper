@@ -3,8 +3,8 @@ package email
 import (
 	"net/http"
 
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cerror"
+	"gorm.io/gorm"
 
 	"github.com/tusharsoni/copper/cauth"
 

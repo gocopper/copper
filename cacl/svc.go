@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cerror"
+	"gorm.io/gorm"
 )
 
 // Svc provides methods to manage permissions for a grantee (user, role etc.), resource, and action combination.

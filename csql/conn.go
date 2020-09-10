@@ -3,7 +3,7 @@ package csql
 import (
 	"context"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type ctxKey string

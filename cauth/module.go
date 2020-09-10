@@ -1,9 +1,9 @@
 package cauth
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
+	"gorm.io/gorm"
 )
 
 type Module struct {

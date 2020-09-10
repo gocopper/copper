@@ -1,14 +1,15 @@
 package csql
 
 import (
-	"context"
 	"fmt"
+
+	"gorm.io/gorm/logger"
 
 	"github.com/tusharsoni/copper/clogger"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // Postgres dialect for gorm
 	"go.uber.org/fx"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type GormDBParams struct {
@@ -36,22 +37,13 @@ func NewGormDB(p GormDBParams) (*gorm.DB, error) {
 		conn = fmt.Sprintf("%s password=%s", conn, p.Config.Password)
 	}
 
-	db, err := gorm.Open("postgres", conn)
+	db, err := gorm.Open(postgres.Open(conn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		p.Logger.Error("Failed to connect to database..", err)
 		return nil, err
 	}
-
-	if p.Lifecycle != nil {
-		p.Lifecycle.Append(fx.Hook{
-			OnStop: func(context context.Context) error {
-				p.Logger.Info("Closing connection to database..")
-				return db.Close()
-			},
-		})
-	}
-
-	db.LogMode(false)
 
 	return db, nil
 }

@@ -669,7 +669,6 @@ func NewIncomingRequestLogger(logger clogger.Logger) MiddlewareFunc {
         logger.Error("Failed to connect to the database", err)
         return
     }
-    defer db.Close()
 
     postsRouter := NewPostsRouter(PostsRouterParams{
         Svc: NewPostsSvc(

@@ -1,11 +1,11 @@
 package email
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cauth"
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
 	"github.com/tusharsoni/copper/cmailer"
+	"gorm.io/gorm"
 )
 
 type Module struct {

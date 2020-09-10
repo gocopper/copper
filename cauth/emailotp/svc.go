@@ -9,9 +9,9 @@ import (
 
 	"github.com/tusharsoni/copper/cauth"
 
-	"github.com/jinzhu/gorm"
 	"github.com/tusharsoni/copper/cerror"
 	"github.com/tusharsoni/copper/crandom"
+	"gorm.io/gorm"
 )
 
 type Svc interface {

@@ -1,7 +1,7 @@
 package cauth
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 func RunMigrations(db *gorm.DB) error {
-	return db.AutoMigrate(User{}).Error
+	return db.AutoMigrate(User{})
 }

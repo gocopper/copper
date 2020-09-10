@@ -9,6 +9,3 @@ var Fx = fx.Provide(
 	newSQLRepo,
 	newSvcImpl,
 )
-
-// RunMigrations runs the SQL database migrations for all entities in the ctags package.
-var RunMigrations = fx.Invoke(runMigrations)
