@@ -28,7 +28,7 @@ func (r *sqlRepo) GetCredentialsByEmail(ctx context.Context, email string) (*Cre
 
 	err := csql.GetConn(ctx, r.db).
 		Where(Credentials{Email: email}).
-		Find(&c).
+		First(&c).
 		Error
 	if err != nil {
 		return nil, cerror.New(err, "failed to query credentials", map[string]interface{}{

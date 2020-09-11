@@ -28,7 +28,7 @@ func (r *sqlRepo) GetCredentialsByPhoneNumber(ctx context.Context, phoneNumber s
 
 	err := csql.GetConn(ctx, r.db).
 		Where(Credentials{PhoneNumber: phoneNumber}).
-		Find(&c).
+		First(&c).
 		Error
 	if err != nil {
 		return nil, cerror.New(err, "failed to query credentials", map[string]interface{}{

@@ -28,7 +28,7 @@ func (r *sqlRepo) GetUser(ctx context.Context, uuid string) (*User, error) {
 
 	err := csql.GetConn(ctx, r.db).
 		Where(User{UUID: uuid}).
-		Find(&u).
+		First(&u).
 		Error
 	if err != nil {
 		return nil, cerror.New(err, "failed to query user", map[string]interface{}{
