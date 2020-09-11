@@ -71,18 +71,16 @@ func (s *svcImpl) UserHasPermission(ctx context.Context, userUUID string, resour
 }
 
 func (s *svcImpl) HasPermission(ctx context.Context, granteeID, resource, action string) (bool, error) {
-	_, err := s.repo.GetPermissionForGrantee(ctx, granteeID, resource, action)
-	if err != nil && cerror.Cause(err) != gorm.ErrRecordNotFound {
-		return false, cerror.New(err, "failed to get permission for grantte", map[string]interface{}{
+	p, err := s.repo.GetPermissionForGrantee(ctx, granteeID, resource, action)
+	if err != nil && !cerror.HasCause(err, gorm.ErrRecordNotFound) {
+		return false, cerror.New(err, "failed to get permission for grantee", map[string]interface{}{
 			"granteeID": granteeID,
 			"resource":  resource,
 			"action":    action,
 		})
-	} else if err != nil && cerror.Cause(err) == gorm.ErrRecordNotFound {
-		return false, nil
 	}
 
-	return true, nil
+	return p != nil, nil
 }
 
 func (s *svcImpl) GrantPermissions(ctx context.Context, granteeID, resource string, actions []string) error {

@@ -55,7 +55,7 @@ func (r *sqlRepo) GetPermissionForGrantee(ctx context.Context, granteeID, resour
 
 	err := csql.GetConn(ctx, r.db).
 		Where(permission{GranteeID: granteeID, Resource: resource, Action: action}).
-		Find(&p).
+		First(&p).
 		Error
 	if err != nil {
 		return nil, cerror.New(err, "failed to query permission by grantee, resource, action", map[string]interface{}{
@@ -99,7 +99,7 @@ func (r *sqlRepo) FindRolesForUserUUID(ctx context.Context, userUUID string) ([]
 
 	err := csql.GetConn(ctx, r.db).
 		Model(&role{}).
-		Joins("JOIN cacl_role_user_joins ON role_user_joins.role_uuid=cacl_roles.uuid").
+		Joins("JOIN cacl_role_user_joins ON cacl_role_user_joins.role_uuid=cacl_roles.uuid").
 		Where("user_uuid = ?", userUUID).
 		Find(&roles).
 		Error
