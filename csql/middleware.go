@@ -1,7 +1,10 @@
 package csql
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"net"
 	"net/http"
 
 	"github.com/tusharsoni/copper/chttp"
@@ -98,4 +101,13 @@ func (w *txnrw) commitIfNeeded() error {
 
 	w.didCommit = true
 	return w.db.Commit().Error
+}
+
+func (w *txnrw) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := w.internal.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("internal response writer is not http.Hijacker")
+	}
+
+	return h.Hijack()
 }
