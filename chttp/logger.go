@@ -1,7 +1,10 @@
 package chttp
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/tusharsoni/copper/clogger"
@@ -37,6 +40,15 @@ func NewRequestLogger(logger clogger.Logger) GlobalMiddlewareFuncResult {
 type requestLoggerRw struct {
 	internal   http.ResponseWriter
 	statusCode int
+}
+
+func (rw *requestLoggerRw) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := rw.internal.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("internal response writer is not http.Hijacker")
+	}
+
+	return h.Hijack()
 }
 
 func (rw *requestLoggerRw) Header() http.Header {
