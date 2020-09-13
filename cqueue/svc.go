@@ -113,6 +113,6 @@ func (s *svc) UpdateTaskStatus(ctx context.Context, uuid, status string, taskErr
 
 func (s *svc) StartWorkers(ctx context.Context) {
 	for i := range s.workers {
-		go s.workers[i].run(ctx, s, s.logger)
+		go s.workers[i].Start(ctx, s, s.logger)
 	}
 }
