@@ -1,7 +1,7 @@
 package cqueue
 
 import (
-	"context"
+	"github.com/tusharsoni/copper/chttp"
 
 	"github.com/tusharsoni/copper/clogger"
 	"go.uber.org/fx"
@@ -9,36 +9,36 @@ import (
 )
 
 type Module struct {
-	Svc Svc
+	Svc    Svc
+	Router *Router
 }
 
 type NewModuleParams struct {
 	DB     *gorm.DB
 	Config Config
+	Logger clogger.Logger
 }
 
 func NewModule(p NewModuleParams) *Module {
-	return &Module{NewSvc(SvcParams{
+	svc := NewSvc(SvcParams{
 		Repo:   NewSQLRepo(p.DB),
 		Config: p.Config,
-	})}
+	})
+
+	return &Module{
+		Svc: svc,
+		Router: NewRouter(RouterParams{
+			RW:     chttp.NewJSONReaderWriter(p.Logger),
+			Logger: p.Logger,
+			Svc:    svc,
+		}),
+	}
 }
 
 var Fx = fx.Provide(
 	NewSQLRepo,
 	NewSvc,
+
+	NewRouter,
+	NewGetTaskRoute,
 )
-
-type StartBackgroundWorkersParams struct {
-	fx.In
-
-	Workers []Worker `group:"cqueue/workers"`
-	Queue   Svc
-	Logger  clogger.Logger
-}
-
-func StartBackgroundWorkers(p StartBackgroundWorkersParams) {
-	for i := range p.Workers {
-		go p.Workers[i].Start(context.Background(), p.Queue, p.Logger)
-	}
-}

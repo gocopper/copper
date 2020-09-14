@@ -8,6 +8,20 @@ import (
 	"go.uber.org/fx"
 )
 
+type StartBackgroundWorkersParams struct {
+	fx.In
+
+	Workers []Worker `group:"cqueue/workers"`
+	Queue   Svc
+	Logger  clogger.Logger
+}
+
+func StartBackgroundWorkers(p StartBackgroundWorkersParams) {
+	for i := range p.Workers {
+		go p.Workers[i].Start(context.Background(), p.Queue, p.Logger)
+	}
+}
+
 type WorkerResult struct {
 	fx.Out
 
