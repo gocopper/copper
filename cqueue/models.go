@@ -20,6 +20,7 @@ type Task struct {
 	Payload []byte
 	Status  string `gorm:"not null"`
 	Error   *string
+	Result  []byte
 }
 
 func (t Task) TableName() string {

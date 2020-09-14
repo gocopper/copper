@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/tusharsoni/copper/clogger"
-	"github.com/tusharsoni/copper/cptr"
 	"go.uber.org/fx"
 )
 
@@ -19,7 +18,7 @@ type Worker struct {
 	TaskType  string
 	Timeout   time.Duration
 	RateLimit *time.Duration
-	Handler   func(ctx context.Context, payload []byte) error
+	Handler   func(ctx context.Context, payload []byte) ([]byte, error)
 }
 
 func (w *Worker) Start(ctx context.Context, s Svc, logger clogger.Logger) {
@@ -62,11 +61,11 @@ func (w *Worker) runNextTask(ctx context.Context, s Svc, logger clogger.Logger) 
 	log.Info("Running task..")
 	defer log.Info("Task completed")
 
-	err = w.Handler(ctx, task.Payload)
+	result, err := w.Handler(ctx, task.Payload)
 	if err != nil {
 		log.Error("Failed to run task", err)
 
-		err = s.UpdateTaskStatus(ctx, task.UUID, TaskStatusFailed, cptr.String(err.Error()))
+		err = s.FailTask(ctx, task.UUID, err.Error())
 		if err != nil {
 			log.Error("Failed to mark task as failed", err)
 		}
@@ -74,7 +73,7 @@ func (w *Worker) runNextTask(ctx context.Context, s Svc, logger clogger.Logger) 
 		return
 	}
 
-	err = s.UpdateTaskStatus(ctx, task.UUID, TaskStatusCompleted, nil)
+	err = s.CompleteTask(ctx, task.UUID, result)
 	if err != nil {
 		log.Error("Failed to mark task as completed", err)
 	}
