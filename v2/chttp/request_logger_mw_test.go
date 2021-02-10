@@ -1,9 +1,7 @@
 package chttp_test
 
 import (
-	"bytes"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,8 +15,8 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 	t.Parallel()
 
 	var (
-		buf     bytes.Buffer
-		logger  = clogger.NewConsole()
+		logs    = make([]clogger.RecordedLog, 0)
+		logger  = clogger.NewRecorder(&logs)
 		handler = chttp.NewHandler(chttp.NewHandlerParams{
 			Routes: []chttp.Route{
 				{
@@ -39,8 +37,6 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 		})
 	)
 
-	log.SetOutput(&buf)
-
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
@@ -52,5 +48,6 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 
 	assert.Equal(t, "OK", string(body))
-	assert.Contains(t, buf.String(), "[INFO] GET /test 201")
+	assert.Equal(t, clogger.LevelInfo, logs[0].Level)
+	assert.Equal(t, "GET /test 201", logs[0].Msg)
 }
