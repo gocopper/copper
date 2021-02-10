@@ -1,4 +1,4 @@
-package console
+package clogger
 
 func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
 	merged := make(map[string]interface{})

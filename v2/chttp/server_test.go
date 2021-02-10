@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/chttp"
-	"github.com/tusharsoni/copper/v2/clogger/console"
+	"github.com/tusharsoni/copper/v2/clogger"
 )
 
 func TestStartServer(t *testing.T) {
@@ -21,7 +21,7 @@ func TestStartServer(t *testing.T) {
 				Port:                   8999,
 				ShutdownTimeoutSeconds: 5,
 			},
-			Logger: console.New(),
+			Logger: clogger.NewConsole(),
 			Stop:   chttp.NewOSSignalStopChan(),
 		})
 	}()

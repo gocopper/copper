@@ -1,4 +1,4 @@
-package console_test
+package clogger_test
 
 import (
 	"bytes"
@@ -8,13 +8,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/clogger"
-	"github.com/tusharsoni/copper/v2/clogger/console"
 )
 
-func TestNew(t *testing.T) {
+func TestNewConsole(t *testing.T) {
 	t.Parallel()
 
-	logger := console.New()
+	logger := clogger.NewConsole()
 
 	_, ok := logger.(clogger.Logger)
 
@@ -22,10 +21,10 @@ func TestNew(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestLogger_Debug(t *testing.T) { //nolint:paralleltest
+func TestConsoleLogger_Debug(t *testing.T) { //nolint:paralleltest
 	var (
 		buf    bytes.Buffer
-		logger = console.New()
+		logger = clogger.NewConsole()
 	)
 
 	log.SetOutput(&buf)
@@ -35,10 +34,10 @@ func TestLogger_Debug(t *testing.T) { //nolint:paralleltest
 	assert.Contains(t, buf.String(), "[DEBUG] test debug log")
 }
 
-func TestLogger_WithTags_Debug(t *testing.T) { //nolint:paralleltest
+func TestConsoleLogger_WithTags_Debug(t *testing.T) { //nolint:paralleltest
 	var (
 		buf    bytes.Buffer
-		logger = console.New()
+		logger = clogger.NewConsole()
 	)
 
 	log.SetOutput(&buf)
@@ -54,10 +53,10 @@ func TestLogger_WithTags_Debug(t *testing.T) { //nolint:paralleltest
 	assert.Contains(t, buf.String(), "[DEBUG] test debug log where key=val,key2=val2")
 }
 
-func TestLogger_Info(t *testing.T) { //nolint:paralleltest
+func TestConsoleLogger_Info(t *testing.T) { //nolint:paralleltest
 	var (
 		buf    bytes.Buffer
-		logger = console.New()
+		logger = clogger.NewConsole()
 	)
 
 	log.SetOutput(&buf)
@@ -67,10 +66,10 @@ func TestLogger_Info(t *testing.T) { //nolint:paralleltest
 	assert.Contains(t, buf.String(), "[INFO] test info log")
 }
 
-func TestLogger_Warn(t *testing.T) { //nolint:paralleltest
+func TestConsoleLogger_Warn(t *testing.T) { //nolint:paralleltest
 	var (
 		buf    bytes.Buffer
-		logger = console.New()
+		logger = clogger.NewConsole()
 	)
 
 	log.SetOutput(&buf)
@@ -80,10 +79,10 @@ func TestLogger_Warn(t *testing.T) { //nolint:paralleltest
 	assert.Contains(t, buf.String(), "[WARN] test warn log because\n> test-error")
 }
 
-func TestLogger_Error(t *testing.T) { //nolint:paralleltest
+func TestConsoleLogger_Error(t *testing.T) { //nolint:paralleltest
 	var (
 		buf    bytes.Buffer
-		logger = console.New()
+		logger = clogger.NewConsole()
 	)
 
 	log.SetOutput(&buf)

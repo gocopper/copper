@@ -1,17 +1,16 @@
-package noop_test
+package clogger_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/clogger"
-	"github.com/tusharsoni/copper/v2/clogger/noop"
 )
 
-func TestNew(t *testing.T) {
+func TestNewNoop(t *testing.T) {
 	t.Parallel()
 
-	logger := noop.New()
+	logger := clogger.NewNoop()
 
 	_, ok := logger.(clogger.Logger)
 
@@ -19,10 +18,10 @@ func TestNew(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestLogger_WithTags(t *testing.T) {
+func TestNoopLogger_WithTags(t *testing.T) {
 	t.Parallel()
 
-	logger := noop.New().WithTags(nil)
+	logger := clogger.NewNoop().WithTags(nil)
 
 	assert.NotNil(t, logger)
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/chttp"
-	"github.com/tusharsoni/copper/v2/clogger/console"
+	"github.com/tusharsoni/copper/v2/clogger"
 )
 
 func TestNewRequestLoggerMiddleware(t *testing.T) {
@@ -18,7 +18,7 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 
 	var (
 		buf     bytes.Buffer
-		logger  = console.New()
+		logger  = clogger.NewConsole()
 		handler = chttp.NewHandler(chttp.NewHandlerParams{
 			Routes: []chttp.Route{
 				{
