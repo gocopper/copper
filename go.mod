@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/pelletier/go-toml v1.8.1
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/dig v1.6.0 // indirect
 	go.uber.org/fx v1.8.0
