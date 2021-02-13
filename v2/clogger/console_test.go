@@ -3,9 +3,12 @@ package clogger_test
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
@@ -18,6 +21,64 @@ func TestNewConsole(t *testing.T) {
 
 	assert.NotNil(t, logger)
 	assert.True(t, ok)
+}
+
+func TestNewConsoleWithConfig(t *testing.T) {
+	t.Parallel()
+
+	log, err := ioutil.TempFile("", "*")
+	assert.NoError(t, err)
+
+	t.Cleanup(func() {
+		assert.NoError(t, os.Remove(log.Name()))
+	})
+
+	logger, err := clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+		"clogger.out": log.Name(),
+		"clogger.err": log.Name(),
+	}))
+	assert.NoError(t, err)
+
+	_, ok := logger.(clogger.Logger)
+
+	assert.NotNil(t, logger)
+	assert.True(t, ok)
+}
+
+func TestNewConsoleWithConfig_OutFileErr(t *testing.T) {
+	t.Parallel()
+
+	log, err := ioutil.TempFile("", "*")
+	assert.NoError(t, err)
+
+	assert.NoError(t, os.Chmod(log.Name(), 0000))
+
+	t.Cleanup(func() {
+		assert.NoError(t, os.Remove(log.Name()))
+	})
+
+	_, err = clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+		"clogger.out": log.Name(),
+	}))
+	assert.Error(t, err)
+}
+
+func TestNewConsoleWithConfig_ErrFileErr(t *testing.T) {
+	t.Parallel()
+
+	log, err := ioutil.TempFile("", "*")
+	assert.NoError(t, err)
+
+	assert.NoError(t, os.Chmod(log.Name(), 0000))
+
+	t.Cleanup(func() {
+		assert.NoError(t, os.Remove(log.Name()))
+	})
+
+	_, err = clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+		"clogger.err": log.Name(),
+	}))
+	assert.Error(t, err)
 }
 
 func TestNewConsoleWithParams(t *testing.T) {

@@ -7,12 +7,53 @@ import (
 	"os"
 
 	"github.com/tusharsoni/copper/cerror"
+	"github.com/tusharsoni/copper/v2/cconfig"
+	"github.com/tusharsoni/copper/v2/cerrors"
 )
 
 // NewConsole returns a Logger implementation that is best suited to log to console
 // with human-friendly formatting.
 func NewConsole() Logger {
 	return NewConsoleWithParams(os.Stdout, os.Stderr)
+}
+
+// NewConsoleWithConfig creates a Logger based on the provided config.
+// Example TOML config:
+// [clogger]
+// out = "./logs.out"
+// err = "./logs.err".
+func NewConsoleWithConfig(config cconfig.Config) (Logger, error) {
+	var (
+		outFile io.Writer = os.Stdout
+		errFile io.Writer = os.Stderr
+		err     error
+	)
+
+	outFilePath, ok := config.Value("clogger.out").(string)
+
+	if ok {
+		outFile, err = os.OpenFile(outFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
+		if err != nil {
+			return nil, cerrors.New(err, "failed to open log file", map[string]interface{}{
+				"path": outFilePath,
+			})
+		}
+	}
+
+	errFilePath, ok := config.Value("clogger.err").(string)
+
+	if ok && errFilePath == outFilePath {
+		errFile = outFile
+	} else if ok {
+		errFile, err = os.OpenFile(errFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
+		if err != nil {
+			return nil, cerrors.New(err, "failed to open error log file", map[string]interface{}{
+				"path": errFilePath,
+			})
+		}
+	}
+
+	return NewConsoleWithParams(outFile, errFile), nil
 }
 
 // NewConsoleWithParams creates a Logger that uses the provided writers. out is
