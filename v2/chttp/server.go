@@ -10,30 +10,43 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/clogger"
+)
+
+const (
+	defaultPort                = 7501
+	defaultShutdownTimeoutSecs = 15
 )
 
 // StartServerParams holds the params to call the StartServer method.
 type StartServerParams struct {
 	Handler http.Handler
-	Config  Config
+	Config  cconfig.Config
 	Logger  clogger.Logger
 	Stop    chan bool
 }
 
 // StartServer starts an HTTP server with the given handler.
 func StartServer(p StartServerParams) {
-	var (
-		config = p.Config
-		server http.Server
-	)
+	var server http.Server
 
-	server.Addr = fmt.Sprintf(":%d", config.Port)
+	port, ok := p.Config.Value("chttp.port").(int64)
+	if !ok {
+		port = defaultPort
+	}
+
+	shutdownTimeoutSecs, ok := p.Config.Value("chttp.shutdown_timeout_secs").(int64)
+	if !ok {
+		shutdownTimeoutSecs = defaultShutdownTimeoutSecs
+	}
+
+	server.Addr = fmt.Sprintf(":%d", port)
 	server.Handler = p.Handler
 
 	go func() {
 		p.Logger.
-			WithTags(map[string]interface{}{"port": config.Port}).
+			WithTags(map[string]interface{}{"port": port}).
 			Info("Starting http server..")
 
 		err := server.ListenAndServe()
@@ -48,7 +61,7 @@ func StartServer(p StartServerParams) {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(p.Config.ShutdownTimeoutSeconds)*time.Second,
+		time.Duration(shutdownTimeoutSecs)*time.Second,
 	)
 	defer cancel()
 

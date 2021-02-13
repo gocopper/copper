@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/chttp"
 	"github.com/tusharsoni/copper/v2/clogger"
 )
@@ -17,10 +18,9 @@ func TestStartServer(t *testing.T) {
 	go func() {
 		chttp.StartServer(chttp.StartServerParams{
 			Handler: http.NotFoundHandler(),
-			Config: chttp.Config{
-				Port:                   8999,
-				ShutdownTimeoutSeconds: 5,
-			},
+			Config: cconfig.NewStaticConfig(map[string]interface{}{
+				"chttp.port": int64(8999),
+			}),
 			Logger: clogger.NewConsole(),
 			Stop:   chttp.NewOSSignalStopChan(),
 		})
