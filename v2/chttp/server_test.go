@@ -1,8 +1,8 @@
 package chttp_test
 
 import (
+	"context"
 	"net/http"
-	"syscall"
 	"testing"
 	"time"
 
@@ -15,14 +15,15 @@ import (
 func TestStartServer(t *testing.T) {
 	t.Parallel()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	go func() {
-		chttp.StartServer(chttp.StartServerParams{
+		chttp.StartServer(ctx, chttp.StartServerParams{
 			Handler: http.NotFoundHandler(),
 			Config: cconfig.NewStaticConfig(map[string]interface{}{
 				"chttp.port": int64(8999),
 			}),
-			Logger: clogger.NewConsole(),
-			Stop:   chttp.NewOSSignalStopChan(),
+			Logger: clogger.NewNoop(),
 		})
 	}()
 
@@ -35,8 +36,7 @@ func TestStartServer(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-	err = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-	assert.NoError(t, err)
+	cancel()
 
 	time.Sleep(50 * time.Millisecond) // wait for server to stop
 
