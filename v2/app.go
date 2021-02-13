@@ -42,6 +42,10 @@ func Start(f func(ctx context.Context, logger clogger.Logger, config cconfig.Con
 		cancel()
 	}()
 
+	logger.WithTags(map[string]interface{}{
+		"env": *env,
+	}).Info("Starting app..")
+
 	err = f(ctx, logger, config)
 	if err != nil {
 		log.Fatal(err)
