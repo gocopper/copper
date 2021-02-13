@@ -1,7 +1,6 @@
 package cconfig_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -18,15 +17,9 @@ const (
 func TestNewConfig(t *testing.T) {
 	t.Parallel()
 
-	dir := cconfigtest.SetupDir(t)
+	configDir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	err := ioutil.WriteFile(path.Join(dir, "base.toml"), []byte(""), os.ModePerm)
-	assert.NoError(t, err)
-
-	err = ioutil.WriteFile(path.Join(dir, "test.toml"), []byte(""), os.ModePerm)
-	assert.NoError(t, err)
-
-	config, err := cconfig.NewConfig(dir, envTest)
+	config, err := cconfig.NewConfig(configDir, envTest)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, config)
@@ -35,7 +28,9 @@ func TestNewConfig(t *testing.T) {
 func TestNewConfig_MissingBase(t *testing.T) {
 	t.Parallel()
 
-	dir := cconfigtest.SetupDir(t)
+	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
+
+	assert.NoError(t, os.Remove(path.Join(dir, "base.toml")))
 
 	_, err := cconfig.NewConfig(dir, envTest)
 
@@ -45,52 +40,79 @@ func TestNewConfig_MissingBase(t *testing.T) {
 func TestNewConfig_MissingEnv(t *testing.T) {
 	t.Parallel()
 
-	dir := cconfigtest.SetupDir(t)
+	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	err := ioutil.WriteFile(path.Join(dir, "base.toml"), []byte(""), os.ModePerm)
-	assert.NoError(t, err)
+	assert.NoError(t, os.Remove(path.Join(dir, "test.toml")))
 
-	_, err = cconfig.NewConfig(dir, envTest)
+	_, err := cconfig.NewConfig(dir, envTest)
 
 	assert.Error(t, err)
 }
 
-func TestConfig_Value(t *testing.T) {
+func TestConfig_Load_Default(t *testing.T) {
 	t.Parallel()
 
-	dir := cconfigtest.SetupDir(t)
+	var testConfig struct {
+		Value string `default:"default"`
+	}
 
-	err := ioutil.WriteFile(path.Join(dir, "base.toml"), []byte("file = \"base\""), os.ModePerm)
-	assert.NoError(t, err)
-
-	err = ioutil.WriteFile(path.Join(dir, "test.toml"), []byte(""), os.ModePerm)
-	assert.NoError(t, err)
+	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
 	config, err := cconfig.NewConfig(dir, envTest)
 	assert.NoError(t, err)
 
-	val, ok := config.Value("file").(string)
+	err = config.Load("group1", &testConfig)
+	assert.NoError(t, err)
 
-	assert.True(t, ok)
-	assert.Equal(t, "base", val)
+	assert.Equal(t, "default", testConfig.Value)
 }
 
-func TestConfig_Value_Override(t *testing.T) {
+func TestConfig_Load_Base(t *testing.T) {
 	t.Parallel()
 
-	dir := cconfigtest.SetupDir(t)
+	var testConfig struct {
+		Value string `default:"default"`
+	}
 
-	err := ioutil.WriteFile(path.Join(dir, "base.toml"), []byte("file = \"base\""), os.ModePerm)
-	assert.NoError(t, err)
+	base := `
+[group1]
+value = "base"
+`
 
-	err = ioutil.WriteFile(path.Join(dir, "test.toml"), []byte("file = \"test\""), os.ModePerm)
-	assert.NoError(t, err)
+	dir := cconfigtest.SetupDirWithConfigs(t, base, "")
 
 	config, err := cconfig.NewConfig(dir, envTest)
 	assert.NoError(t, err)
 
-	val, ok := config.Value("file").(string)
+	err = config.Load("group1", &testConfig)
+	assert.NoError(t, err)
 
-	assert.True(t, ok)
-	assert.Equal(t, "test", val)
+	assert.Equal(t, "base", testConfig.Value)
+}
+
+func TestConfig_Load_Env(t *testing.T) {
+	t.Parallel()
+
+	var testConfig struct {
+		Value string `default:"default"`
+	}
+
+	base := `
+[group1]
+value = "base"
+`
+
+	env := `
+[group1]
+value = "env"`
+
+	dir := cconfigtest.SetupDirWithConfigs(t, base, env)
+
+	config, err := cconfig.NewConfig(dir, envTest)
+	assert.NoError(t, err)
+
+	err = config.Load("group1", &testConfig)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "env", testConfig.Value)
 }

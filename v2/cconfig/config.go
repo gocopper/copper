@@ -2,15 +2,17 @@ package cconfig
 
 import (
 	"path"
+	"reflect"
 	"strings"
 
+	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 	"github.com/tusharsoni/copper/v2/cerrors"
 )
 
 // Config provides methods to read app config.
 type Config interface {
-	Value(path string) interface{}
+	Load(key string, dest interface{}) error
 }
 
 const (
@@ -51,12 +53,74 @@ type config struct {
 	env  *toml.Tree
 }
 
-func (c *config) Value(path string) interface{} {
-	val := c.env.Get(path)
+func (c *config) Load(key string, dest interface{}) error {
+	var (
+		base = &toml.Tree{}
+		env  = &toml.Tree{}
+	)
 
-	if val != nil {
-		return val
+	if c.base.Has(key) {
+		base = c.base.Get(key).(*toml.Tree)
 	}
 
-	return c.base.Get(path)
+	if c.env.Has(key) {
+		env = c.env.Get(key).(*toml.Tree)
+	}
+
+	// create a new value with the same type as dest
+	// we will unmarshal with empty config to set all the
+	// default values as set on the dest's struct tags
+	defaults := reflect.New(reflect.TypeOf(dest).Elem()).Interface()
+
+	err := toml.Unmarshal([]byte(""), defaults)
+	if err != nil {
+		return cerrors.New(err, "failed to load config defaults", map[string]interface{}{
+			"key": key,
+		})
+	}
+
+	err = env.Unmarshal(dest)
+	if err != nil {
+		return cerrors.New(err, "failed to unmarshal env config", map[string]interface{}{
+			"key": key,
+		})
+	}
+
+	// removes default values from dest by 'merging' dest + defaults
+	// using a custom transformer. the transformer checks if the dest
+	// has a default value. if so, it sets it to its zero value.
+	err = mergo.Merge(dest, defaults, mergo.WithTransformers(c))
+	if err != nil {
+		return cerrors.New(err, "failed to remove default values from config", map[string]interface{}{
+			"key": key,
+		})
+	}
+
+	baseDest := reflect.New(reflect.TypeOf(dest).Elem()).Interface()
+
+	err = base.Unmarshal(baseDest)
+	if err != nil {
+		return cerrors.New(err, "failed to unmarshal base config", map[string]interface{}{
+			"key": key,
+		})
+	}
+
+	err = mergo.Merge(dest, baseDest)
+	if err != nil {
+		return cerrors.New(err, "failed to merge env with base config", map[string]interface{}{
+			"key": key,
+		})
+	}
+
+	return nil
+}
+
+func (c *config) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	return func(dst, src reflect.Value) error {
+		if dst.Interface() == src.Interface() {
+			dst.Set(reflect.Zero(dst.Type()))
+		}
+
+		return nil
+	}
 }

@@ -31,33 +31,36 @@ func New() Logger {
 // [clogger]
 // out = "./logs.out"
 // err = "./logs.err".
-func NewWithConfig(config cconfig.Config) (Logger, error) {
+func NewWithConfig(appConfig cconfig.Config) (Logger, error) {
 	var (
+		config config
+
 		outFile io.Writer = os.Stdout
 		errFile io.Writer = os.Stderr
 		err     error
 	)
 
-	outFilePath, ok := config.Value("clogger.out").(string)
+	err = appConfig.Load("clogger", &config)
+	if err != nil {
+		return nil, cerrors.New(err, "failed to load clogger config", nil)
+	}
 
-	if ok {
-		outFile, err = os.OpenFile(outFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
+	if config.Out != "" {
+		outFile, err = os.OpenFile(config.Out, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
 		if err != nil {
 			return nil, cerrors.New(err, "failed to open log file", map[string]interface{}{
-				"path": outFilePath,
+				"path": config.Out,
 			})
 		}
 	}
 
-	errFilePath, ok := config.Value("clogger.err").(string)
-
-	if ok && errFilePath == outFilePath {
+	if config.Out == config.Err {
 		errFile = outFile
-	} else if ok {
-		errFile, err = os.OpenFile(errFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
+	} else if config.Err != "" {
+		errFile, err = os.OpenFile(config.Err, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
 		if err != nil {
 			return nil, cerrors.New(err, "failed to open error log file", map[string]interface{}{
-				"path": errFilePath,
+				"path": config.Err,
 			})
 		}
 	}

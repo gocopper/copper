@@ -8,12 +8,8 @@ import (
 	"time"
 
 	"github.com/tusharsoni/copper/v2/cconfig"
+	"github.com/tusharsoni/copper/v2/cerrors"
 	"github.com/tusharsoni/copper/v2/clogger"
-)
-
-const (
-	defaultPort                = 7501
-	defaultShutdownTimeoutSecs = 15
 )
 
 // StartServerParams holds the params to call the StartServer method.
@@ -24,25 +20,23 @@ type StartServerParams struct {
 }
 
 // StartServer starts an HTTP server with the given handler.
-func StartServer(ctx context.Context, p StartServerParams) {
-	var server http.Server
+func StartServer(ctx context.Context, p StartServerParams) error {
+	var (
+		server http.Server
+		config config
+	)
 
-	port, ok := p.Config.Value("chttp.port").(int64)
-	if !ok {
-		port = defaultPort
+	err := p.Config.Load("chttp", &config)
+	if err != nil {
+		return cerrors.New(err, "failed to load chttp config", nil)
 	}
 
-	shutdownTimeoutSecs, ok := p.Config.Value("chttp.shutdown_timeout_secs").(int64)
-	if !ok {
-		shutdownTimeoutSecs = defaultShutdownTimeoutSecs
-	}
-
-	server.Addr = fmt.Sprintf(":%d", port)
+	server.Addr = fmt.Sprintf(":%d", config.Port)
 	server.Handler = p.Handler
 
 	go func() {
 		p.Logger.
-			WithTags(map[string]interface{}{"port": port}).
+			WithTags(map[string]interface{}{"port": config.Port}).
 			Info("Starting http server..")
 
 		err := server.ListenAndServe()
@@ -57,11 +51,13 @@ func StartServer(ctx context.Context, p StartServerParams) {
 
 	ctxShutdown, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(shutdownTimeoutSecs)*time.Second,
+		time.Duration(config.ShutdownTimeoutSecs)*time.Second,
 	)
 	defer cancel()
 
 	if err := server.Shutdown(ctxShutdown); err != nil {
 		p.Logger.Error("Failed to shutdown http server cleanly", err)
 	}
+
+	return nil
 }

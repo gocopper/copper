@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/cconfig"
+	"github.com/tusharsoni/copper/v2/cconfig/cconfigtest"
 	"github.com/tusharsoni/copper/v2/chttp"
 	"github.com/tusharsoni/copper/v2/clogger"
 )
@@ -17,14 +18,19 @@ func TestStartServer(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	config, err := cconfig.NewConfig(cconfigtest.SetupDirWithConfigs(t, `
+[chttp]
+Port = 8999
+`, ""), "test")
+	assert.NoError(t, err)
+
 	go func() {
-		chttp.StartServer(ctx, chttp.StartServerParams{
+		err = chttp.StartServer(ctx, chttp.StartServerParams{
 			Handler: http.NotFoundHandler(),
-			Config: cconfig.NewStaticConfig(map[string]interface{}{
-				"chttp.port": int64(8999),
-			}),
-			Logger: clogger.NewNoop(),
+			Config:  config,
+			Logger:  clogger.New(),
 		})
+		assert.NoError(t, err)
 	}()
 
 	time.Sleep(50 * time.Millisecond) // wait for server to start

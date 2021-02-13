@@ -3,12 +3,14 @@ package clogger_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/v2/cconfig"
+	"github.com/tusharsoni/copper/v2/cconfig/cconfigtest"
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
@@ -33,10 +35,16 @@ func TestNewWithConfig(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	logger, err := clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
-		"clogger.out": log.Name(),
-		"clogger.err": log.Name(),
-	}))
+	configData := fmt.Sprintf(`
+[clogger]
+out = "%s"
+err = "%s"
+`, log.Name(), log.Name())
+
+	config, err := cconfig.NewConfig(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	assert.NoError(t, err)
+
+	logger, err := clogger.NewWithConfig(config)
 	assert.NoError(t, err)
 
 	_, ok := logger.(clogger.Logger)
@@ -57,9 +65,15 @@ func TestNewWithConfig_OutFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
-		"clogger.out": log.Name(),
-	}))
+	configData := fmt.Sprintf(`
+[clogger]
+out = "%s"
+`, log.Name())
+
+	config, err := cconfig.NewConfig(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	assert.NoError(t, err)
+
+	_, err = clogger.NewWithConfig(config)
 	assert.Error(t, err)
 }
 
@@ -75,9 +89,15 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
-		"clogger.err": log.Name(),
-	}))
+	configData := fmt.Sprintf(`
+[clogger]
+err = "%s"
+`, log.Name())
+
+	config, err := cconfig.NewConfig(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	assert.NoError(t, err)
+
+	_, err = clogger.NewWithConfig(config)
 	assert.Error(t, err)
 }
 
