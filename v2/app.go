@@ -27,7 +27,7 @@ func Start(f func(ctx context.Context, logger clogger.Logger, config cconfig.Con
 		log.Fatal(err)
 	}
 
-	logger, err := clogger.NewConsoleWithConfig(config)
+	logger, err := clogger.NewWithConfig(config)
 	if err != nil {
 		log.Fatal(err)
 	}

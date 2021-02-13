@@ -12,10 +12,10 @@ import (
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
-func TestNewConsole(t *testing.T) {
+func TestNew(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.NewConsole()
+	logger := clogger.New()
 
 	_, ok := logger.(clogger.Logger)
 
@@ -23,7 +23,7 @@ func TestNewConsole(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestNewConsoleWithConfig(t *testing.T) {
+func TestNewWithConfig(t *testing.T) {
 	t.Parallel()
 
 	log, err := ioutil.TempFile("", "*")
@@ -33,7 +33,7 @@ func TestNewConsoleWithConfig(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	logger, err := clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+	logger, err := clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
 		"clogger.out": log.Name(),
 		"clogger.err": log.Name(),
 	}))
@@ -45,7 +45,7 @@ func TestNewConsoleWithConfig(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestNewConsoleWithConfig_OutFileErr(t *testing.T) {
+func TestNewWithConfig_OutFileErr(t *testing.T) {
 	t.Parallel()
 
 	log, err := ioutil.TempFile("", "*")
@@ -57,13 +57,13 @@ func TestNewConsoleWithConfig_OutFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+	_, err = clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
 		"clogger.out": log.Name(),
 	}))
 	assert.Error(t, err)
 }
 
-func TestNewConsoleWithConfig_ErrFileErr(t *testing.T) {
+func TestNewWithConfig_ErrFileErr(t *testing.T) {
 	t.Parallel()
 
 	log, err := ioutil.TempFile("", "*")
@@ -75,16 +75,16 @@ func TestNewConsoleWithConfig_ErrFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewConsoleWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
+	_, err = clogger.NewWithConfig(cconfig.NewStaticConfig(map[string]interface{}{
 		"clogger.err": log.Name(),
 	}))
 	assert.Error(t, err)
 }
 
-func TestNewConsoleWithParams(t *testing.T) {
+func TestNewWithParams(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.NewConsoleWithParams(nil, nil)
+	logger := clogger.NewWithWriters(nil, nil)
 
 	_, ok := logger.(clogger.Logger)
 
@@ -92,12 +92,12 @@ func TestNewConsoleWithParams(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestConsoleLogger_Debug(t *testing.T) {
+func TestLogger_Debug(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewConsoleWithParams(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf)
 	)
 
 	logger.Debug("test debug log")
@@ -105,12 +105,12 @@ func TestConsoleLogger_Debug(t *testing.T) {
 	assert.Contains(t, buf.String(), "[DEBUG] test debug log")
 }
 
-func TestConsoleLogger_WithTags_Debug(t *testing.T) {
+func TestLogger_WithTags_Debug(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewConsoleWithParams(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf)
 	)
 
 	logger.
@@ -124,12 +124,12 @@ func TestConsoleLogger_WithTags_Debug(t *testing.T) {
 	assert.Contains(t, buf.String(), "[DEBUG] test debug log where key=val,key2=val2")
 }
 
-func TestConsoleLogger_Info(t *testing.T) {
+func TestLogger_Info(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewConsoleWithParams(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf)
 	)
 
 	logger.Info("test info log")
@@ -137,12 +137,12 @@ func TestConsoleLogger_Info(t *testing.T) {
 	assert.Contains(t, buf.String(), "[INFO] test info log")
 }
 
-func TestConsoleLogger_Warn(t *testing.T) {
+func TestLogger_Warn(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewConsoleWithParams(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf)
 	)
 
 	logger.Warn("test warn log", errors.New("test-error")) //nolint:goerr113
@@ -150,12 +150,12 @@ func TestConsoleLogger_Warn(t *testing.T) {
 	assert.Contains(t, buf.String(), "[WARN] test warn log because\n> test-error")
 }
 
-func TestConsoleLogger_Error(t *testing.T) {
+func TestLogger_Error(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewConsoleWithParams(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf)
 	)
 
 	logger.Error("test error log", errors.New("test-error")) //nolint:goerr113
