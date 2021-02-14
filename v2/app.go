@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/clogger"
@@ -35,7 +36,7 @@ func Start(f func(ctx context.Context, logger clogger.Logger, config cconfig.Con
 	ctx, cancel := context.WithCancel(context.Background())
 	osInt := make(chan os.Signal, 1)
 
-	signal.Notify(osInt, os.Interrupt)
+	signal.Notify(osInt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		<-osInt
