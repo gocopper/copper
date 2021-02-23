@@ -16,3 +16,8 @@ type Route struct {
 	Methods     []string
 	Handler     http.HandlerFunc
 }
+
+// Router is used to group routes together that are returned by the Routes method.
+type Router interface {
+	Routes() []Route
+}

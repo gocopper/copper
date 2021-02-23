@@ -11,3 +11,16 @@ func ReverseRoutes(routes []chttp.Route) []chttp.Route {
 
 	return routes
 }
+
+// NewRouter returns a router that returns the given routes.
+func NewRouter(routes []chttp.Route) chttp.Router {
+	return &router{routes: routes}
+}
+
+type router struct {
+	routes []chttp.Route
+}
+
+func (ro *router) Routes() []chttp.Route {
+	return ro.routes
+}

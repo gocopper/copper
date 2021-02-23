@@ -14,17 +14,19 @@ import (
 func TestNewHandler(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
-		Routes: []chttp.Route{
-			{
-				Path:    "/",
-				Methods: []string{http.MethodGet},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					_, err := w.Write([]byte("success"))
-					assert.NoError(t, err)
-				},
+	router := chttptest.NewRouter([]chttp.Route{
+		{
+			Path:    "/",
+			Methods: []string{http.MethodGet},
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				_, err := w.Write([]byte("success"))
+				assert.NoError(t, err)
 			},
 		},
+	})
+
+	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
+		Routers:           []chttp.Router{router},
 		GlobalMiddlewares: nil,
 	}))
 	defer server.Close()
@@ -44,13 +46,15 @@ func TestNewHandler_GlobalMiddleware(t *testing.T) {
 
 	didCallGlobalMiddleware := false
 
-	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
-		Routes: []chttp.Route{
-			{
-				Path:    "/",
-				Handler: func(w http.ResponseWriter, r *http.Request) {},
-			},
+	router := chttptest.NewRouter([]chttp.Route{
+		{
+			Path:    "/",
+			Handler: func(w http.ResponseWriter, r *http.Request) {},
 		},
+	})
+
+	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
+		Routers: []chttp.Router{router},
 		GlobalMiddlewares: []chttp.Middleware{
 			func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -74,21 +78,23 @@ func TestNewHandler_RouteMiddleware(t *testing.T) {
 
 	didCallRouteMiddleware := false
 
-	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
-		Routes: []chttp.Route{
-			{
-				Path: "/",
-				Middlewares: []chttp.Middleware{
-					func(next http.Handler) http.Handler {
-						return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-							didCallRouteMiddleware = true
-							next.ServeHTTP(w, r)
-						})
-					},
+	router := chttptest.NewRouter([]chttp.Route{
+		{
+			Path: "/",
+			Middlewares: []chttp.Middleware{
+				func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						didCallRouteMiddleware = true
+						next.ServeHTTP(w, r)
+					})
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {},
 			},
+			Handler: func(w http.ResponseWriter, r *http.Request) {},
 		},
+	})
+
+	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
+		Routers:           []chttp.Router{router},
 		GlobalMiddlewares: nil,
 	}))
 	defer server.Close()

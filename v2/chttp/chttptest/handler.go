@@ -25,7 +25,7 @@ func PingRoutes(t *testing.T, routes []chttp.Route) {
 	}
 
 	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
-		Routes:            routes,
+		Routers:           []chttp.Router{NewRouter(routes)},
 		GlobalMiddlewares: nil,
 	}))
 	defer server.Close()

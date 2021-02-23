@@ -11,7 +11,7 @@ import (
 
 // NewHandlerParams holds the params needed for NewHandler.
 type NewHandlerParams struct {
-	Routes            []Route
+	Routers           []Router
 	GlobalMiddlewares []Middleware
 }
 
@@ -27,9 +27,14 @@ func NewHandler(p NewHandlerParams) http.Handler {
 		muxRouter.Use(mux.MiddlewareFunc(f))
 	}
 
-	sortRoutes(p.Routes)
+	routes := make([]Route, 0)
+	for _, router := range p.Routers {
+		routes = append(routes, router.Routes()...)
+	}
 
-	for _, route := range p.Routes {
+	sortRoutes(routes)
+
+	for _, route := range routes {
 		handler := http.Handler(route.Handler)
 
 		for _, f := range route.Middlewares {
