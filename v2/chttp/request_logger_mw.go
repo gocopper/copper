@@ -12,8 +12,12 @@ import (
 
 var errRWIsNotHijacker = errors.New("internal response writer is not http.Hijacker")
 
-// NewRequestLoggerMiddleware creates a middleware that logs each request using the provided logger.
-func NewRequestLoggerMiddleware(logger clogger.Logger) Middleware {
+// RequestLoggerMiddleware logs each request's HTTP method, path, and status code along with user uuid
+// (from basic auth) if any.
+type RequestLoggerMiddleware = Middleware
+
+// NewRequestLoggerMiddleware creates a new RequestLoggerMiddleware.
+func NewRequestLoggerMiddleware(logger clogger.Logger) RequestLoggerMiddleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var (

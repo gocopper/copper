@@ -1,14 +1,15 @@
 package chttp_test
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/v2/chttp"
-	"github.com/tusharsoni/copper/v2/chttp/chttptest"
-	"github.com/tusharsoni/copper/v2/clogger"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tusharsoni/copper/v2/chttp"
+	"github.com/tusharsoni/copper/v2/chttp/chttptest"
+	"github.com/tusharsoni/copper/v2/clogger"
 )
 
 func TestNewRequestLoggerMiddleware(t *testing.T) {
