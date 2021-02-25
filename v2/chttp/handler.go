@@ -23,8 +23,8 @@ func NewHandler(p NewHandlerParams) http.Handler {
 		muxHandler = http.NewServeMux()
 	)
 
-	for _, f := range p.GlobalMiddlewares {
-		muxRouter.Use(mux.MiddlewareFunc(f))
+	for _, mw := range p.GlobalMiddlewares {
+		muxRouter.Use(mw.Handle)
 	}
 
 	routes := make([]Route, 0)
@@ -37,8 +37,8 @@ func NewHandler(p NewHandlerParams) http.Handler {
 	for _, route := range routes {
 		handler := http.Handler(route.Handler)
 
-		for _, f := range route.Middlewares {
-			handler = f(handler)
+		for _, mw := range route.Middlewares {
+			handler = mw.Handle(handler)
 		}
 
 		muxRoute := muxRouter.Handle(route.Path, handler)
