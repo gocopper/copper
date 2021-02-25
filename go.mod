@@ -8,6 +8,7 @@ require (
 	github.com/getsentry/sentry-go v0.1.3
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/uuid v1.1.1
+	github.com/google/wire v0.5.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/imdario/mergo v0.3.11
