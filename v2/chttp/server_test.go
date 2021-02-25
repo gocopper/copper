@@ -13,7 +13,7 @@ import (
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
-func TestStartServer(t *testing.T) {
+func TestServer_Start(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -24,12 +24,14 @@ Port = 8999
 `, ""), "test")
 	assert.NoError(t, err)
 
+	server := chttp.NewServer(chttp.NewServerParams{
+		Handler: http.NotFoundHandler(),
+		Config:  config,
+		Logger:  clogger.New(),
+	})
+
 	go func() {
-		err = chttp.StartServer(ctx, chttp.StartServerParams{
-			Handler: http.NotFoundHandler(),
-			Config:  config,
-			Logger:  clogger.New(),
-		})
+		err = server.Start(ctx)
 		assert.NoError(t, err)
 	}()
 

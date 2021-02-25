@@ -12,42 +12,59 @@ import (
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
-// StartServerParams holds the params to call the StartServer method.
-type StartServerParams struct {
+// NewServerParams holds the params needed to create a server.
+type NewServerParams struct {
 	Handler http.Handler
 	Config  cconfig.Config
 	Logger  clogger.Logger
 }
 
-// StartServer starts an HTTP server with the given handler.
-func StartServer(ctx context.Context, p StartServerParams) error {
+// NewServer creates a new server.
+func NewServer(p NewServerParams) *Server {
+	return &Server{
+		handler: p.Handler,
+		config:  p.Config,
+		logger:  p.Logger,
+	}
+}
+
+// Server represents a configurable HTTP server that supports graceful shutdown.
+type Server struct {
+	handler http.Handler
+	config  cconfig.Config
+	logger  clogger.Logger
+}
+
+// Start starts the HTTP server on the configured port and blocks until the context expires.
+// Once the context expires, the server is gracefully shutdown.
+func (s *Server) Start(ctx context.Context) error {
 	var (
 		server http.Server
 		config config
 	)
 
-	err := p.Config.Load("chttp", &config)
+	err := s.config.Load("chttp", &config)
 	if err != nil {
 		return cerrors.New(err, "failed to load chttp config", nil)
 	}
 
 	server.Addr = fmt.Sprintf(":%d", config.Port)
-	server.Handler = p.Handler
+	server.Handler = s.handler
 
 	go func() {
-		p.Logger.
+		s.logger.
 			WithTags(map[string]interface{}{"port": config.Port}).
 			Info("Starting http server..")
 
 		err := server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			p.Logger.Error("Failed to start server", err)
+			s.logger.Error("Failed to start server", err)
 		}
 	}()
 
 	<-ctx.Done()
 
-	p.Logger.Info("Shutting down http server..")
+	s.logger.Info("Shutting down http server..")
 
 	ctxShutdown, cancel := context.WithTimeout(
 		context.Background(),
@@ -56,7 +73,7 @@ func StartServer(ctx context.Context, p StartServerParams) error {
 	defer cancel()
 
 	if err := server.Shutdown(ctxShutdown); err != nil {
-		p.Logger.Error("Failed to shutdown http server cleanly", err)
+		s.logger.Error("Failed to shutdown http server cleanly", err)
 	}
 
 	return nil
