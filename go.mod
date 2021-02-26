@@ -21,5 +21,6 @@ require (
 	go.uber.org/goleak v0.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gorm.io/driver/postgres v1.0.0
-	gorm.io/gorm v1.20.0
+	gorm.io/driver/sqlite v1.1.4
+	gorm.io/gorm v1.20.7
 )
