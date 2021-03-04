@@ -1,4 +1,5 @@
 GO=GO111MODULE=on go
+WIRE=wire
 
 .PHONY: all
 all: lint test
@@ -9,5 +10,8 @@ test:
 
 .PHONY: lint
 lint:
-	golangci-lint run --fast --enable-all --exclude-use-default=false --fix
+	golangci-lint run
 
+.PHONY: generate
+generate:
+	$(WIRE) .

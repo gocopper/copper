@@ -19,7 +19,7 @@ func TestNewConfig(t *testing.T) {
 
 	configDir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	config, err := cconfig.NewConfig(configDir, envTest)
+	config, err := cconfig.New(configDir, envTest)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, config)
@@ -30,9 +30,9 @@ func TestNewConfig_MissingBase(t *testing.T) {
 
 	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	assert.NoError(t, os.Remove(path.Join(dir, "base.toml")))
+	assert.NoError(t, os.Remove(path.Join(string(dir), "base.toml")))
 
-	_, err := cconfig.NewConfig(dir, envTest)
+	_, err := cconfig.New(dir, envTest)
 
 	assert.Error(t, err)
 }
@@ -42,9 +42,9 @@ func TestNewConfig_MissingEnv(t *testing.T) {
 
 	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	assert.NoError(t, os.Remove(path.Join(dir, "test.toml")))
+	assert.NoError(t, os.Remove(path.Join(string(dir), "test.toml")))
 
-	_, err := cconfig.NewConfig(dir, envTest)
+	_, err := cconfig.New(dir, envTest)
 
 	assert.Error(t, err)
 }
@@ -58,7 +58,7 @@ func TestConfig_Load_Default(t *testing.T) {
 
 	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
 
-	config, err := cconfig.NewConfig(dir, envTest)
+	config, err := cconfig.New(dir, envTest)
 	assert.NoError(t, err)
 
 	err = config.Load("group1", &testConfig)
@@ -81,7 +81,7 @@ value = "base"
 
 	dir := cconfigtest.SetupDirWithConfigs(t, base, "")
 
-	config, err := cconfig.NewConfig(dir, envTest)
+	config, err := cconfig.New(dir, envTest)
 	assert.NoError(t, err)
 
 	err = config.Load("group1", &testConfig)
@@ -108,7 +108,7 @@ value = "env"`
 
 	dir := cconfigtest.SetupDirWithConfigs(t, base, env)
 
-	config, err := cconfig.NewConfig(dir, envTest)
+	config, err := cconfig.New(dir, envTest)
 	assert.NoError(t, err)
 
 	err = config.Load("group1", &testConfig)

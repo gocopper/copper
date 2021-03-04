@@ -1,37 +1,39 @@
 package chttp_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tusharsoni/copper/v2"
 	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/cconfig/cconfigtest"
 	"github.com/tusharsoni/copper/v2/chttp"
 	"github.com/tusharsoni/copper/v2/clogger"
 )
 
-func TestServer_Start(t *testing.T) {
+func TestServer_Run(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	logger := clogger.New()
+	lc := copper.NewLifecycle(logger)
 
-	config, err := cconfig.NewConfig(cconfigtest.SetupDirWithConfigs(t, `
+	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, `
 [chttp]
 Port = 8999
 `, ""), "test")
 	assert.NoError(t, err)
 
 	server := chttp.NewServer(chttp.NewServerParams{
-		Handler: http.NotFoundHandler(),
-		Config:  config,
-		Logger:  clogger.New(),
+		Handler:   http.NotFoundHandler(),
+		Config:    config,
+		Logger:    logger,
+		Lifecycle: lc,
 	})
 
 	go func() {
-		err = server.Start(ctx)
+		err = server.Run()
 		assert.NoError(t, err)
 	}()
 
@@ -44,7 +46,7 @@ Port = 8999
 	assert.NoError(t, resp.Body.Close())
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-	cancel()
+	lc.Stop()
 
 	time.Sleep(50 * time.Millisecond) // wait for server to stop
 

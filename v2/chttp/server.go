@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/tusharsoni/copper/v2"
 	"github.com/tusharsoni/copper/v2/cconfig"
 	"github.com/tusharsoni/copper/v2/cerrors"
 	"github.com/tusharsoni/copper/v2/clogger"
@@ -14,18 +14,30 @@ import (
 
 // NewServerParams holds the params needed to create a server.
 type NewServerParams struct {
-	Handler http.Handler
-	Config  cconfig.Config
-	Logger  clogger.Logger
+	Handler   http.Handler
+	Lifecycle *copper.Lifecycle
+	Config    cconfig.Config
+	Logger    clogger.Logger
 }
 
 // NewServer creates a new server.
 func NewServer(p NewServerParams) *Server {
-	return &Server{
-		handler: p.Handler,
-		config:  p.Config,
-		logger:  p.Logger,
+	server := &Server{
+		handler:  p.Handler,
+		config:   p.Config,
+		logger:   p.Logger,
+		internal: http.Server{}, // nolint: exhaustivestruct
 	}
+
+	if p.Lifecycle != nil {
+		p.Lifecycle.OnStop(func(ctx context.Context) error {
+			p.Logger.Info("Shutting down http server..")
+
+			return server.internal.Shutdown(ctx)
+		})
+	}
+
+	return server
 }
 
 // Server represents a configurable HTTP server that supports graceful shutdown.
@@ -33,47 +45,29 @@ type Server struct {
 	handler http.Handler
 	config  cconfig.Config
 	logger  clogger.Logger
+
+	internal http.Server
 }
 
-// Start starts the HTTP server on the configured port and blocks until the context expires.
-// Once the context expires, the server is gracefully shutdown.
-func (s *Server) Start(ctx context.Context) error {
-	var (
-		server http.Server
-		config config
-	)
+// Run configures an HTTP server using the provided app config and starts it.
+func (s *Server) Run() error {
+	var config config
 
 	err := s.config.Load("chttp", &config)
 	if err != nil {
 		return cerrors.New(err, "failed to load chttp config", nil)
 	}
 
-	server.Addr = fmt.Sprintf(":%d", config.Port)
-	server.Handler = s.handler
+	s.internal.Addr = fmt.Sprintf(":%d", config.Port)
+	s.internal.Handler = s.handler
 
-	go func() {
-		s.logger.
-			WithTags(map[string]interface{}{"port": config.Port}).
-			Info("Starting http server..")
+	s.logger.
+		WithTags(map[string]interface{}{"port": config.Port}).
+		Info("Starting http server..")
 
-		err := server.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.Error("Failed to start server", err)
-		}
-	}()
-
-	<-ctx.Done()
-
-	s.logger.Info("Shutting down http server..")
-
-	ctxShutdown, cancel := context.WithTimeout(
-		context.Background(),
-		time.Duration(config.ShutdownTimeoutSecs)*time.Second,
-	)
-	defer cancel()
-
-	if err := server.Shutdown(ctxShutdown); err != nil {
-		s.logger.Error("Failed to shutdown http server cleanly", err)
+	err = s.internal.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		s.logger.Error("Server did not close cleanly", err)
 	}
 
 	return nil

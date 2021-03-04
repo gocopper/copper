@@ -10,6 +10,13 @@ import (
 	"github.com/tusharsoni/copper/v2/cerrors"
 )
 
+// Env defines the various environments the app can be configured for.
+// The Env may be dev, test, staging, or prod.
+type Env string
+
+// Dir defines the directory where config file(s) live.
+type Dir string
+
 // Config provides methods to read app config.
 type Config interface {
 	Load(key string, dest interface{}) error
@@ -20,12 +27,12 @@ const (
 	tomlExt                = ".toml"
 )
 
-// NewConfig provides an implementation of Config that reads config files in the
+// New provides an implementation of Config that reads config files in the
 // dir. By default, it reads from base.toml and can be overridden by a file
 // corresponding to the env. For 'test' env, the file should be test.toml.
-func NewConfig(dir, env string) (Config, error) {
-	baseConfigPath := path.Join(dir, baseTomlConfigFileName)
-	envConfigPath := path.Join(dir, strings.ToLower(env)+tomlExt)
+func New(dir Dir, env Env) (Config, error) {
+	baseConfigPath := path.Join(string(dir), baseTomlConfigFileName)
+	envConfigPath := path.Join(string(dir), strings.ToLower(string(env))+tomlExt)
 
 	baseTree, err := toml.LoadFile(baseConfigPath)
 	if err != nil {
