@@ -6,7 +6,7 @@ all: lint test
 
 .PHONY: test
 test:
-	$(GO) test -cover ./...
+	$(GO) test -tags csql_sqlite -cover ./...
 
 .PHONY: lint
 lint:
