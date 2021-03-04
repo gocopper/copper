@@ -11,8 +11,8 @@ import (
 // NewRouterParams holds the dependencies to create a new Router.
 type NewRouterParams struct {
 	Auth      *Svc
+	SessionMW *VerifySessionMiddleware
 	RW        chttp.ReaderWriter
-	SessionMW chttp.Middleware
 	Logger    clogger.Logger
 }
 
@@ -29,8 +29,8 @@ func NewRouter(p NewRouterParams) *Router {
 // Router handles incoming HTTP requests related the cauth package.
 type Router struct {
 	svc       *Svc
-	rw        chttp.ReaderWriter
 	sessionMW chttp.Middleware
+	rw        chttp.ReaderWriter
 	logger    clogger.Logger
 }
 
