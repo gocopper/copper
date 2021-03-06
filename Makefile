@@ -1,11 +1,17 @@
 GO=GO111MODULE=on go
-GOIMPORTS=goimports
+WIRE=wire
+
+.PHONY: all
+all: lint test
 
 .PHONY: test
 test:
-	$(GO) test ./pkg/...
+	$(GO) test -tags csql_sqlite -cover ./...
 
-.PHONY: imports
-imports:
-	$(GOIMPORTS) -w .
+.PHONY: lint
+lint:
+	golangci-lint run
 
+.PHONY: generate
+generate:
+	$(WIRE) .

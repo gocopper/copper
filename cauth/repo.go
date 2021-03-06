@@ -3,47 +3,54 @@ package cauth
 import (
 	"context"
 
-	"github.com/tusharsoni/copper/cerror"
-	"github.com/tusharsoni/copper/csql"
+	"github.com/tusharsoni/copper/cerrors"
 	"gorm.io/gorm"
 )
 
-type Repo interface {
-	GetUser(ctx context.Context, uuid string) (*User, error)
-	AddUser(ctx context.Context, user *User) error
+// NewRepo instantiates and returns a new Repo.
+func NewRepo(db *gorm.DB) *Repo {
+	return &Repo{db: db}
 }
 
-type sqlRepo struct {
+// Repo represents the repository layer for all models in the cauth package.
+type Repo struct {
 	db *gorm.DB
 }
 
-func NewSQLRepo(db *gorm.DB) Repo {
-	return &sqlRepo{
-		db: db,
+// GetUserByUsername queries the users table for a user with the given username.
+func (r *Repo) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+	var user User
+
+	err := r.db.WithContext(ctx).Where("username=?", username).First(&user).Error
+	if err != nil {
+		return nil, cerrors.New(err, "failed to query user", map[string]interface{}{
+			"username": username,
+		})
 	}
+
+	return &user, nil
 }
 
-func (r *sqlRepo) GetUser(ctx context.Context, uuid string) (*User, error) {
-	var u User
+// SaveUser saves or creates the given user.
+func (r *Repo) SaveUser(ctx context.Context, user *User) error {
+	return r.db.WithContext(ctx).Save(user).Error
+}
 
-	err := csql.GetConn(ctx, r.db).
-		Where(User{UUID: uuid}).
-		First(&u).
-		Error
+// GetSession queries the sessions table for a session with the given uuid.
+func (r *Repo) GetSession(ctx context.Context, uuid string) (*Session, error) {
+	var session Session
+
+	err := r.db.WithContext(ctx).Where("uuid=?", uuid).First(&session).Error
 	if err != nil {
-		return nil, cerror.New(err, "failed to query user", map[string]interface{}{
+		return nil, cerrors.New(err, "failed to query session", map[string]interface{}{
 			"uuid": uuid,
 		})
 	}
 
-	return &u, nil
+	return &session, nil
 }
 
-func (r *sqlRepo) AddUser(ctx context.Context, user *User) error {
-	err := csql.GetConn(ctx, r.db).Save(user).Error
-	if err != nil {
-		return cerror.New(err, "failed to upsert user", nil)
-	}
-
-	return nil
+// SaveSession saves or creates the given session.
+func (r *Repo) SaveSession(ctx context.Context, session *Session) error {
+	return r.db.WithContext(ctx).Save(session).Error
 }

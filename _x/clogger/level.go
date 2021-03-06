@@ -1,11 +1,11 @@
 package clogger
 
-// Level represents the severity level of a log.
+// Level represents the severity level of a log
 type Level int
 
-// Pre-defined log levels.
+// Pre-defined log levels
 const (
-	LevelDebug = Level(iota + 1)
+	LevelDebug = iota + 1
 	LevelInfo
 	LevelWarn
 	LevelError

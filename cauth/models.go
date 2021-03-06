@@ -1,16 +1,39 @@
 package cauth
 
-import "time"
+import (
+	"time"
+)
 
+// User represents a user who has created an account. This model stores their login credentials
+// as well as their metadata.
 type User struct {
-	ID        uint      `gorm:"primaryKey"`
-	CreatedAt time.Time `gorm:"not null"`
-	UpdatedAt time.Time `gorm:"not null"`
+	UUID      string    `gorm:"primaryKey" json:"uuid"`
+	CreatedAt time.Time `gorm:"not null" json:"-"`
+	UpdatedAt time.Time `gorm:"not null" json:"-"`
 
-	UUID         string `gorm:"uniqueIndex;not null"`
-	SessionToken string `gorm:"not null"`
+	Username *string `json:"username,omitempty"`
+
+	Password           []byte  `json:"-"`
+	PasswordResetToken *string `json:"-"`
 }
 
-func (User) TableName() string {
+// TableName returns the table name where the users are stored.
+func (u User) TableName() string {
 	return "cauth_users"
+}
+
+// Session represents a single logged-in session that a user is able create after providing valid
+// login credentials.
+type Session struct {
+	UUID      string    `gorm:"primaryKey" json:"uuid"`
+	CreatedAt time.Time `gorm:"not null" json:"-"`
+
+	UserUUID  string    `gorm:"not null" json:"user_uuid"`
+	Token     []byte    `gorm:"not null" json:"-"`
+	ExpiresAt time.Time `gorm:"not null" json:"expires_at"`
+}
+
+// TableName returns the table name where the sessions are stored.
+func (u Session) TableName() string {
+	return "cauth_sessions"
 }

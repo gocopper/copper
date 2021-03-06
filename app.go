@@ -1,64 +1,75 @@
-// Package copper provides the primitives to create a new app using github.com/uber-go/fx.
 package copper
 
 import (
-	"github.com/tusharsoni/copper/chttp"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/tusharsoni/copper/cconfig"
 	"github.com/tusharsoni/copper/clogger"
-	"github.com/tusharsoni/copper/crandom"
-	"go.uber.org/fx"
 )
 
-// NewHTTPApp creates a new copper app that starts a http server.
-// It accepts additional modules as fx.Option that can be registered in the app.
-// Returns *fx.App that be started using the Run() method.
-func NewHTTPApp(opts ...fx.Option) *fx.App {
-	combined := append([]fx.Option{
-		chttp.Fx,
-
-		fx.Invoke(crandom.Seed),
-		fx.Invoke(chttp.Register),
-	}, opts...)
-
-	return fx.New(combined...)
+// Runner provides an interface that can be run by a Copper app using the Run or Start funcs.
+// This interface is implemented by various packages within Copper including chttp.Server.
+type Runner interface {
+	Run() error
 }
 
-type HTTPAppParams struct {
-	Logger            clogger.Logger
-	Routes            []chttp.Route
-	GlobalMiddlewares []chttp.MiddlewareFunc
-	Config            chttp.Config
-}
-
-func RunHTTPApp(p HTTPAppParams) {
-	var (
-		router = chttp.NewRouter(chttp.RouterParams{
-			Routes: append(
-				p.Routes,
-				chttp.NewHealthRoute(chttp.HealthRouteParams{}).Route,
-			),
-			GlobalMiddlewareFuncs: append(
-				p.GlobalMiddlewares,
-				chttp.NewRequestLogger(p.Logger).GlobalMiddlewareFunc,
-			),
-			Logger: p.Logger,
-		})
-		server = chttp.NewServer(chttp.ServerParams{
-			Logger: p.Logger,
-			Config: p.Config,
-		})
-	)
-
-	crandom.Seed()
-
-	err := chttp.Register(server, router)
-	if err != nil {
-		p.Logger.Error("Failed to register http router to the server", err)
-		return
+// New creates a new Copper app and returns it along with the app's lifecycle manager,
+// config, and the logger.
+func New(lifecycle *Lifecycle, config cconfig.Config, logger clogger.Logger) *App {
+	return &App{
+		Lifecycle: lifecycle,
+		Config:    config,
+		Logger:    logger,
 	}
+}
 
-	err = server.ListenAndServe()
+// App defines a Copper app container that can run provided code in its managed lifecycle.
+// It provides functionality to read config in multiple environments as defined by
+// command-line flags.
+type App struct {
+	Lifecycle *Lifecycle
+	Config    cconfig.Config
+	Logger    clogger.Logger
+}
+
+// Run runs the provided func. Once the function completes its run, the
+// lifecycle's stop funcs are also called. If fn returns an error,
+// the app exits with an exit code 1.
+// Run should be used when fn is not blocking. For blocking funcs like
+// a long running server, use Start.
+func (a *App) Run(fn Runner) {
+	err := fn.Run()
+
+	a.Lifecycle.Stop()
+
 	if err != nil {
-		p.Logger.Error("Failed to start the server", err)
-		return
+		a.Logger.Error("Failed to run", err)
+		os.Exit(1)
+	}
+}
+
+// Start runs the provided func that may be blocking like a long running
+// server. The app listens on the OS's INT and TERM signals from the user
+// to exit. Once the signal is received, the lifecycle's stop funcs are
+// called.
+// If fn fails to run and returns an error, the app exits with exit code
+// 1.
+// If fn is not blocking, use Run instead.
+func (a *App) Start(fn Runner) {
+	osInt := make(chan os.Signal, 1)
+
+	signal.Notify(osInt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-osInt
+		a.Lifecycle.Stop()
+	}()
+
+	err := fn.Run()
+	if err != nil {
+		a.Logger.Error("Failed to run", err)
+		os.Exit(1)
 	}
 }
