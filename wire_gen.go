@@ -13,6 +13,7 @@ import (
 
 // Injectors from wire.go:
 
+// InitApp creates a new Copper app along with its dependencies.
 func InitApp() (*App, error) {
 	flags := NewFlags()
 	dir := flags.ConfigDir
@@ -32,4 +33,6 @@ func InitApp() (*App, error) {
 
 // wire.go:
 
+// WireModule can be used as part of google/wire setup to include the app's
+// lifecycle, config, and logger.
 var WireModule = wire.NewSet(wire.FieldsOf(new(*App), "Lifecycle", "Config", "Logger"))
