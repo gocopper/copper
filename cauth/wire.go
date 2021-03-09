@@ -8,7 +8,7 @@ import (
 var WireModule = wire.NewSet( // nolint:gochecknoglobals
 	NewSvc,
 	NewRepo,
-	NewMigrator,
+	NewMigration,
 	NewVerifySessionMiddleware,
 
 	wire.Struct(new(NewRouterParams), "*"),

@@ -29,7 +29,7 @@ func NewRouter(t *testing.T) *cauth.Router {
 	})
 	assert.NoError(t, err)
 
-	err = cauth.NewMigrator(db).Run()
+	err = cauth.NewMigration(db).Run()
 	assert.NoError(t, err)
 
 	svc := cauth.NewSvc(cauth.NewRepo(db))
