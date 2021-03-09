@@ -19,6 +19,7 @@ type ReaderWriter interface {
 	Unauthorized(w http.ResponseWriter)
 	Forbidden(w http.ResponseWriter)
 	BadRequest(w http.ResponseWriter, err error)
+	NotFound(w http.ResponseWriter)
 }
 
 type jsonRW struct {
@@ -89,6 +90,10 @@ func (r *jsonRW) BadRequest(w http.ResponseWriter, err error) {
 
 	resp.Error = err.Error()
 	r.json(w, &resp, http.StatusBadRequest)
+}
+
+func (r *jsonRW) NotFound(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func (r *jsonRW) json(w http.ResponseWriter, o interface{}, status int) {
