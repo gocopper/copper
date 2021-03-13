@@ -1,6 +1,6 @@
 GO=GO111MODULE=on go
 WIRE=wire
-COVERAGE_FILE="/tmp/copp_coverage.out"
+COVERAGE_FILE="/tmp/copper_coverage.out"
 
 .PHONY: all
 all: lint generate test
