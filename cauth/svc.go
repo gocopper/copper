@@ -170,7 +170,9 @@ func (s *Svc) createSession(ctx context.Context, userUUID string) (*Session, str
 // sessionUUID.
 func (s *Svc) ValidateSession(ctx context.Context, sessionUUID, plainToken string) (bool, *Session, error) {
 	session, err := s.repo.GetSession(ctx, sessionUUID)
-	if err != nil {
+	if err != nil && errors.Is(err, ErrNotFound) {
+		return false, nil, nil
+	} else if err != nil {
 		return false, nil, cerrors.New(err, "failed to get session", map[string]interface{}{
 			"sessionUUID": sessionUUID,
 		})

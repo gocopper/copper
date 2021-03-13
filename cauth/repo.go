@@ -7,6 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// ErrNotFound is returned when a model does not exist in the repository
+var ErrNotFound = gorm.ErrRecordNotFound
+
 // NewRepo instantiates and returns a new Repo.
 func NewRepo(db *gorm.DB) *Repo {
 	return &Repo{db: db}

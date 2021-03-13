@@ -106,6 +106,8 @@ func TestRouter_HandleLogout_InvalidSession(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
+	req.SetBasicAuth("invalid-uuid", "invalid-token")
+
 	resp, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
 
