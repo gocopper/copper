@@ -1,8 +1,6 @@
 package cconfig_test
 
 import (
-	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +15,7 @@ const (
 func TestNewConfig(t *testing.T) {
 	t.Parallel()
 
-	configDir := cconfigtest.SetupDirWithConfigs(t, "", "")
+	configDir := cconfigtest.SetupDirWithConfigs(t, "", "", "")
 
 	config, err := cconfig.New(configDir, envTest)
 
@@ -25,88 +23,32 @@ func TestNewConfig(t *testing.T) {
 	assert.NotNil(t, config)
 }
 
-func TestNewConfig_MissingBase(t *testing.T) {
-	t.Parallel()
-
-	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
-
-	assert.NoError(t, os.Remove(path.Join(string(dir), "base.toml")))
-
-	_, err := cconfig.New(dir, envTest)
-
-	assert.Error(t, err)
-}
-
-func TestNewConfig_MissingEnv(t *testing.T) {
-	t.Parallel()
-
-	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
-
-	assert.NoError(t, os.Remove(path.Join(string(dir), "test.toml")))
-
-	_, err := cconfig.New(dir, envTest)
-
-	assert.Error(t, err)
-}
-
-func TestConfig_Load_Default(t *testing.T) {
+func TestConfig_Load_All(t *testing.T) {
 	t.Parallel()
 
 	var testConfig struct {
-		Value string `default:"default"`
-	}
-
-	dir := cconfigtest.SetupDirWithConfigs(t, "", "")
-
-	config, err := cconfig.New(dir, envTest)
-	assert.NoError(t, err)
-
-	err = config.Load("group1", &testConfig)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "default", testConfig.Value)
-}
-
-func TestConfig_Load_Base(t *testing.T) {
-	t.Parallel()
-
-	var testConfig struct {
-		Value string `default:"default"`
+		Default string `default:"default"`
+		Base    string `default:"default"`
+		Env     string `default:"default"`
+		Secrets string `default:"default"`
 	}
 
 	base := `
 [group1]
-value = "base"
-`
-
-	dir := cconfigtest.SetupDirWithConfigs(t, base, "")
-
-	config, err := cconfig.New(dir, envTest)
-	assert.NoError(t, err)
-
-	err = config.Load("group1", &testConfig)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "base", testConfig.Value)
-}
-
-func TestConfig_Load_Env(t *testing.T) {
-	t.Parallel()
-
-	var testConfig struct {
-		Value string `default:"default"`
-	}
-
-	base := `
-[group1]
-value = "base"
+base = "base"
 `
 
 	env := `
 [group1]
-value = "env"`
+env = "env"
+`
 
-	dir := cconfigtest.SetupDirWithConfigs(t, base, env)
+	secrets := `
+[group1]
+secrets = "secrets"
+`
+
+	dir := cconfigtest.SetupDirWithConfigs(t, base, env, secrets)
 
 	config, err := cconfig.New(dir, envTest)
 	assert.NoError(t, err)
@@ -114,5 +56,8 @@ value = "env"`
 	err = config.Load("group1", &testConfig)
 	assert.NoError(t, err)
 
-	assert.Equal(t, "env", testConfig.Value)
+	assert.Equal(t, "default", testConfig.Default)
+	assert.Equal(t, "base", testConfig.Base)
+	assert.Equal(t, "env", testConfig.Env)
+	assert.Equal(t, "secrets", testConfig.Secrets)
 }
