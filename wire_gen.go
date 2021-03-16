@@ -27,7 +27,7 @@ func InitApp() (*App, error) {
 		return nil, err
 	}
 	lifecycle := NewLifecycle(logger)
-	app := New(lifecycle, config, logger)
+	app := NewApp(lifecycle, config, logger)
 	return app, nil
 }
 

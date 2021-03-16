@@ -15,9 +15,9 @@ type Runner interface {
 	Run() error
 }
 
-// New creates a new Copper app and returns it along with the app's lifecycle manager,
+// NewApp creates a new Copper app and returns it along with the app's lifecycle manager,
 // config, and the logger.
-func New(lifecycle *Lifecycle, config cconfig.Config, logger clogger.Logger) *App {
+func NewApp(lifecycle *Lifecycle, config cconfig.Config, logger clogger.Logger) *App {
 	return &App{
 		Lifecycle: lifecycle,
 		Config:    config,
@@ -34,30 +34,32 @@ type App struct {
 	Logger    clogger.Logger
 }
 
-// Run runs the provided func. Once the function completes its run, the
-// lifecycle's stop funcs are also called. If fn returns an error,
+// Run runs the provided funcs. Once all of the functions complete their run,
+// the  lifecycle's stop funcs are also called. If any of the fns return an error,
 // the app exits with an exit code 1.
-// Run should be used when fn is not blocking. For blocking funcs like
+// Run should be used when none of the fn are blocking. For blocking funcs like
 // a long running server, use Start.
-func (a *App) Run(fn Runner) {
-	err := fn.Run()
+func (a *App) Run(fns ...Runner) {
+	for i := range fns {
+		err := fns[i].Run()
+		if err != nil {
+			a.Logger.Error("Failed to run", err)
+			a.Lifecycle.Stop()
+			os.Exit(1)
+		}
+	}
 
 	a.Lifecycle.Stop()
-
-	if err != nil {
-		a.Logger.Error("Failed to run", err)
-		os.Exit(1)
-	}
 }
 
-// Start runs the provided func that may be blocking like a long running
-// server. The app listens on the OS's INT and TERM signals from the user
-// to exit. Once the signal is received, the lifecycle's stop funcs are
+// Start runs the provided fns where the last provided fn be blocking like a
+// long running  server. The app listens on the OS's INT and TERM signals from the
+// user to exit. Once the signal is received, the lifecycle's stop funcs are
 // called.
-// If fn fails to run and returns an error, the app exits with exit code
+// If any of the fns fail to run and returns an error, the app exits with exit code
 // 1.
-// If fn is not blocking, use Run instead.
-func (a *App) Start(fn Runner) {
+// If none of the fns are blocking, use Run instead.
+func (a *App) Start(fns ...Runner) {
 	osInt := make(chan os.Signal, 1)
 
 	signal.Notify(osInt, syscall.SIGINT, syscall.SIGTERM)
@@ -67,9 +69,11 @@ func (a *App) Start(fn Runner) {
 		a.Lifecycle.Stop()
 	}()
 
-	err := fn.Run()
-	if err != nil {
-		a.Logger.Error("Failed to run", err)
-		os.Exit(1)
+	for i := range fns {
+		err := fns[i].Run()
+		if err != nil {
+			a.Logger.Error("Failed to run", err)
+			os.Exit(1)
+		}
 	}
 }

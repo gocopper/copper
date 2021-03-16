@@ -12,7 +12,7 @@ import (
 func InitApp() (*App, error) {
 	panic(
 		wire.Build(
-			New,
+			NewApp,
 			NewFlags,
 			NewLifecycle,
 			cconfig.New,
