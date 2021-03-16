@@ -22,22 +22,13 @@ type NewServerParams struct {
 
 // NewServer creates a new server.
 func NewServer(p NewServerParams) *Server {
-	server := &Server{
+	return &Server{
 		handler:  p.Handler,
 		config:   p.Config,
 		logger:   p.Logger,
-		internal: http.Server{}, // nolint: exhaustivestruct
+		lc:       p.Lifecycle,
+		internal: http.Server{},
 	}
-
-	if p.Lifecycle != nil {
-		p.Lifecycle.OnStop(func(ctx context.Context) error {
-			p.Logger.Info("Shutting down http server..")
-
-			return server.internal.Shutdown(ctx)
-		})
-	}
-
-	return server
 }
 
 // Server represents a configurable HTTP server that supports graceful shutdown.
@@ -45,6 +36,7 @@ type Server struct {
 	handler http.Handler
 	config  cconfig.Config
 	logger  clogger.Logger
+	lc      *copper.Lifecycle
 
 	internal http.Server
 }
@@ -60,6 +52,12 @@ func (s *Server) Run() error {
 
 	s.internal.Addr = fmt.Sprintf(":%d", config.Port)
 	s.internal.Handler = s.handler
+
+	s.lc.OnStop(func(ctx context.Context) error {
+		s.logger.Info("Shutting down http server..")
+
+		return s.internal.Shutdown(ctx)
+	})
 
 	s.logger.
 		WithTags(map[string]interface{}{"port": config.Port}).
