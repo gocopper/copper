@@ -13,7 +13,7 @@ type ctxKey string
 const ctxKeySession = ctxKey("cauth/session")
 
 // NewVerifySessionMiddleware instantiates and creates a new VerifySessionMiddleware.
-func NewVerifySessionMiddleware(auth *Svc, rw chttp.ReaderWriter, logger clogger.Logger) *VerifySessionMiddleware {
+func NewVerifySessionMiddleware(auth *Svc, rw *chttp.ReaderWriter, logger clogger.Logger) *VerifySessionMiddleware {
 	return &VerifySessionMiddleware{
 		auth:   auth,
 		rw:     rw,
@@ -26,7 +26,7 @@ func NewVerifySessionMiddleware(auth *Svc, rw chttp.ReaderWriter, logger clogger
 // called. If the session is invalid, an unauthorized response is sent back.
 type VerifySessionMiddleware struct {
 	auth   *Svc
-	rw     chttp.ReaderWriter
+	rw     *chttp.ReaderWriter
 	logger clogger.Logger
 }
 
@@ -35,7 +35,7 @@ func (mw *VerifySessionMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionUUID, plainToken, ok := r.BasicAuth()
 		if !ok || sessionUUID == "" || plainToken == "" {
-			mw.rw.Unauthorized(w)
+			w.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}
@@ -45,13 +45,13 @@ func (mw *VerifySessionMiddleware) Handle(next http.Handler) http.Handler {
 			mw.logger.WithTags(map[string]interface{}{
 				"sessionUUID": sessionUUID,
 			}).Error("Failed to verify session token", err)
-			mw.rw.InternalErr(w)
+			w.WriteHeader(http.StatusInternalServerError)
 
 			return
 		}
 
 		if !ok {
-			mw.rw.Unauthorized(w)
+			w.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}

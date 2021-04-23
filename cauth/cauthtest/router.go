@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tusharsoni/copper/chttp/chttptest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/cauth"
 	"github.com/tusharsoni/copper/chttp"
@@ -22,7 +24,7 @@ func NewRouter(t *testing.T) *cauth.Router {
 	t.Helper()
 
 	logger := clogger.New()
-	rw := chttp.NewJSONReaderWriter(logger)
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, logger)
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{ // nolint: exhaustivestruct
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),

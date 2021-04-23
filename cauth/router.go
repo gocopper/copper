@@ -12,7 +12,7 @@ import (
 type NewRouterParams struct {
 	Auth      *Svc
 	SessionMW *VerifySessionMiddleware
-	RW        chttp.ReaderWriter
+	RW        *chttp.ReaderWriter
 	Logger    clogger.Logger
 }
 
@@ -30,7 +30,7 @@ func NewRouter(p NewRouterParams) *Router {
 type Router struct {
 	svc       *Svc
 	sessionMW chttp.Middleware
-	rw        chttp.ReaderWriter
+	rw        *chttp.ReaderWriter
 	logger    clogger.Logger
 }
 
@@ -60,42 +60,46 @@ func (ro *Router) Routes() []chttp.Route {
 func (ro *Router) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	var params SignupParams
 
-	if !ro.rw.Read(w, r, &params) {
+	if !ro.rw.ReadJSON(w, r, &params) {
 		return
 	}
 
 	sessionResult, err := ro.svc.Signup(r.Context(), params)
 	if err != nil {
 		ro.logger.Error("Failed to signup", err)
-		ro.rw.InternalErr(w)
+		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	ro.rw.OK(w, sessionResult)
+	ro.rw.WriteJSON(w, chttp.WriteJSONParams{
+		Data: sessionResult,
+	})
 }
 
 // HandleLogin handles a user login request.
 func (ro *Router) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var params LoginParams
 
-	if !ro.rw.Read(w, r, &params) {
+	if !ro.rw.ReadJSON(w, r, &params) {
 		return
 	}
 
 	sessionResult, err := ro.svc.Login(r.Context(), params)
 	if err != nil && errors.Is(err, ErrInvalidCredentials) {
-		ro.rw.Unauthorized(w)
+		w.WriteHeader(http.StatusUnauthorized)
 
 		return
 	} else if err != nil {
 		ro.logger.Error("Failed to login", err)
-		ro.rw.InternalErr(w)
+		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	ro.rw.OK(w, sessionResult)
+	ro.rw.WriteJSON(w, chttp.WriteJSONParams{
+		Data: sessionResult,
+	})
 }
 
 // HandleLogout handles a user logout request.
@@ -108,10 +112,8 @@ func (ro *Router) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	err := ro.svc.Logout(ctx, session.UUID)
 	if err != nil {
 		ro.logger.Error("Failed to logout", err)
-		ro.rw.InternalErr(w)
+		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
-
-	ro.rw.OK(w, nil)
 }

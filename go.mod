@@ -1,6 +1,6 @@
 module github.com/tusharsoni/copper
 
-go 1.14
+go 1.16
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf

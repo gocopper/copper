@@ -7,32 +7,23 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/tusharsoni/copper/chttp/chttptest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/tusharsoni/copper/chttp"
 	"github.com/tusharsoni/copper/clogger"
 )
 
-func TestNewJSONReaderWriter(t *testing.T) {
-	t.Parallel()
-
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
-
-	_, ok := rw.(chttp.ReaderWriter)
-
-	assert.NotNil(t, rw)
-	assert.True(t, ok)
-}
-
-func TestJSONRW_Read(t *testing.T) {
+func TestReaderWriter_ReadJSON(t *testing.T) {
 	t.Parallel()
 
 	var body struct {
 		Key string `json:"key"`
 	}
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 
-	ok := rw.Read(
+	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
 		httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte(`{"key": "value"}`))),
 		&body,
@@ -42,16 +33,16 @@ func TestJSONRW_Read(t *testing.T) {
 	assert.Equal(t, "value", body.Key)
 }
 
-func TestJSONRW_Read_Invalid_Body(t *testing.T) {
+func TestReaderWriter_ReadJSON_Invalid_Body(t *testing.T) {
 	t.Parallel()
 
 	var body struct {
 		Key string `json:"key"`
 	}
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 
-	ok := rw.Read(
+	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
 		httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte(`{ invalid json }`))),
 		&body,
@@ -60,16 +51,16 @@ func TestJSONRW_Read_Invalid_Body(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestJSONRW_Read_Validator(t *testing.T) {
+func TestReaderWriter_ReadJSON_Validator(t *testing.T) {
 	t.Parallel()
 
 	var body struct {
 		Key string `json:"key" valid:"email"`
 	}
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 
-	ok := rw.Read(
+	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
 		httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte(`{"key": "value"}`))),
 		&body,
@@ -78,78 +69,86 @@ func TestJSONRW_Read_Validator(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestJSONRW_OK(t *testing.T) {
+func TestReaderWriter_WriteJSON_Data(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 	resp := httptest.NewRecorder()
 
-	rw.OK(resp, map[string]string{
-		"key": "val",
+	rw.WriteJSON(resp, chttp.WriteJSONParams{
+		Data: map[string]string{
+			"key": "val",
+		},
 	})
 
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Equal(t, "application/json", resp.Header().Get("content-type"))
-	assert.Equal(t, `{"key":"val"}`, resp.Body.String())
+	assert.Contains(t, resp.Body.String(), `{"key":"val"}`)
 }
 
-func TestJSONRW_Created(t *testing.T) {
+func TestReaderWriter_WriteJSON_StatusCode(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 	resp := httptest.NewRecorder()
 
-	rw.Created(resp, map[string]string{
-		"key": "val",
+	rw.WriteJSON(resp, chttp.WriteJSONParams{
+		StatusCode: http.StatusCreated,
+		Data: map[string]string{
+			"key": "val",
+		},
 	})
 
 	assert.Equal(t, http.StatusCreated, resp.Code)
 	assert.Equal(t, "application/json", resp.Header().Get("content-type"))
-	assert.Equal(t, `{"key":"val"}`, resp.Body.String())
+	assert.Contains(t, resp.Body.String(), `{"key":"val"}`)
 }
 
-func TestJSONRW_InternalErr(t *testing.T) {
+func TestReaderWriter_WriteJSON_Error(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
 	resp := httptest.NewRecorder()
 
-	rw.InternalErr(resp)
-
-	assert.Equal(t, http.StatusInternalServerError, resp.Code)
-}
-
-func TestJSONRW_Unauthorized(t *testing.T) {
-	t.Parallel()
-
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
-	resp := httptest.NewRecorder()
-
-	rw.Unauthorized(resp)
-
-	assert.Equal(t, http.StatusUnauthorized, resp.Code)
-}
-
-func TestJSONRW_Forbidden(t *testing.T) {
-	t.Parallel()
-
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
-	resp := httptest.NewRecorder()
-
-	rw.Forbidden(resp)
-
-	assert.Equal(t, http.StatusForbidden, resp.Code)
-}
-
-func TestJSONRW_BadRequest(t *testing.T) {
-	t.Parallel()
-
-	rw := chttp.NewJSONReaderWriter(clogger.NewNoop())
-	resp := httptest.NewRecorder()
-
-	rw.BadRequest(resp, errors.New("test-err")) //nolint:goerr113
+	rw.WriteJSON(resp, chttp.WriteJSONParams{
+		StatusCode: http.StatusBadRequest,
+		Data:       errors.New("test-err"), //nolint:goerr113
+	})
 
 	assert.Equal(t, http.StatusBadRequest, resp.Code)
 	assert.Equal(t, "application/json", resp.Header().Get("content-type"))
-	assert.Equal(t, `{"error":"test-err"}`, resp.Body.String())
+	assert.Contains(t, resp.Body.String(), `{"error":"test-err"}`)
+}
+
+func TestReaderWriter_WriteHTML(t *testing.T) {
+	t.Parallel()
+
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	resp := httptest.NewRecorder()
+
+	rw.WriteHTML(resp, chttp.WriteHTMLParams{
+		StatusCode:   http.StatusOK,
+		Data:         map[string]string{"user": "test"},
+		PageTemplate: "index.html",
+	})
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, "text/html", resp.Header().Get("content-type"))
+	assert.Contains(t, resp.Body.String(), `Test Page`)
+}
+
+func TestReaderWriter_WriteHTML_NotFound(t *testing.T) {
+	t.Parallel()
+
+	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.New())
+	resp := httptest.NewRecorder()
+
+	rw.WriteHTML(resp, chttp.WriteHTMLParams{
+		StatusCode: http.StatusNotFound,
+		Data:       map[string]string{"user": "test"},
+	})
+
+	assert.Equal(t, http.StatusNotFound, resp.Code)
+	assert.Equal(t, "text/html", resp.Header().Get("content-type"))
+	assert.Contains(t, resp.Body.String(), `not found`)
 }
