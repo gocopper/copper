@@ -12,12 +12,18 @@ import (
 	"github.com/tusharsoni/copper/cerrors"
 )
 
-// Env defines the various environments the app can be configured for.
-// The Env may be dev, test, staging, or prod.
-type Env string
+type (
+	// Env defines the various environments the app can be configured for.
+	// The Env may be dev, test, staging, or prod.
+	Env string
 
-// Dir defines the directory where config file(s) live.
-type Dir string
+	// Dir defines the directory where config file(s) live.
+	Dir string
+
+	// ProjectDir defines the project directory. This variable can be used in the config file with {{ .ProjectDir }}.
+	// It is set by passing a -project flag to the app binary.
+	ProjectDir string
+)
 
 // Config provides methods to read app config.
 type Config interface {
@@ -33,21 +39,21 @@ const (
 // New provides an implementation of Config that reads config files in the
 // dir. By default, it reads from base.toml and can be overridden by a file
 // corresponding to the env. For 'test' env, the file should be test.toml.
-func New(dir Dir, env Env) (Config, error) {
+func New(dir Dir, projectDir ProjectDir, env Env) (Config, error) {
 	var (
 		baseConfigPath    = path.Join(string(dir), baseTomlConfigFileName)
 		envConfigPath     = path.Join(string(dir), strings.ToLower(string(env))+tomlExt)
 		secretsConfigPath = path.Join(string(dir), secretsTomlConfigFileName)
 	)
 
-	baseTree, err := toml.LoadFile(baseConfigPath)
+	baseTree, err := loadTOMLTemplate(baseConfigPath, projectDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, cerrors.New(err, "failed to load base config file", map[string]interface{}{
 			"path": baseConfigPath,
 		})
 	}
 
-	envTree, err := toml.LoadFile(envConfigPath)
+	envTree, err := loadTOMLTemplate(envConfigPath, projectDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, cerrors.New(err, "failed to load env config file", map[string]interface{}{
 			"env":  env,
@@ -55,7 +61,7 @@ func New(dir Dir, env Env) (Config, error) {
 		})
 	}
 
-	secretsTree, err := toml.LoadFile(secretsConfigPath)
+	secretsTree, err := loadTOMLTemplate(secretsConfigPath, projectDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, cerrors.New(err, "failed to load secrets config file", map[string]interface{}{
 			"path": secretsConfigPath,

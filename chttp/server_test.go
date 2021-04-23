@@ -22,7 +22,7 @@ func TestServer_Run(t *testing.T) {
 	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, `
 [chttp]
 Port = 8999
-`, ""), "test")
+`, ""), ".", "test")
 	assert.NoError(t, err)
 
 	server := chttp.NewServer(chttp.NewServerParams{

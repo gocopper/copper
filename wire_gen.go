@@ -17,8 +17,9 @@ import (
 func InitApp() (*App, error) {
 	flags := NewFlags()
 	dir := flags.ConfigDir
+	projectDir := flags.ProjectDir
 	env := flags.Env
-	config, err := cconfig.New(dir, env)
+	config, err := cconfig.New(dir, projectDir, env)
 	if err != nil {
 		return nil, err
 	}

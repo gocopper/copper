@@ -19,7 +19,7 @@ func TestNewDBConnection(t *testing.T) {
 	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, `
 [csql]
 dsn = ":memory:"
-`, ""), "test")
+`, ""), ".", "test")
 	assert.NoError(t, err)
 
 	db, err := csql.NewDBConnection(lc, config, logger)

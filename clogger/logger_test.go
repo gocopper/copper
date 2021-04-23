@@ -41,7 +41,7 @@ out = "%s"
 err = "%s"
 `, log.Name(), log.Name())
 
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
 	assert.NoError(t, err)
 
 	logger, err := clogger.NewWithConfig(config)
@@ -70,7 +70,7 @@ func TestNewWithConfig_OutFileErr(t *testing.T) {
 out = "%s"
 `, log.Name())
 
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
 	assert.NoError(t, err)
 
 	_, err = clogger.NewWithConfig(config)
@@ -94,7 +94,7 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 err = "%s"
 `, log.Name())
 
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), "test")
+	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
 	assert.NoError(t, err)
 
 	_, err = clogger.NewWithConfig(config)

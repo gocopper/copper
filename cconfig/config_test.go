@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	envTest = "test"
+	envTest    = "test"
+	projectDir = "/tmp/project-dir"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -17,7 +18,7 @@ func TestNewConfig(t *testing.T) {
 
 	configDir := cconfigtest.SetupDirWithConfigs(t, "", "", "")
 
-	config, err := cconfig.New(configDir, envTest)
+	config, err := cconfig.New(configDir, projectDir, envTest)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, config)
@@ -50,7 +51,7 @@ secrets = "secrets"
 
 	dir := cconfigtest.SetupDirWithConfigs(t, base, env, secrets)
 
-	config, err := cconfig.New(dir, envTest)
+	config, err := cconfig.New(dir, projectDir, envTest)
 	assert.NoError(t, err)
 
 	err = config.Load("group1", &testConfig)
@@ -60,4 +61,27 @@ secrets = "secrets"
 	assert.Equal(t, "base", testConfig.Base)
 	assert.Equal(t, "env", testConfig.Env)
 	assert.Equal(t, "secrets", testConfig.Secrets)
+}
+
+func TestConfig_Template(t *testing.T) {
+	t.Parallel()
+
+	var testConfig struct {
+		Path string
+	}
+
+	base := `
+[group1]
+path = "{{ .ProjectDir }}"
+`
+
+	dir := cconfigtest.SetupDirWithConfigs(t, base)
+
+	config, err := cconfig.New(dir, projectDir, envTest)
+	assert.NoError(t, err)
+
+	err = config.Load("group1", &testConfig)
+	assert.NoError(t, err)
+
+	assert.Equal(t, projectDir, testConfig.Path)
 }
