@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/gocopper/copper/cerrors"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
-	"github.com/tusharsoni/copper/cerrors"
 )
 
 type (

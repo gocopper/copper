@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gocopper/copper/cerrors"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cerrors"
 )
 
 func TestNew(t *testing.T) {

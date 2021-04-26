@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cerrors"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cerrors"
 )
 
 // Logger can be used to log messages and errors.

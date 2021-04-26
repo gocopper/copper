@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cconfig/cconfigtest"
+	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cconfig/cconfigtest"
-	"github.com/tusharsoni/copper/clogger"
 )
 
 func TestNew(t *testing.T) {

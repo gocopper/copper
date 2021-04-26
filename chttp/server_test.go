@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gocopper/copper"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cconfig/cconfigtest"
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cconfig/cconfigtest"
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/clogger"
 )
 
 func TestServer_Run(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/clogger"
 )
 
 // Runner provides an interface that can be run by a Copper app using the Run or Start funcs.

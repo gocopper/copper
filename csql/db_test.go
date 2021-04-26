@@ -3,12 +3,12 @@ package csql_test
 import (
 	"testing"
 
+	"github.com/gocopper/copper"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cconfig/cconfigtest"
+	"github.com/gocopper/copper/clogger"
+	"github.com/gocopper/copper/csql"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cconfig/cconfigtest"
-	"github.com/tusharsoni/copper/clogger"
-	"github.com/tusharsoni/copper/csql"
 )
 
 func TestNewDBConnection(t *testing.T) {

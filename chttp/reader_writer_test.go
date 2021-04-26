@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/tusharsoni/copper/chttp/chttptest"
+	"github.com/gocopper/copper/chttp/chttptest"
 
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/clogger"
 )
 
 func TestReaderWriter_ReadJSON(t *testing.T) {

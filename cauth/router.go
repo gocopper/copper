@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/clogger"
 )
 
 // NewRouterParams holds the dependencies to create a new Router.

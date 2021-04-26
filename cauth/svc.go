@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/crandom"
 	"github.com/google/uuid"
-	"github.com/tusharsoni/copper/cerrors"
-	"github.com/tusharsoni/copper/crandom"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

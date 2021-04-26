@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cerrors"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cerrors"
 )
 
 type (

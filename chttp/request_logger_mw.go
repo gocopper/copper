@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/clogger"
 )
 
 var errRWIsNotHijacker = errors.New("internal response writer is not http.Hijacker")

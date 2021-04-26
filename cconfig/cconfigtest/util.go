@@ -6,8 +6,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/gocopper/copper/cconfig"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cconfig"
 )
 
 // SetupDirWithConfigs creates a temp directory that can store config files.

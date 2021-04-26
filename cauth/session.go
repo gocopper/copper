@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/clogger"
 )
 
 type ctxKey string

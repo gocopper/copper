@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gocopper/copper/cauth"
+	"github.com/gocopper/copper/cauth/cauthtest"
+	"github.com/gocopper/copper/chttp"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cauth"
-	"github.com/tusharsoni/copper/cauth/cauthtest"
-	"github.com/tusharsoni/copper/chttp"
 )
 
 func TestRouter_HandleSignup(t *testing.T) {

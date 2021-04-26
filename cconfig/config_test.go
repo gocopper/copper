@@ -3,9 +3,9 @@ package cconfig_test
 import (
 	"testing"
 
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cconfig/cconfigtest"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cconfig/cconfigtest"
 )
 
 const (

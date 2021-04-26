@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tusharsoni/copper"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/cerrors"
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper"
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/clogger"
 )
 
 // NewServerParams holds the params needed to create a server.

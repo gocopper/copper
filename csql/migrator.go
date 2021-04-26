@@ -1,7 +1,7 @@
 package csql
 
 import (
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/clogger"
 )
 
 // Migration can be implemented by any struct that runs a database migration

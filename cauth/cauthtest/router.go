@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tusharsoni/copper/chttp/chttptest"
+	"github.com/gocopper/copper/chttp/chttptest"
 
+	"github.com/gocopper/copper/cauth"
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/cauth"
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/clogger"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"

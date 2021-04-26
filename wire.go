@@ -3,9 +3,9 @@
 package copper
 
 import (
+	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/clogger"
 	"github.com/google/wire"
-	"github.com/tusharsoni/copper/cconfig"
-	"github.com/tusharsoni/copper/clogger"
 )
 
 // InitApp creates a new Copper app along with its dependencies.

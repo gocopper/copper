@@ -3,7 +3,7 @@ package copper
 import (
 	"flag"
 
-	"github.com/tusharsoni/copper/cconfig"
+	"github.com/gocopper/copper/cconfig"
 )
 
 // Flags holds flag values passed in via command line. These can be used to configure the app environment

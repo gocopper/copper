@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
+	"github.com/gocopper/copper/cmailer"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/clogger"
-	"github.com/tusharsoni/copper/cmailer"
 )
 
 func TestNewLogMailer(t *testing.T) {

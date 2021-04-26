@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/clogger"
 )
 
 func TestNewRecorder(t *testing.T) {

@@ -3,7 +3,7 @@ package cauth
 import (
 	"context"
 
-	"github.com/tusharsoni/copper/cerrors"
+	"github.com/gocopper/copper/cerrors"
 	"gorm.io/gorm"
 )
 

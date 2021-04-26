@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/chttp"
+	"github.com/gocopper/copper/chttp/chttptest"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/chttp"
-	"github.com/tusharsoni/copper/chttp/chttptest"
 )
 
 func TestNewHandler(t *testing.T) {

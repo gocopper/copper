@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
+	"github.com/gocopper/copper/crandom"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/crandom"
 )
 
 func TestGenerateRandomNumericalCode(t *testing.T) {

@@ -3,7 +3,7 @@ package cmailer
 import (
 	"context"
 
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/clogger"
 )
 
 // NewLogMailer creates an implementation of Mailer that logs

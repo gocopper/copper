@@ -1,6 +1,6 @@
 package chttptest
 
-import "github.com/tusharsoni/copper/chttp"
+import "github.com/gocopper/copper/chttp"
 
 // ReverseRoutes reverses the provided slice of chttp.Route.
 func ReverseRoutes(routes []chttp.Route) []chttp.Route {

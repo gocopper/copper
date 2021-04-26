@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/chttp"
 	"github.com/stretchr/testify/assert"
-	"github.com/tusharsoni/copper/chttp"
 )
 
 // PingRoutes creates a handler using chttp.NewHandler, starts a test

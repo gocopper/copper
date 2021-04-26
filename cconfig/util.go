@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/gocopper/copper/cerrors"
 	"github.com/pelletier/go-toml"
-	"github.com/tusharsoni/copper/cerrors"
 )
 
 func loadTOMLTemplate(fp string, pd ProjectDir) (*toml.Tree, error) {

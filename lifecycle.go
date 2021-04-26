@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/clogger"
 )
 
 const defaultStopTimeout = 10 * time.Second

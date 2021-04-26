@@ -8,8 +8,8 @@ import (
 	"path"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/tusharsoni/copper/cerrors"
-	"github.com/tusharsoni/copper/clogger"
+	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/clogger"
 )
 
 type (
