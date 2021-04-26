@@ -1,4 +1,4 @@
-module github.com/tusharsoni/copper
+module github.com/gocopper/copper
 
 go 1.16
 
