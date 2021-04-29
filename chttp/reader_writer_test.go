@@ -10,7 +10,6 @@ import (
 	"github.com/gocopper/copper/chttp/chttptest"
 
 	"github.com/gocopper/copper/chttp"
-	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +20,7 @@ func TestReaderWriter_ReadJSON(t *testing.T) {
 		Key string `json:"key"`
 	}
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 
 	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
@@ -40,7 +39,7 @@ func TestReaderWriter_ReadJSON_Invalid_Body(t *testing.T) {
 		Key string `json:"key"`
 	}
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 
 	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
@@ -58,7 +57,7 @@ func TestReaderWriter_ReadJSON_Validator(t *testing.T) {
 		Key string `json:"key" valid:"email"`
 	}
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 
 	ok := rw.ReadJSON(
 		httptest.NewRecorder(),
@@ -72,7 +71,7 @@ func TestReaderWriter_ReadJSON_Validator(t *testing.T) {
 func TestReaderWriter_WriteJSON_Data(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 	resp := httptest.NewRecorder()
 
 	rw.WriteJSON(resp, chttp.WriteJSONParams{
@@ -89,7 +88,7 @@ func TestReaderWriter_WriteJSON_Data(t *testing.T) {
 func TestReaderWriter_WriteJSON_StatusCode(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 	resp := httptest.NewRecorder()
 
 	rw.WriteJSON(resp, chttp.WriteJSONParams{
@@ -107,7 +106,7 @@ func TestReaderWriter_WriteJSON_StatusCode(t *testing.T) {
 func TestReaderWriter_WriteJSON_Error(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 	resp := httptest.NewRecorder()
 
 	rw.WriteJSON(resp, chttp.WriteJSONParams{
@@ -123,10 +122,10 @@ func TestReaderWriter_WriteJSON_Error(t *testing.T) {
 func TestReaderWriter_WriteHTML(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.NewNoop())
+	rw := chttptest.NewReaderWriter(t)
 	resp := httptest.NewRecorder()
 
-	rw.WriteHTML(resp, chttp.WriteHTMLParams{
+	rw.WriteHTML(resp, httptest.NewRequest(http.MethodGet, "/", nil), chttp.WriteHTMLParams{
 		StatusCode:   http.StatusOK,
 		Data:         map[string]string{"user": "test"},
 		PageTemplate: "index.html",
@@ -140,10 +139,10 @@ func TestReaderWriter_WriteHTML(t *testing.T) {
 func TestReaderWriter_WriteHTML_NotFound(t *testing.T) {
 	t.Parallel()
 
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, clogger.New())
+	rw := chttptest.NewReaderWriter(t)
 	resp := httptest.NewRecorder()
 
-	rw.WriteHTML(resp, chttp.WriteHTMLParams{
+	rw.WriteHTML(resp, httptest.NewRequest(http.MethodGet, "/", nil), chttp.WriteHTMLParams{
 		StatusCode: http.StatusNotFound,
 		Data:       map[string]string{"user": "test"},
 	})

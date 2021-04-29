@@ -11,7 +11,6 @@ import (
 	"github.com/gocopper/copper/chttp/chttptest"
 
 	"github.com/gocopper/copper/cauth"
-	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
@@ -24,7 +23,7 @@ func NewRouter(t *testing.T) *cauth.Router {
 	t.Helper()
 
 	logger := clogger.New()
-	rw := chttp.NewReaderWriter(chttptest.HTMLDir, logger)
+	rw := chttptest.NewReaderWriter(t)
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{ // nolint: exhaustivestruct
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),

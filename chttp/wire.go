@@ -9,4 +9,5 @@ var WireModule = wire.NewSet( //nolint:gochecknoglobals
 	wire.Struct(new(NewServerParams), "*"),
 	NewServer,
 	NewStaticRouter,
+	NewHTMLRenderer,
 )

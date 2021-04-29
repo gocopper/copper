@@ -40,3 +40,12 @@ func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
 
 	return cconfig.Dir(dir)
 }
+
+func NewEmptyConfig(t *testing.T) cconfig.Config {
+	t.Helper()
+
+	c, err := cconfig.New(SetupDirWithConfigs(t), ".", "test")
+	assert.NoError(t, err)
+
+	return c
+}

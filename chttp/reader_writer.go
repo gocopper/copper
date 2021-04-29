@@ -2,10 +2,7 @@ package chttp
 
 import (
 	"encoding/json"
-	"html/template"
-	"io/fs"
 	"net/http"
-	"path"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gocopper/copper/cerrors"
@@ -13,10 +10,6 @@ import (
 )
 
 type (
-	// HTMLDir is a directory that can be embedded or found on the host system. It should contain sub-directories
-	// and files to support the WriteHTML function in ReaderWriter.
-	HTMLDir fs.FS
-
 	// WriteJSONParams holds the params for the WriteJSON function in ReaderWriter
 	WriteJSONParams struct {
 		StatusCode int
@@ -33,22 +26,22 @@ type (
 
 	// ReaderWriter provides functions to read data from HTTP requests and write response bodies in various formats
 	ReaderWriter struct {
-		htmlDir fs.FS
-		logger  clogger.Logger
+		renderer *HTMLRenderer
+		logger   clogger.Logger
 	}
 )
 
 // NewReaderWriter instantiates a new ReaderWriter with its dependencies
-func NewReaderWriter(htmlDir HTMLDir, logger clogger.Logger) *ReaderWriter {
+func NewReaderWriter(renderer *HTMLRenderer, logger clogger.Logger) *ReaderWriter {
 	return &ReaderWriter{
-		htmlDir: htmlDir,
-		logger:  logger,
+		renderer: renderer,
+		logger:   logger,
 	}
 }
 
 // WriteHTML writes an HTML response to the provided http.ResponseWriter. Using the given WriteHTMLParams, the HTML
 // is generated with a layout, page, and component templates.
-func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, p WriteHTMLParams) {
+func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p WriteHTMLParams) {
 	if p.StatusCode == 0 {
 		p.StatusCode = http.StatusOK
 	}
@@ -61,13 +54,9 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, p WriteHTMLParams) {
 		p.PageTemplate = "not-found.html"
 	}
 
-	tmpl, err := template.ParseFS(rw.htmlDir,
-		path.Join("html", "layouts", p.LayoutTemplate),
-		path.Join("html", "pages", p.PageTemplate),
-		path.Join("html", "components", "*.html"),
-	)
+	out, err := rw.renderer.render(r, p.LayoutTemplate, p.PageTemplate, p.Data)
 	if err != nil {
-		rw.logger.Error("Failed to render view template", cerrors.WithTags(err, map[string]interface{}{
+		rw.logger.Error("Failed to render html template", cerrors.WithTags(err, map[string]interface{}{
 			"layout": p.LayoutTemplate,
 			"page":   p.PageTemplate,
 		}))
@@ -77,13 +66,7 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, p WriteHTMLParams) {
 
 	w.WriteHeader(p.StatusCode)
 	w.Header().Set("content-type", "text/html")
-
-	err = tmpl.Execute(w, p.Data)
-	if err != nil {
-		rw.logger.Error("Failed to render view template", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	_, _ = w.Write([]byte(out))
 }
 
 // WriteJSON writes a JSON response to the http.ResponseWriter. It can be configured with status code and data using
