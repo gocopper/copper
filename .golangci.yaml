@@ -32,7 +32,6 @@ linters:
     - govet
     - ineffassign
     - interfacer
-    - lll
     - misspell
     - nakedret
     - noctx

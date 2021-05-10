@@ -8,6 +8,7 @@ var WireModule = wire.NewSet( //nolint:gochecknoglobals
 	NewRequestLoggerMiddleware,
 	wire.Struct(new(NewServerParams), "*"),
 	NewServer,
-	NewStaticRouter,
+	wire.Struct(new(NewHTMLRouterParams), "*"),
+	NewHTMLRouter,
 	NewHTMLRenderer,
 )
