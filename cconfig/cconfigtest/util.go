@@ -41,6 +41,7 @@ func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
 	return cconfig.Dir(dir)
 }
 
+// NewEmptyConfig is a helper method to create an empty app config
 func NewEmptyConfig(t *testing.T) cconfig.Config {
 	t.Helper()
 
