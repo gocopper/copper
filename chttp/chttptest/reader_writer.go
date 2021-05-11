@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gocopper/copper/cconfig/cconfigtest"
+
 	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,12 @@ import (
 func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
 	t.Helper()
 
-	r, err := chttp.NewHTMLRenderer(HTMLDir, nil, cconfigtest.NewEmptyConfig(t))
+	r, err := chttp.NewHTMLRenderer(chttp.NewHTMLRendererParams{
+		HTMLDir:    HTMLDir,
+		StaticDir:  nil,
+		Components: nil,
+		AppConfig:  cconfigtest.NewEmptyConfig(t),
+	})
 	assert.NoError(t, err)
 
 	return chttp.NewReaderWriter(r, clogger.NewNoop())

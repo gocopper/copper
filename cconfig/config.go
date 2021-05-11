@@ -27,6 +27,7 @@ type (
 
 // Config provides methods to read app config.
 type Config interface {
+	Env() Env
 	Load(key string, dest interface{}) error
 }
 
@@ -69,16 +70,22 @@ func New(dir Dir, projectDir ProjectDir, env Env) (Config, error) {
 	}
 
 	return &config{
-		base:    baseTree,
-		env:     envTree,
-		secrets: secretsTree,
+		base:       baseTree,
+		env:        envTree,
+		secrets:    secretsTree,
+		currentEnv: env,
 	}, nil
 }
 
 type config struct {
-	base    *toml.Tree
-	env     *toml.Tree
-	secrets *toml.Tree
+	base       *toml.Tree
+	env        *toml.Tree
+	secrets    *toml.Tree
+	currentEnv Env
+}
+
+func (c *config) Env() Env {
+	return c.currentEnv
 }
 
 func (c *config) Load(key string, dest interface{}) error {

@@ -32,27 +32,39 @@ type HTMLComponentSubscriber interface {
 
 // HTMLRenderer provides functionality in rendering templatized HTML along with HTML components
 type HTMLRenderer struct {
-	dir        HTMLDir
+	htmlDir    HTMLDir
+	staticDir  StaticDir
 	components []HTMLComponent
+	env        cconfig.Env
+}
+
+// NewHTMLRendererParams holds the params needed to create HTMLRenderer
+type NewHTMLRendererParams struct {
+	HTMLDir    HTMLDir
+	StaticDir  StaticDir
+	Components []HTMLComponent
+	AppConfig  cconfig.Config
 }
 
 // NewHTMLRenderer creates a new HTMLRenderer with HTML templates stored in dir and registers the provided HTML
 // components
-func NewHTMLRenderer(dir HTMLDir, components []HTMLComponent, appConfig cconfig.Config) (*HTMLRenderer, error) {
+func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	var config config
 
 	hr := HTMLRenderer{
-		dir:        dir,
-		components: components,
+		htmlDir:    p.HTMLDir,
+		staticDir:  p.StaticDir,
+		components: p.Components,
+		env:        p.AppConfig.Env(),
 	}
 
-	err := appConfig.Load("chttp", &config)
+	err := p.AppConfig.Load("chttp", &config)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load chttp config", nil)
 	}
 
 	if config.WebDir != "" {
-		hr.dir = os.DirFS(config.WebDir)
+		hr.htmlDir = os.DirFS(config.WebDir)
 	}
 
 	return &hr, nil
@@ -62,6 +74,7 @@ func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
 	return template.FuncMap{
 		"component": r.component(req, nil),
 		"partial":   r.partial(req),
+		"assets":    r.assets,
 	}
 }
 
@@ -70,7 +83,7 @@ func (r *HTMLRenderer) render(req *http.Request, layout, page string, data inter
 
 	tmpl, err := template.New(layout).
 		Funcs(r.funcMap(req)).
-		ParseFS(r.dir,
+		ParseFS(r.htmlDir,
 			path.Join("html", "layouts", layout),
 			path.Join("html", "pages", page),
 		)
@@ -158,7 +171,7 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 
 		tmpl, err := template.New(name+".html").
 			Funcs(r.funcMap(req)).
-			ParseFS(r.dir,
+			ParseFS(r.htmlDir,
 				path.Join("html", "partials", "*.html"),
 			)
 		if err != nil {
@@ -218,7 +231,7 @@ func (r *HTMLRenderer) component(req *http.Request, id *string) func(componentNa
 
 		tmpl, err := template.New(component.Name()+".html").
 			Funcs(r.funcMap(req)).
-			ParseFS(r.dir,
+			ParseFS(r.htmlDir,
 				path.Join("html", "components", "*.html"),
 			)
 		if err != nil {
@@ -269,4 +282,40 @@ func (r *HTMLRenderer) component(req *http.Request, id *string) func(componentNa
 		// nolint:gosec
 		return template.HTML(wrappedComponent), nil
 	}
+}
+
+func (r *HTMLRenderer) assets() (template.HTML, error) {
+	if r.env == "dev" {
+		return `<script type="module" src="http://localhost:3000/@vite/client"></script>
+    <script type="module" src="http://localhost:3000/src/main.js"></script>`, nil
+	}
+
+	var (
+		manifest struct {
+			MainJS struct {
+				File string   `json:"file"`
+				CSS  []string `json:"css"`
+			} `json:"src/main.js"`
+		}
+		out strings.Builder
+	)
+
+	manifestFile, err := r.staticDir.Open("static/dist/manifest.json")
+	if err != nil {
+		return "", cerrors.New(err, "failed to open manifest.json", nil)
+	}
+
+	err = json.NewDecoder(manifestFile).Decode(&manifest)
+	if err != nil {
+		return "", cerrors.New(err, "failed to decode manifest.json", nil)
+	}
+
+	if len(manifest.MainJS.CSS) == 1 {
+		out.WriteString(fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/dist/%s\" />\n", manifest.MainJS.CSS[0]))
+	}
+
+	out.WriteString(fmt.Sprintf("<script type=\"module\" src=\"/static/dist/%s\"></script>", manifest.MainJS.File))
+
+	//nolint:gosec
+	return template.HTML(out.String()), nil
 }
