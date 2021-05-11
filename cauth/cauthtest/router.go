@@ -1,12 +1,15 @@
 package cauthtest
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gocopper/copper/chttp"
 
 	"github.com/gocopper/copper/chttp/chttptest"
 
@@ -18,8 +21,8 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
-// NewRouter instantiates and returns a router suited for testing.
-func NewRouter(t *testing.T) *cauth.Router {
+// NewHandler instantiates and returns a http.Handler with auth roter and middlewares suited for testing.
+func NewHandler(t *testing.T) http.Handler {
 	t.Helper()
 
 	logger := clogger.New()
@@ -35,18 +38,26 @@ func NewRouter(t *testing.T) *cauth.Router {
 
 	svc := cauth.NewSvc(cauth.NewRepo(db))
 
-	sessionMW := cauth.NewVerifySessionMiddleware(svc, rw, logger)
+	setSessionMW := cauth.NewSetSessionMiddleware(svc, rw, logger)
+	verifySessionMW := cauth.NewVerifySessionMiddleware(svc, rw, logger)
 
-	return cauth.NewRouter(cauth.NewRouterParams{
+	router := cauth.NewRouter(cauth.NewRouterParams{
 		Auth:      svc,
 		RW:        rw,
-		SessionMW: sessionMW,
+		SessionMW: verifySessionMW,
 		Logger:    logger,
 	})
+
+	handler := chttp.NewHandler(chttp.NewHandlerParams{
+		Routers:           []chttp.Router{router},
+		GlobalMiddlewares: []chttp.Middleware{setSessionMW},
+	})
+
+	return handler
 }
 
 // CreateNewUserSession creates a new user using the given router and returns the session created by it.
-func CreateNewUserSession(t *testing.T, router *cauth.Router) *cauth.SessionResult {
+func CreateNewUserSession(t *testing.T, server *httptest.Server) *cauth.SessionResult {
 	t.Helper()
 
 	var session cauth.SessionResult
@@ -56,12 +67,18 @@ func CreateNewUserSession(t *testing.T, router *cauth.Router) *cauth.SessionResu
 		"password": "test-pass"
 	}`)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", reqBody)
-	resp := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(context.Background(),
+		http.MethodPost,
+		server.URL+"/api/auth/signup",
+		reqBody,
+	)
+	assert.NoError(t, err)
 
-	http.HandlerFunc(router.HandleSignup).ServeHTTP(resp, req)
+	resp, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
 
-	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	respBodyJ, err := ioutil.ReadAll(resp.Body)
 	assert.NoError(t, err)

@@ -9,6 +9,7 @@ var WireModule = wire.NewSet( // nolint:gochecknoglobals
 	NewSvc,
 	NewRepo,
 	NewMigration,
+	NewSetSessionMiddleware,
 	NewVerifySessionMiddleware,
 
 	wire.Struct(new(NewRouterParams), "*"),
