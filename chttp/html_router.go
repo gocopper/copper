@@ -1,7 +1,6 @@
 package chttp
 
 import (
-	"encoding/json"
 	"io/fs"
 	"net/http"
 
@@ -60,43 +59,5 @@ func (ro *HTMLRouter) Routes() []Route {
 			Methods: []string{http.MethodGet},
 			Handler: http.FileServer(http.FS(ro.dir)).ServeHTTP,
 		},
-		{
-			Path:    "/api/chtml/components/call-method",
-			Methods: []string{http.MethodPost},
-			Handler: ro.HandleCallComponentMethod,
-		},
 	}
-}
-
-// HandleCallComponentMethod calls the action method on the component along with its props and args.
-// The component is then re-rendered and the updated HTML along with any broadcasted events are
-// sent back in the response.
-func (ro *HTMLRouter) HandleCallComponentMethod(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		ID        string            `json:"id"`
-		Component string            `json:"component"`
-		Method    string            `json:"method"`
-		Props     []json.RawMessage `json:"props"`
-		Args      []json.RawMessage `json:"args"`
-	}
-
-	if !ro.rw.ReadJSON(w, r, &body) {
-		return
-	}
-
-	req := requestWithComponentTree(r)
-
-	html, err := ro.html.callComponentMethod(req, body.ID, body.Component, body.Method, body.Props, body.Args)
-	if err != nil {
-		ro.logger.Error("Failed to call component method", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	ro.rw.WriteJSON(w, WriteJSONParams{
-		Data: map[string]interface{}{
-			"events": GetComponentTree(req).events,
-			"html":   html,
-		},
-	})
 }

@@ -15,10 +15,9 @@ func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
 	t.Helper()
 
 	r, err := chttp.NewHTMLRenderer(chttp.NewHTMLRendererParams{
-		HTMLDir:    HTMLDir,
-		StaticDir:  nil,
-		Components: nil,
-		AppConfig:  cconfigtest.NewEmptyConfig(t),
+		HTMLDir:   HTMLDir,
+		StaticDir: nil,
+		AppConfig: cconfigtest.NewEmptyConfig(t),
 	})
 	assert.NoError(t, err)
 
