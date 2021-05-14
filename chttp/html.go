@@ -58,7 +58,7 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
 	return template.FuncMap{
 		"partial": r.partial(req),
-		"assets":  r.assets,
+		"assets":  r.assets(req),
 	}
 }
 
@@ -114,20 +114,59 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 	}
 }
 
-func (r *HTMLRenderer) assets() (template.HTML, error) {
-	if r.env == "dev" {
-		return `<script type="module" src="http://localhost:3000/@vite/client"></script>
-    <script type="module" src="http://localhost:3000/src/main.js"></script>`, nil
+func (r *HTMLRenderer) assets(req *http.Request) func() (template.HTML, error) {
+	return func() (template.HTML, error) {
+		if r.env == "dev" {
+			return r.devAssets(req)
+		}
+
+		return r.prodAssets()
+	}
+}
+
+func (r *HTMLRenderer) devAssets(req *http.Request) (template.HTML, error) {
+	const reactRefreshURL = "http://localhost:3000/@react-refresh"
+	var out strings.Builder
+
+	reactReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, reactRefreshURL, nil)
+	if err != nil {
+		return "", cerrors.New(err, "failed to create request for @react-refresh", nil)
 	}
 
+	resp, err := http.DefaultClient.Do(reactReq)
+	if err != nil {
+		return "", cerrors.New(err, "failed to execute request for @react-refresh", nil)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusOK {
+		out.WriteString(`
+<script type="module">
+  import RefreshRuntime from 'http://localhost:3000/@react-refresh'
+  RefreshRuntime.injectIntoGlobalHook(window)
+  window.$RefreshReg$ = () => {}
+  window.$RefreshSig$ = () => (type) => type
+  window.__vite_plugin_react_preamble_installed__ = true
+</script>`)
+	}
+
+	out.WriteString(`
+<script type="module" src="http://localhost:3000/@vite/client"></script>
+<script type="module" src="http://localhost:3000/src/main.js"></script>`)
+
+	// nolint:gosec
+	return template.HTML(out.String()), nil
+}
+
+func (r *HTMLRenderer) prodAssets() (template.HTML, error) {
 	var (
+		out      strings.Builder
 		manifest struct {
 			MainJS struct {
 				File string   `json:"file"`
 				CSS  []string `json:"css"`
 			} `json:"src/main.js"`
 		}
-		out strings.Builder
 	)
 
 	manifestFile, err := r.staticDir.Open("static/manifest.json")
