@@ -84,8 +84,8 @@ func (r *HTMLRenderer) render(req *http.Request, layout, page string, data inter
 	tmpl, err := template.New(layout).
 		Funcs(r.funcMap(req)).
 		ParseFS(r.htmlDir,
-			path.Join("html", "layouts", layout),
-			path.Join("html", "pages", page),
+			path.Join("src", "layouts", layout),
+			path.Join("src", "pages", page),
 		)
 	if err != nil {
 		return "", cerrors.New(err, "failed to parse templates in html dir", map[string]interface{}{
@@ -172,7 +172,7 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 		tmpl, err := template.New(name+".html").
 			Funcs(r.funcMap(req)).
 			ParseFS(r.htmlDir,
-				path.Join("html", "partials", "*.html"),
+				path.Join("src", "partials", "*.html"),
 			)
 		if err != nil {
 			return "", cerrors.New(err, "failed to parse partial template", map[string]interface{}{
@@ -232,7 +232,7 @@ func (r *HTMLRenderer) component(req *http.Request, id *string) func(componentNa
 		tmpl, err := template.New(component.Name()+".html").
 			Funcs(r.funcMap(req)).
 			ParseFS(r.htmlDir,
-				path.Join("html", "components", "*.html"),
+				path.Join("src", "components", "*.html"),
 			)
 		if err != nil {
 			return "", cerrors.New(err, "failed to parse component template", map[string]interface{}{
@@ -300,7 +300,7 @@ func (r *HTMLRenderer) assets() (template.HTML, error) {
 		out strings.Builder
 	)
 
-	manifestFile, err := r.staticDir.Open("static/dist/manifest.json")
+	manifestFile, err := r.staticDir.Open("static/manifest.json")
 	if err != nil {
 		return "", cerrors.New(err, "failed to open manifest.json", nil)
 	}
@@ -311,10 +311,10 @@ func (r *HTMLRenderer) assets() (template.HTML, error) {
 	}
 
 	if len(manifest.MainJS.CSS) == 1 {
-		out.WriteString(fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/dist/%s\" />\n", manifest.MainJS.CSS[0]))
+		out.WriteString(fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/%s\" />\n", manifest.MainJS.CSS[0]))
 	}
 
-	out.WriteString(fmt.Sprintf("<script type=\"module\" src=\"/static/dist/%s\"></script>", manifest.MainJS.File))
+	out.WriteString(fmt.Sprintf("<script type=\"module\" src=\"/static/%s\"></script>", manifest.MainJS.File))
 
 	//nolint:gosec
 	return template.HTML(out.String()), nil

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
-	"os"
 
 	"github.com/gocopper/copper/clogger"
 
@@ -48,10 +47,6 @@ func NewHTMLRouter(p NewHTMLRouterParams) (*HTMLRouter, error) {
 	err := p.AppConfig.Load("chttp", &config)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load chttp config", nil)
-	}
-
-	if config.WebDir != "" {
-		router.dir = os.DirFS(config.WebDir)
 	}
 
 	return &router, nil
