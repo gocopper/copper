@@ -1,0 +1,38 @@
+<style type="text/css">
+    @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Work+Sans&display=swap');
+
+    #error-box {
+        font-family: 'Work Sans', sans-serif;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 20px;
+        color: #D63B4B;
+    }
+
+    pre {
+        background-color: #FDF3F4;
+        padding: 10px;
+    }
+
+    code {
+        font-family: 'Source Code Pro', monospace;
+    }
+
+    #footer {
+        color: #B2B6B8;
+        font-size: 14px;
+    }
+</style>
+
+<div id="error-box">
+    <h1>Failed to handle request</h1>
+    <pre><code>> {{ .Error }}</code></pre>
+
+    <div id="footer">
+        This screen is visible only in development. It will not appear if the app crashes in production.
+        <br />
+        Check your app logs for more details on this error.
+    </div>
+</div>

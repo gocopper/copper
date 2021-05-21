@@ -2,12 +2,22 @@ package chttp
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
+	// embeds html templates
+	_ "embed"
+
 	"github.com/asaskevich/govalidator"
+	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
 )
+
+//go:embed error.html
+var errorHTML string
 
 type (
 	// WriteJSONParams holds the params for the WriteJSON function in ReaderWriter
@@ -19,6 +29,7 @@ type (
 	// WriteHTMLParams holds the params for the WriteHTML function in ReaderWriter
 	WriteHTMLParams struct {
 		StatusCode     int
+		Error          error
 		Data           interface{}
 		PageTemplate   string
 		LayoutTemplate string
@@ -28,30 +39,70 @@ type (
 	ReaderWriter struct {
 		renderer *HTMLRenderer
 		logger   clogger.Logger
+		env      cconfig.Env
 	}
 )
 
+// URLParams returns the route variables for the current request, if any
+var URLParams = mux.Vars
+
 // NewReaderWriter instantiates a new ReaderWriter with its dependencies
-func NewReaderWriter(renderer *HTMLRenderer, logger clogger.Logger) *ReaderWriter {
+func NewReaderWriter(renderer *HTMLRenderer, config cconfig.Config, logger clogger.Logger) *ReaderWriter {
 	return &ReaderWriter{
 		renderer: renderer,
+		env:      config.Env(),
 		logger:   logger,
 	}
+}
+
+// WriteHTMLError handles the given error. In dev environment, it writes an HTML page with the error.
+// Errors are logged in all environments.
+func (rw *ReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, err error) {
+	rw.WriteHTML(w, r, WriteHTMLParams{
+		Error: err,
+	})
 }
 
 // WriteHTML writes an HTML response to the provided http.ResponseWriter. Using the given WriteHTMLParams, the HTML
 // is generated with a layout, page, and component templates.
 func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p WriteHTMLParams) {
-	if p.StatusCode == 0 {
+	if p.StatusCode == 0 && p.Error == nil {
 		p.StatusCode = http.StatusOK
+	}
+
+	if p.StatusCode == 0 && p.Error != nil {
+		p.StatusCode = http.StatusInternalServerError
 	}
 
 	if p.LayoutTemplate == "" {
 		p.LayoutTemplate = "main.html"
 	}
 
+	if p.PageTemplate == "" && p.StatusCode == http.StatusInternalServerError {
+		p.PageTemplate = "internal-error.html"
+	}
+
 	if p.PageTemplate == "" && p.StatusCode == http.StatusNotFound {
 		p.PageTemplate = "not-found.html"
+	}
+
+	if p.Error != nil {
+		rw.logger.WithTags(map[string]interface{}{
+			"url": r.URL.String(),
+		}).Error("Failed to handle request", p.Error)
+	}
+
+	if p.Error != nil && rw.env == "dev" {
+		w.WriteHeader(p.StatusCode)
+		w.Header().Set("content-type", "text/html")
+
+		errorHTMLTmpl := template.Must(template.New("chttp/error.html").Parse(errorHTML))
+
+		_ = errorHTMLTmpl.Execute(w, map[string]interface{}{
+			"Error": p.Error.Error(),
+		})
+
+		return
 	}
 
 	out, err := rw.renderer.render(r, p.LayoutTemplate, p.PageTemplate, p.Data)

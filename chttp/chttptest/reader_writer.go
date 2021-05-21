@@ -21,5 +21,5 @@ func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
 	})
 	assert.NoError(t, err)
 
-	return chttp.NewReaderWriter(r, clogger.NewNoop())
+	return chttp.NewReaderWriter(r, cconfigtest.NewEmptyConfig(t), clogger.NewNoop())
 }
