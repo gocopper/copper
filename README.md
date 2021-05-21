@@ -58,16 +58,21 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 ## Getting Started
 
-> Copper requires Go 1.16+
+> Copper requires Go 1.16+, Node 12+
 
 <br  />
 
 1. Install the Copper CLI
 ```
-❯ go install github.com/gocopper/cli/cmd/copper
+❯ go install github.com/gocopper/cli/cmd/copper@latest
 ```
 
-2. Scaffold your project
+2. Install Wire CLI
+```
+❯ go install github.com/google/wire/cmd/wire@latest
+```
+
+3. Scaffold your project
 ```
 ❯ copper init
 ? What's the module name for your project? xnotes
@@ -108,16 +113,16 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 └──────────────┘
 ```
 
-3. Start Project
+4. Start Project
 ```cgo
 ❯ cd xnotes
 ❯ copper build
 ❯ copper watch
 ```
 
-4. Open http://localhost:5901 in your browser
+5. Open http://localhost:5901 in your browser
 
-5. Watch the tour on https://gocopper.dev
+6. Watch the tour on https://gocopper.dev
 
 <br />
 
