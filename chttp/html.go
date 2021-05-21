@@ -150,6 +150,34 @@ func (r *HTMLRenderer) devAssets(req *http.Request) (template.HTML, error) {
 </script>`)
 	}
 
+	// note: in dev mode only, the css is not part of the initial page load. since it is loaded async, there is
+	// a brief time period where the page has no styles. to avoid this, the following snippet hides the
+	// body until the css has been loaded.
+	out.WriteString(`
+<style type="text/css" id="copper-hide-body">
+	body { visibility: hidden; }
+</style>
+<script type="text/javascript">
+	(function() {
+		let interval;
+	
+		function showBodyIfStylesPresent() {
+			const styleEls = document.getElementsByTagName('style');
+			const copperHideBodyStyleEl = document.getElementById('copper-hide-body');
+			
+			if (!copperHideBodyStyleEl || styleEls.length === 1) {
+				return;
+			}
+			
+			copperHideBodyStyleEl.remove();
+			clearInterval(interval);
+		}
+	
+		interval = setInterval(showBodyIfStylesPresent, 100);
+	})();
+</script>
+`)
+
 	out.WriteString(`
 <script type="module" src="http://localhost:3000/@vite/client"></script>
 <script type="module" src="http://localhost:3000/src/main.js"></script>`)
