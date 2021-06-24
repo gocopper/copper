@@ -11,10 +11,11 @@ type User struct {
 	CreatedAt time.Time `gorm:"not null" json:"-"`
 	UpdatedAt time.Time `gorm:"not null" json:"-"`
 
+	Email    *string `json:"email,omitempty"`
 	Username *string `json:"username,omitempty"`
 
-	Password           []byte  `json:"-"`
-	PasswordResetToken *string `json:"-"`
+	Password           []byte `json:"-"`
+	PasswordResetToken []byte `json:"-"`
 }
 
 // TableName returns the table name where the users are stored.

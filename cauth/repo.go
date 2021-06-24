@@ -34,6 +34,20 @@ func (r *Repo) GetUserByUsername(ctx context.Context, username string) (*User, e
 	return &user, nil
 }
 
+// GetUserByEmail queries the users table for a user with the given email.
+func (r *Repo) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+
+	err := r.db.WithContext(ctx).Where("email=?", email).First(&user).Error
+	if err != nil {
+		return nil, cerrors.New(err, "failed to query user", map[string]interface{}{
+			"email": email,
+		})
+	}
+
+	return &user, nil
+}
+
 // SaveUser saves or creates the given user.
 func (r *Repo) SaveUser(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Save(user).Error

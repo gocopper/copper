@@ -9,6 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gocopper/copper/cconfig/cconfigtest"
+
+	"github.com/gocopper/copper/cmailer"
+
 	"github.com/gocopper/copper/chttp"
 
 	"github.com/gocopper/copper/chttp/chttptest"
@@ -36,7 +40,8 @@ func NewHandler(t *testing.T) http.Handler {
 	err = cauth.NewMigration(db).Run()
 	assert.NoError(t, err)
 
-	svc := cauth.NewSvc(cauth.NewRepo(db))
+	svc, err := cauth.NewSvc(cauth.NewRepo(db), cmailer.NewLogMailer(logger), cconfigtest.NewEmptyConfig(t))
+	assert.NoError(t, err)
 
 	setSessionMW := cauth.NewSetSessionMiddleware(svc, rw, logger)
 	verifySessionMW := cauth.NewVerifySessionMiddleware(svc, rw, logger)
