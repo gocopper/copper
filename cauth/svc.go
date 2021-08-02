@@ -69,7 +69,7 @@ type LoginParams struct {
 // Signup creates a new user. If contact methods such as email or phone are provided, it will send verification
 // codes so them. It creates a new session for this newly created user and returns that.
 func (s *Svc) Signup(ctx context.Context, p SignupParams) (*SessionResult, error) {
-	if p.Username != nil && p.Password == nil {
+	if p.Username != nil && p.Password != nil {
 		return s.signupWithUsernamePassword(ctx, *p.Username, *p.Password)
 	}
 

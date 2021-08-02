@@ -25,7 +25,7 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
-// NewHandler instantiates and returns a http.Handler with auth roter and middlewares suited for testing.
+// NewHandler instantiates and returns a http.Handler with auth router and middlewares suited for testing.
 func NewHandler(t *testing.T) http.Handler {
 	t.Helper()
 
