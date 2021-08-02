@@ -1,4 +1,4 @@
-package chttp
+package chtml
 
 import (
 	"encoding/json"
@@ -14,36 +14,41 @@ import (
 	"github.com/gocopper/copper/cerrors"
 )
 
-// HTMLDir is a directory that can be embedded or found on the host system. It should contain sub-directories
-// and files to support the WriteHTML function in ReaderWriter.
-type HTMLDir fs.FS
+type (
+	// HTMLDir is a directory that can be embedded or found on the host system. It should contain sub-directories
+	// and files to support the WriteHTML function in ReaderWriter.
+	HTMLDir fs.FS
 
-// HTMLRenderer provides functionality in rendering templatized HTML along with HTML components
-type HTMLRenderer struct {
-	htmlDir   HTMLDir
-	staticDir StaticDir
-	env       cconfig.Env
-}
+	// StaticDir represents a directory that holds static resources (JS, CSS, images, etc.)
+	StaticDir fs.FS
 
-// NewHTMLRendererParams holds the params needed to create HTMLRenderer
-type NewHTMLRendererParams struct {
-	HTMLDir   HTMLDir
-	StaticDir StaticDir
-	AppConfig cconfig.Config
-}
+	// Renderer provides functionality in rendering templatized HTML along with HTML components
+	Renderer struct {
+		htmlDir   HTMLDir
+		staticDir StaticDir
+		env       cconfig.Env
+	}
 
-// NewHTMLRenderer creates a new HTMLRenderer with HTML templates stored in dir and registers the provided HTML
+	// NewRendererParams holds the params needed to create Renderer
+	NewRendererParams struct {
+		HTMLDir   HTMLDir
+		StaticDir StaticDir
+		AppConfig cconfig.Config
+	}
+)
+
+// NewRenderer creates a new Renderer with HTML templates stored in dir and registers the provided HTML
 // components
-func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
+func NewRenderer(p NewRendererParams) (*Renderer, error) {
 	var config config
 
-	hr := HTMLRenderer{
+	hr := Renderer{
 		htmlDir:   p.HTMLDir,
 		staticDir: p.StaticDir,
 		env:       p.AppConfig.Env(),
 	}
 
-	err := p.AppConfig.Load("chttp", &config)
+	err := p.AppConfig.Load("chtml", &config)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load chttp config", nil)
 	}
@@ -55,14 +60,14 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	return &hr, nil
 }
 
-func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
+func (r *Renderer) funcMap(req *http.Request) template.FuncMap {
 	return template.FuncMap{
 		"partial": r.partial(req),
 		"assets":  r.assets(req),
 	}
 }
 
-func (r *HTMLRenderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
+func (r *Renderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
 	var dest strings.Builder
 
 	tmpl, err := template.New(layout).
@@ -87,7 +92,7 @@ func (r *HTMLRenderer) render(req *http.Request, layout, page string, data inter
 	return template.HTML(dest.String()), nil
 }
 
-func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interface{}) (template.HTML, error) {
+func (r *Renderer) partial(req *http.Request) func(name string, data interface{}) (template.HTML, error) {
 	return func(name string, data interface{}) (template.HTML, error) {
 		var dest strings.Builder
 
@@ -114,7 +119,7 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 	}
 }
 
-func (r *HTMLRenderer) assets(req *http.Request) func() (template.HTML, error) {
+func (r *Renderer) assets(req *http.Request) func() (template.HTML, error) {
 	return func() (template.HTML, error) {
 		if r.env == "dev" {
 			return r.devAssets(req)
@@ -124,7 +129,7 @@ func (r *HTMLRenderer) assets(req *http.Request) func() (template.HTML, error) {
 	}
 }
 
-func (r *HTMLRenderer) devAssets(req *http.Request) (template.HTML, error) {
+func (r *Renderer) devAssets(req *http.Request) (template.HTML, error) {
 	const reactRefreshURL = "http://localhost:3000/@react-refresh"
 	var out strings.Builder
 
@@ -186,7 +191,7 @@ func (r *HTMLRenderer) devAssets(req *http.Request) (template.HTML, error) {
 	return template.HTML(out.String()), nil
 }
 
-func (r *HTMLRenderer) prodAssets() (template.HTML, error) {
+func (r *Renderer) prodAssets() (template.HTML, error) {
 	var (
 		out      strings.Builder
 		manifest struct {

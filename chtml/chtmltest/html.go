@@ -1,4 +1,4 @@
-package chttptest
+package chtmltest
 
 import (
 	"embed"
