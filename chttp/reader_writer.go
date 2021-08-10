@@ -6,9 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	// embeds html templates
-	_ "embed"
-
 	"github.com/asaskevich/govalidator"
 	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
