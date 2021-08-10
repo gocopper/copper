@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
-	github.com/aws/aws-sdk-go v1.38.68
+	github.com/aws/aws-sdk-go v1.37.19
 	github.com/google/uuid v1.1.1
 	github.com/google/wire v0.5.0
 	github.com/gorilla/context v1.1.1 // indirect
