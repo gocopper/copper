@@ -59,14 +59,16 @@ func (s *Server) Run() error {
 		return s.internal.Shutdown(ctx)
 	})
 
-	s.logger.
-		WithTags(map[string]interface{}{"port": config.Port}).
-		Info("Starting http server..")
+	go func() {
+		s.logger.
+			WithTags(map[string]interface{}{"port": config.Port}).
+			Info("Starting http server..")
 
-	err = s.internal.ListenAndServe()
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Error("Server did not close cleanly", err)
-	}
+		err = s.internal.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.logger.Error("Server did not close cleanly", err)
+		}
+	}()
 
 	return nil
 }
