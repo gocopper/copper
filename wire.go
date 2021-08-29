@@ -17,6 +17,7 @@ func InitApp() (*App, error) {
 			NewLifecycle,
 			cconfig.New,
 			clogger.NewWithConfig,
+			clogger.LoadConfig,
 
 			wire.FieldsOf(new(*Flags), "Env", "ConfigDir", "ProjectDir"),
 		),

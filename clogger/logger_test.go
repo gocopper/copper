@@ -3,13 +3,10 @@ package clogger_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/gocopper/copper/cconfig"
-	"github.com/gocopper/copper/cconfig/cconfigtest"
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,16 +32,11 @@ func TestNewWithConfig(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	configData := fmt.Sprintf(`
-[clogger]
-out = "%s"
-err = "%s"
-`, log.Name(), log.Name())
-
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
-	assert.NoError(t, err)
-
-	logger, err := clogger.NewWithConfig(config)
+	logger, err := clogger.NewWithConfig(clogger.Config{
+		Out:    log.Name(),
+		Err:    log.Name(),
+		Format: clogger.FormatPlain,
+	})
 	assert.NoError(t, err)
 
 	_, ok := logger.(clogger.Logger)
@@ -65,15 +57,10 @@ func TestNewWithConfig_OutFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	configData := fmt.Sprintf(`
-[clogger]
-out = "%s"
-`, log.Name())
-
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
-	assert.NoError(t, err)
-
-	_, err = clogger.NewWithConfig(config)
+	_, err = clogger.NewWithConfig(clogger.Config{
+		Out:    log.Name(),
+		Format: clogger.FormatPlain,
+	})
 	assert.Error(t, err)
 }
 
@@ -89,22 +76,17 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	configData := fmt.Sprintf(`
-[clogger]
-err = "%s"
-`, log.Name())
-
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, configData, ""), ".", "test")
-	assert.NoError(t, err)
-
-	_, err = clogger.NewWithConfig(config)
+	_, err = clogger.NewWithConfig(clogger.Config{
+		Err:    log.Name(),
+		Format: clogger.FormatPlain,
+	})
 	assert.Error(t, err)
 }
 
 func TestNewWithParams(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.NewWithWriters(nil, nil)
+	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain)
 
 	_, ok := logger.(clogger.Logger)
 
@@ -117,7 +99,7 @@ func TestLogger_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
 	)
 
 	logger.Debug("test debug log")
@@ -130,7 +112,7 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
 	)
 
 	logger.
@@ -149,7 +131,7 @@ func TestLogger_Info(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
 	)
 
 	logger.Info("test info log")
@@ -162,7 +144,7 @@ func TestLogger_Warn(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
 	)
 
 	logger.Warn("test warn log", errors.New("test-error")) //nolint:goerr113
@@ -175,7 +157,7 @@ func TestLogger_Error(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
 	)
 
 	logger.Error("test error log", errors.New("test-error")) //nolint:goerr113

@@ -23,7 +23,11 @@ func InitApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger, err := clogger.NewWithConfig(config)
+	cloggerConfig, err := clogger.LoadConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	logger, err := clogger.NewWithConfig(cloggerConfig)
 	if err != nil {
 		return nil, err
 	}

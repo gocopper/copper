@@ -1,12 +1,13 @@
 package clogger
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
 	"os"
+	"time"
 
-	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
 )
 
@@ -22,27 +23,16 @@ type Logger interface {
 
 // New returns a Logger implementation that can logs to console.
 func New() Logger {
-	return NewWithWriters(os.Stdout, os.Stderr)
+	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain)
 }
 
 // NewWithConfig creates a Logger based on the provided config.
-// Example TOML config:
-// [clogger]
-// out = "./logs.out"
-// err = "./logs.err".
-func NewWithConfig(appConfig cconfig.Config) (Logger, error) {
+func NewWithConfig(config Config) (Logger, error) {
 	var (
-		config config
-
 		outFile io.Writer = os.Stdout
 		errFile io.Writer = os.Stderr
 		err     error
 	)
-
-	err = appConfig.Load("clogger", &config)
-	if err != nil {
-		return nil, cerrors.New(err, "failed to load clogger config", nil)
-	}
 
 	if config.Out != "" {
 		outFile, err = os.OpenFile(config.Out, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666) //nolint:gosec
@@ -64,30 +54,33 @@ func NewWithConfig(appConfig cconfig.Config) (Logger, error) {
 		}
 	}
 
-	return NewWithWriters(outFile, errFile), nil
+	return NewWithWriters(outFile, errFile, config.Format), nil
 }
 
 // NewWithWriters creates a Logger that uses the provided writers. out is
 // used for debug and info levels. err is used for warn and error levels.
-func NewWithWriters(out, err io.Writer) Logger {
+func NewWithWriters(out, err io.Writer, format Format) Logger {
 	return &logger{
-		out:  log.New(out, "", log.LstdFlags),
-		err:  log.New(err, "", log.LstdFlags),
-		tags: make(map[string]interface{}),
+		out:    out,
+		err:    err,
+		tags:   make(map[string]interface{}),
+		format: format,
 	}
 }
 
 type logger struct {
-	out  *log.Logger
-	err  *log.Logger
-	tags map[string]interface{}
+	out    io.Writer
+	err    io.Writer
+	tags   map[string]interface{}
+	format Format
 }
 
 func (l *logger) WithTags(tags map[string]interface{}) Logger {
 	return &logger{
-		out:  l.out,
-		err:  l.err,
-		tags: mergeTags(l.tags, tags),
+		out:    l.out,
+		err:    l.err,
+		tags:   mergeTags(l.tags, tags),
+		format: l.format,
 	}
 }
 
@@ -107,6 +100,42 @@ func (l *logger) Error(msg string, err error) {
 	l.log(l.err, LevelError, cerrors.New(err, msg, nil))
 }
 
-func (l *logger) log(logger *log.Logger, lvl Level, err error) {
-	logger.Printf("[%s] %s", lvl.String(), cerrors.WithTags(err, l.tags).Error())
+func (l *logger) log(dest io.Writer, lvl Level, err error) {
+	switch l.format {
+	case FormatJSON:
+		l.logJSON(dest, lvl, err)
+	case FormatPlain:
+		fallthrough
+	default:
+		l.logPlain(dest, lvl, err)
+	}
+}
+
+func (l *logger) logJSON(dest io.Writer, lvl Level, err error) {
+	var dict = map[string]interface{}{
+		"ts":    time.Now().Format(time.RFC3339),
+		"level": lvl.String(),
+	}
+
+	dict = mergeTags(dict, l.tags)
+
+	switch cerr := err.(type) {
+	case cerrors.Error:
+		dict["msg"] = cerr.Message
+
+		dict = mergeTags(dict, cerr.Tags)
+
+		if cerr.Cause != nil {
+			dict["error"] = cerr.Cause.Error()
+		}
+	default:
+		dict["msg"] = err.Error()
+	}
+
+	jsonStr, _ := json.Marshal(dict)
+	_, _ = dest.Write([]byte(string(jsonStr) + "\n"))
+}
+
+func (l *logger) logPlain(dest io.Writer, lvl Level, err error) {
+	log.New(dest, "", log.LstdFlags).Printf("[%s] %s", lvl.String(), cerrors.WithTags(err, l.tags).Error())
 }
