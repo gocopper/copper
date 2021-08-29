@@ -28,10 +28,14 @@ type RequestLoggerMiddleware struct {
 func (mw *RequestLoggerMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			tags     = make(map[string]interface{})
 			loggerRw = requestLoggerRw{
 				internal:   w,
 				statusCode: http.StatusOK,
+			}
+
+			tags = map[string]interface{}{
+				"method": r.Method,
+				"url":    r.URL.Path,
 			}
 		)
 
@@ -41,6 +45,8 @@ func (mw *RequestLoggerMiddleware) Handle(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(&loggerRw, r)
+
+		tags["statusCode"] = loggerRw.statusCode
 
 		mw.logger.WithTags(tags).Info(fmt.Sprintf("%s %s %d", r.Method, r.URL.Path, loggerRw.statusCode))
 	})
