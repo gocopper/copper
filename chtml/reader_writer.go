@@ -9,7 +9,6 @@ import (
 	// embeds html templates
 	_ "embed"
 
-	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
 )
@@ -31,7 +30,8 @@ type (
 	ReaderWriter struct {
 		renderer *Renderer
 		logger   clogger.Logger
-		env      cconfig.Env
+
+		renderError bool
 	}
 )
 
@@ -39,16 +39,17 @@ type (
 var URLParams = mux.Vars
 
 // NewReaderWriter instantiates a new ReaderWriter with its dependencies
-func NewReaderWriter(renderer *Renderer, config cconfig.Config, logger clogger.Logger) *ReaderWriter {
+func NewReaderWriter(renderer *Renderer, config Config, logger clogger.Logger) *ReaderWriter {
 	return &ReaderWriter{
 		renderer: renderer,
-		env:      config.Env(),
 		logger:   logger,
+
+		renderError: config.DevMode,
 	}
 }
 
-// WriteHTMLError handles the given error. In dev environment, it writes an HTML page with the error.
-// Errors are logged in all environments.
+// WriteHTMLError handles the given error. In render_error is configured to true, it writes an HTML page with the error.
+// Errors are always logged.
 func (rw *ReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, err error) {
 	rw.WriteHTML(w, r, WriteHTMLParams{
 		Error: err,
@@ -84,7 +85,7 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 		}).Error("Failed to handle request", p.Error)
 	}
 
-	if p.Error != nil && rw.env == "dev" {
+	if p.Error != nil && rw.renderError {
 		w.WriteHeader(p.StatusCode)
 		w.Header().Set("content-type", "text/html")
 

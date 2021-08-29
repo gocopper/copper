@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
 )
 
@@ -26,38 +25,31 @@ type (
 	Renderer struct {
 		htmlDir   HTMLDir
 		staticDir StaticDir
-		env       cconfig.Env
+		devMode   bool
 	}
 
 	// NewRendererParams holds the params needed to create Renderer
 	NewRendererParams struct {
 		HTMLDir   HTMLDir
 		StaticDir StaticDir
-		AppConfig cconfig.Config
+		Config    Config
 	}
 )
 
 // NewRenderer creates a new Renderer with HTML templates stored in dir and registers the provided HTML
 // components
-func NewRenderer(p NewRendererParams) (*Renderer, error) {
-	var config config
-
+func NewRenderer(p NewRendererParams) *Renderer {
 	hr := Renderer{
 		htmlDir:   p.HTMLDir,
 		staticDir: p.StaticDir,
-		env:       p.AppConfig.Env(),
+		devMode:   p.Config.DevMode,
 	}
 
-	err := p.AppConfig.Load("chtml", &config)
-	if err != nil {
-		return nil, cerrors.New(err, "failed to load chttp config", nil)
+	if p.Config.WebDir != "" {
+		hr.htmlDir = os.DirFS(p.Config.WebDir)
 	}
 
-	if config.WebDir != "" {
-		hr.htmlDir = os.DirFS(config.WebDir)
-	}
-
-	return &hr, nil
+	return &hr
 }
 
 func (r *Renderer) funcMap(req *http.Request) template.FuncMap {
@@ -121,7 +113,7 @@ func (r *Renderer) partial(req *http.Request) func(name string, data interface{}
 
 func (r *Renderer) assets(req *http.Request) func() (template.HTML, error) {
 	return func() (template.HTML, error) {
-		if r.env == "dev" {
+		if r.devMode {
 			return r.devAssets(req)
 		}
 

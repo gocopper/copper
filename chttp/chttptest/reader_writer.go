@@ -3,8 +3,6 @@ package chttptest
 import (
 	"testing"
 
-	"github.com/gocopper/copper/cconfig/cconfigtest"
-
 	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/clogger"
 )
@@ -13,5 +11,5 @@ import (
 func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
 	t.Helper()
 
-	return chttp.NewReaderWriter(cconfigtest.NewEmptyConfig(t), clogger.NewNoop())
+	return chttp.NewReaderWriter(clogger.NewNoop())
 }

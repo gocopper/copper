@@ -14,7 +14,7 @@ import (
 
 type (
 	// Env defines the various environments the app can be configured for.
-	// The Env may be dev, test, staging, or prod.
+	// Examples of Env include dev, test, staging, or prod.
 	Env string
 
 	// Dir defines the directory where config file(s) live.
@@ -27,7 +27,6 @@ type (
 
 // Config provides methods to read app config.
 type Config interface {
-	Env() Env
 	Load(key string, dest interface{}) error
 }
 
@@ -82,10 +81,6 @@ type config struct {
 	env        *toml.Tree
 	secrets    *toml.Tree
 	currentEnv Env
-}
-
-func (c *config) Env() Env {
-	return c.currentEnv
 }
 
 func (c *config) Load(key string, dest interface{}) error {

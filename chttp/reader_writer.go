@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/gocopper/copper/cconfig"
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
 )
@@ -22,7 +21,6 @@ type (
 	// ReaderWriter provides functions to read data from HTTP requests and write response bodies in various formats
 	ReaderWriter struct {
 		logger clogger.Logger
-		env    cconfig.Env
 	}
 )
 
@@ -30,9 +28,8 @@ type (
 var URLParams = mux.Vars
 
 // NewReaderWriter instantiates a new ReaderWriter with its dependencies
-func NewReaderWriter(config cconfig.Config, logger clogger.Logger) *ReaderWriter {
+func NewReaderWriter(logger clogger.Logger) *ReaderWriter {
 	return &ReaderWriter{
-		env:    config.Env(),
 		logger: logger,
 	}
 }
