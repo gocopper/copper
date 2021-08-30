@@ -11,7 +11,7 @@ import (
 )
 
 // SetupDirWithConfigs creates a temp directory that can store config files.
-// It creates base.toml, test.toml, and secrets.toml with the given strings.
+// It creates base.toml, test.toml, and local.toml with the given strings.
 // The directory is cleaned up after test run.
 func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
 	t.Helper()
@@ -30,7 +30,7 @@ func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
 	}
 
 	if len(configs) >= 3 { // nolint:gomnd
-		err = ioutil.WriteFile(path.Join(dir, "secrets.toml"), []byte(configs[2]), os.ModePerm)
+		err = ioutil.WriteFile(path.Join(dir, "local.toml"), []byte(configs[2]), os.ModePerm)
 		assert.NoError(t, err)
 	}
 

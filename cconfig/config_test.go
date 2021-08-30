@@ -31,7 +31,7 @@ func TestConfig_Load_All(t *testing.T) {
 		Default string `default:"default"`
 		Base    string `default:"default"`
 		Env     string `default:"default"`
-		Secrets string `default:"default"`
+		Local   string `default:"default"`
 	}
 
 	base := `
@@ -44,12 +44,12 @@ base = "base"
 env = "env"
 `
 
-	secrets := `
+	local := `
 [group1]
-secrets = "secrets"
+local = "local"
 `
 
-	dir := cconfigtest.SetupDirWithConfigs(t, base, env, secrets)
+	dir := cconfigtest.SetupDirWithConfigs(t, base, env, local)
 
 	config, err := cconfig.New(dir, projectDir, envTest)
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ secrets = "secrets"
 	assert.Equal(t, "default", testConfig.Default)
 	assert.Equal(t, "base", testConfig.Base)
 	assert.Equal(t, "env", testConfig.Env)
-	assert.Equal(t, "secrets", testConfig.Secrets)
+	assert.Equal(t, "local", testConfig.Local)
 }
 
 func TestConfig_Template(t *testing.T) {

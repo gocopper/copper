@@ -79,7 +79,7 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 # Create Project Files
 
- SUCCESS  Create xnotes/config/secrets.toml (Took 1ms)
+ SUCCESS  Create xnotes/config/local.toml (Took 1ms)
  SUCCESS  Create xnotes/go.mod (Took 0s)
  SUCCESS  Create xnotes/pkg/app/handler.go (Took 0s)
  SUCCESS  Create xnotes/pkg/app/wire.go (Took 0s)

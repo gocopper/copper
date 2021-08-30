@@ -31,9 +31,9 @@ type Config interface {
 }
 
 const (
-	baseTomlConfigFileName    = "base.toml"
-	secretsTomlConfigFileName = "secrets.toml"
-	tomlExt                   = ".toml"
+	baseTomlConfigFileName  = "base.toml"
+	localTomlConfigFileName = "local.toml"
+	tomlExt                 = ".toml"
 )
 
 // New provides an implementation of Config that reads config files in the
@@ -41,9 +41,9 @@ const (
 // corresponding to the env. For 'test' env, the file should be test.toml.
 func New(dir Dir, projectDir ProjectDir, env Env) (Config, error) {
 	var (
-		baseConfigPath    = path.Join(string(dir), baseTomlConfigFileName)
-		envConfigPath     = path.Join(string(dir), strings.ToLower(string(env))+tomlExt)
-		secretsConfigPath = path.Join(string(dir), secretsTomlConfigFileName)
+		baseConfigPath  = path.Join(string(dir), baseTomlConfigFileName)
+		envConfigPath   = path.Join(string(dir), strings.ToLower(string(env))+tomlExt)
+		localConfigPath = path.Join(string(dir), localTomlConfigFileName)
 	)
 
 	baseTree, err := loadTOMLTemplate(baseConfigPath, projectDir)
@@ -61,17 +61,17 @@ func New(dir Dir, projectDir ProjectDir, env Env) (Config, error) {
 		})
 	}
 
-	secretsTree, err := loadTOMLTemplate(secretsConfigPath, projectDir)
+	localTree, err := loadTOMLTemplate(localConfigPath, projectDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, cerrors.New(err, "failed to load secrets config file", map[string]interface{}{
-			"path": secretsConfigPath,
+		return nil, cerrors.New(err, "failed to load local config file", map[string]interface{}{
+			"path": localConfigPath,
 		})
 	}
 
 	return &config{
 		base:       baseTree,
 		env:        envTree,
-		secrets:    secretsTree,
+		local:      localTree,
 		currentEnv: env,
 	}, nil
 }
@@ -79,15 +79,15 @@ func New(dir Dir, projectDir ProjectDir, env Env) (Config, error) {
 type config struct {
 	base       *toml.Tree
 	env        *toml.Tree
-	secrets    *toml.Tree
+	local      *toml.Tree
 	currentEnv Env
 }
 
 func (c *config) Load(key string, dest interface{}) error {
 	var (
-		base    = &toml.Tree{}
-		env     = &toml.Tree{}
-		secrets = &toml.Tree{}
+		base  = &toml.Tree{}
+		env   = &toml.Tree{}
+		local = &toml.Tree{}
 	)
 
 	if c.base != nil && c.base.Has(key) {
@@ -98,8 +98,8 @@ func (c *config) Load(key string, dest interface{}) error {
 		env = c.env.Get(key).(*toml.Tree)
 	}
 
-	if c.secrets != nil && c.secrets.Has(key) {
-		secrets = c.secrets.Get(key).(*toml.Tree)
+	if c.local != nil && c.local.Has(key) {
+		local = c.local.Get(key).(*toml.Tree)
 	}
 
 	err := toml.Unmarshal([]byte(""), dest)
@@ -117,9 +117,9 @@ func (c *config) Load(key string, dest interface{}) error {
 		return cerrors.New(err, "failed to load env config", nil)
 	}
 
-	err = c.loadWithNoDefaults(secrets, dest)
+	err = c.loadWithNoDefaults(local, dest)
 	if err != nil {
-		return cerrors.New(err, "failed to load secrets config", nil)
+		return cerrors.New(err, "failed to load local config", nil)
 	}
 
 	return nil
