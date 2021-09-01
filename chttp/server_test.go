@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/gocopper/copper"
-	"github.com/gocopper/copper/cconfig"
-	"github.com/gocopper/copper/cconfig/cconfigtest"
 	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
@@ -19,21 +17,15 @@ func TestServer_Run(t *testing.T) {
 	logger := clogger.New()
 	lc := copper.NewLifecycle(logger)
 
-	config, err := cconfig.New(cconfigtest.SetupDirWithConfigs(t, `
-[chttp]
-Port = 8999
-`, ""), ".", "test")
-	assert.NoError(t, err)
-
 	server := chttp.NewServer(chttp.NewServerParams{
 		Handler:   http.NotFoundHandler(),
-		Config:    config,
+		Config:    chttp.Config{Port: 8999},
 		Logger:    logger,
 		Lifecycle: lc,
 	})
 
 	go func() {
-		err = server.Run()
+		err := server.Run()
 		assert.NoError(t, err)
 	}()
 
