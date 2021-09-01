@@ -43,6 +43,8 @@ func NewHandler(p NewHandlerParams) http.Handler {
 			handler = route.Middlewares[i].Handle(handler)
 		}
 
+		handler = setRoutePathInCtxMiddleware(route.Path).Handle(handler)
+
 		muxRoute := muxRouter.Handle(route.Path, handler)
 
 		if len(route.Methods) > 0 {
