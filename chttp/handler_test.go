@@ -76,7 +76,7 @@ func TestNewHandler_GlobalMiddleware(t *testing.T) {
 func TestNewHandler_RouteMiddleware(t *testing.T) {
 	t.Parallel()
 
-	didCallRouteMiddleware := false
+	middlewareCalls := make([]string, 0)
 
 	router := chttptest.NewRouter([]chttp.Route{
 		{
@@ -84,7 +84,14 @@ func TestNewHandler_RouteMiddleware(t *testing.T) {
 			Middlewares: []chttp.Middleware{
 				chttptest.NewMiddleware(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						didCallRouteMiddleware = true
+						middlewareCalls = append(middlewareCalls, "1")
+						next.ServeHTTP(w, r)
+					})
+				}),
+
+				chttptest.NewMiddleware(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						middlewareCalls = append(middlewareCalls, "2")
 						next.ServeHTTP(w, r)
 					})
 				}),
@@ -103,7 +110,7 @@ func TestNewHandler_RouteMiddleware(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Body.Close())
 
-	assert.True(t, didCallRouteMiddleware)
+	assert.Equal(t, []string{"1", "2"}, middlewareCalls)
 }
 
 func TestNewHandler_RoutePriority_WithPlaceholder(t *testing.T) {

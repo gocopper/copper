@@ -37,8 +37,10 @@ func NewHandler(p NewHandlerParams) http.Handler {
 	for _, route := range routes {
 		handler := http.Handler(route.Handler)
 
-		for _, mw := range route.Middlewares {
-			handler = mw.Handle(handler)
+		// Since we are wrapping the handler in middleware functions, the outermost one will run first.
+		// By applying the middlewares in reverse, we ensure that the first middleware in the list is the outermost one.
+		for i := len(route.Middlewares) - 1; i >= 0; i-- {
+			handler = route.Middlewares[i].Handle(handler)
 		}
 
 		muxRoute := muxRouter.Handle(route.Path, handler)
