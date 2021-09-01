@@ -56,7 +56,7 @@ func TestNewHandler_GlobalMiddleware(t *testing.T) {
 	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
 		Routers: []chttp.Router{router},
 		GlobalMiddlewares: []chttp.Middleware{
-			chttptest.NewMiddleware(func(next http.Handler) http.Handler {
+			chttp.HandleMiddleware(func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					didCallGlobalMiddleware = true
 					next.ServeHTTP(w, r)
@@ -82,14 +82,14 @@ func TestNewHandler_RouteMiddleware(t *testing.T) {
 		{
 			Path: "/",
 			Middlewares: []chttp.Middleware{
-				chttptest.NewMiddleware(func(next http.Handler) http.Handler {
+				chttp.HandleMiddleware(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						middlewareCalls = append(middlewareCalls, "1")
 						next.ServeHTTP(w, r)
 					})
 				}),
 
-				chttptest.NewMiddleware(func(next http.Handler) http.Handler {
+				chttp.HandleMiddleware(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						middlewareCalls = append(middlewareCalls, "2")
 						next.ServeHTTP(w, r)
