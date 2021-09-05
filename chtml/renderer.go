@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
+
+	"github.com/gocopper/copper/clogger"
 
 	"github.com/gocopper/copper/cerrors"
 )
@@ -33,23 +36,31 @@ type (
 		HTMLDir   HTMLDir
 		StaticDir StaticDir
 		Config    Config
+		Logger    clogger.Logger
 	}
 )
 
 // NewRenderer creates a new Renderer with HTML templates stored in dir and registers the provided HTML
 // components
-func NewRenderer(p NewRendererParams) *Renderer {
+func NewRenderer(p NewRendererParams) (*Renderer, error) {
 	hr := Renderer{
 		htmlDir:   p.HTMLDir,
 		staticDir: p.StaticDir,
 		devMode:   p.Config.DevMode,
 	}
 
-	if p.Config.WebDir != "" {
-		hr.htmlDir = os.DirFS(p.Config.WebDir)
+	if p.Config.DevMode {
+		p.Logger.Info("chtml dev mode is enabled")
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return nil, cerrors.New(err, "failed to get current working directory", nil)
+		}
+
+		hr.htmlDir = os.DirFS(filepath.Join(wd, "web"))
 	}
 
-	return &hr
+	return &hr, nil
 }
 
 func (r *Renderer) funcMap(req *http.Request) template.FuncMap {

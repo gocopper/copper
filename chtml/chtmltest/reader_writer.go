@@ -3,6 +3,8 @@ package chtmltest
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/gocopper/copper/chtml"
 	"github.com/gocopper/copper/clogger"
 )
@@ -11,11 +13,13 @@ import (
 func NewReaderWriter(t *testing.T) *chtml.ReaderWriter {
 	t.Helper()
 
-	r := chtml.NewRenderer(chtml.NewRendererParams{
+	r, err := chtml.NewRenderer(chtml.NewRendererParams{
 		HTMLDir:   HTMLDir,
 		StaticDir: nil,
 		Config:    chtml.Config{},
+		Logger:    clogger.NewNoop(),
 	})
+	assert.NoError(t, err)
 
 	return chtml.NewReaderWriter(r, chtml.Config{}, clogger.NewNoop())
 }

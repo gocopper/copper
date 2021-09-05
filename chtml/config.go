@@ -19,7 +19,6 @@ func LoadConfig(appConfig cconfig.Config) (Config, error) {
 
 // Config holds params to configure chtml
 type Config struct {
-	WebDir                  string `toml:"web_dir"`
-	DevMode                 bool   `toml:"dev_mode"`
-	EnableSinglePageRouting bool   `toml:"enable_single_page_routing"`
+	DevMode                 bool `toml:"dev_mode"`
+	EnableSinglePageRouting bool `toml:"enable_single_page_routing"`
 }

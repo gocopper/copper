@@ -1,8 +1,9 @@
 package chtml
 
 import (
-	"github.com/gocopper/copper/chttp"
 	"net/http"
+
+	"github.com/gocopper/copper/chttp"
 )
 
 type (
