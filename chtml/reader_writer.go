@@ -4,8 +4,6 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	// embeds html templates
 	_ "embed"
 
@@ -34,9 +32,6 @@ type (
 		renderError bool
 	}
 )
-
-// URLParams returns the route variables for the current request, if any
-var URLParams = mux.Vars
 
 // NewReaderWriter instantiates a new ReaderWriter with its dependencies
 func NewReaderWriter(renderer *Renderer, config Config, logger clogger.Logger) *ReaderWriter {
