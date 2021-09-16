@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
+
 	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/chttp/chttptest"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +30,7 @@ func TestNewHandler(t *testing.T) {
 	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
 		Routers:           []chttp.Router{router},
 		GlobalMiddlewares: nil,
+		Logger:            clogger.NewNoop(),
 	}))
 	defer server.Close()
 
@@ -63,6 +66,7 @@ func TestNewHandler_GlobalMiddleware(t *testing.T) {
 				})
 			}),
 		},
+		Logger: clogger.NewNoop(),
 	}))
 	defer server.Close()
 
@@ -103,6 +107,7 @@ func TestNewHandler_RouteMiddleware(t *testing.T) {
 	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
 		Routers:           []chttp.Router{router},
 		GlobalMiddlewares: nil,
+		Logger:            clogger.NewNoop(),
 	}))
 	defer server.Close()
 

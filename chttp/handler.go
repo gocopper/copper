@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gocopper/copper/clogger"
+
 	"github.com/gorilla/mux"
 )
 
@@ -13,6 +15,7 @@ import (
 type NewHandlerParams struct {
 	Routers           []Router
 	GlobalMiddlewares []Middleware
+	Logger            clogger.Logger
 }
 
 // NewHandler creates a http.Handler with the given routes and middlewares.
@@ -46,6 +49,7 @@ func NewHandler(p NewHandlerParams) http.Handler {
 		}
 
 		handler = setRoutePathInCtxMiddleware(route.Path).Handle(handler)
+		handler = panicLoggerMiddleware(p.Logger).Handle(handler)
 
 		muxRoute := muxRouter.Handle(route.Path, handler)
 

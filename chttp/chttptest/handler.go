@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
+
 	"github.com/gocopper/copper/chttp"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,6 +29,7 @@ func PingRoutes(t *testing.T, routes []chttp.Route) {
 	server := httptest.NewServer(chttp.NewHandler(chttp.NewHandlerParams{
 		Routers:           []chttp.Router{NewRouter(routes)},
 		GlobalMiddlewares: nil,
+		Logger:            clogger.NewNoop(),
 	}))
 	defer server.Close()
 

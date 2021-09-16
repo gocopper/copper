@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
+
 	"github.com/gocopper/copper/chttp"
 	"github.com/gocopper/copper/chttp/chttptest"
 	"github.com/stretchr/testify/assert"
@@ -38,6 +40,7 @@ func TestRoutePathInCtxMiddleware(t *testing.T) {
 					})
 				}),
 			},
+			Logger: clogger.NewNoop(),
 		})
 	)
 

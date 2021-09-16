@@ -36,6 +36,7 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 		handler = chttp.NewHandler(chttp.NewHandlerParams{
 			Routers:           []chttp.Router{router},
 			GlobalMiddlewares: nil,
+			Logger:            clogger.NewNoop(),
 		})
 	)
 
