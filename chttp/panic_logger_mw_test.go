@@ -42,6 +42,7 @@ func TestPanicLoggerMiddleware_PanicError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Body.Close())
 
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, 1, len(logs))
 	assert.Equal(t, "Recovered from a panic while handling HTTP request", logs[0].Msg)
 	assert.Equal(t, clogger.LevelError, logs[0].Level)
@@ -77,6 +78,7 @@ func TestPanicLoggerMiddleware_PanicNonError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Body.Close())
 
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, 1, len(logs))
 	assert.Equal(t, "Recovered from a panic while handling HTTP request", logs[0].Msg)
 	assert.Equal(t, clogger.LevelError, logs[0].Level)
@@ -113,6 +115,7 @@ func TestPanicLoggerMiddleware_PanicNil(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Body.Close())
 
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, 1, len(logs))
 	assert.Equal(t, "Recovered from a panic while handling HTTP request", logs[0].Msg)
 	assert.Equal(t, clogger.LevelError, logs[0].Level)

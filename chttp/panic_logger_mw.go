@@ -17,10 +17,12 @@ func panicLoggerMiddleware(logger clogger.Logger) Middleware {
 				switch r := recover().(type) {
 				case error:
 					log.Error("Recovered from a panic while handling HTTP request", r)
+					w.WriteHeader(http.StatusInternalServerError)
 				default:
 					log.WithTags(map[string]interface{}{
 						"error": r,
 					}).Error("Recovered from a panic while handling HTTP request", nil)
+					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}()
 
