@@ -11,7 +11,7 @@ cover: test
 
 .PHONY: test
 test:
-	$(GO) test -tags csql_sqlite -coverprofile=$(COVERAGE_FILE) ./...
+	$(GO) test -coverprofile=$(COVERAGE_FILE) ./...
 
 .PHONY: lint
 lint: tidy
