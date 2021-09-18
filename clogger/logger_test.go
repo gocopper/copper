@@ -123,7 +123,7 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 			"key2": "val2",
 		}).Debug("test debug log")
 
-	assert.Contains(t, buf.String(), "[DEBUG] test debug log where key=val,key2=val2")
+	assert.Contains(t, buf.String(), "[DEBUG] test debug log where key2=val2,key=val")
 }
 
 func TestLogger_Info(t *testing.T) {

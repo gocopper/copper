@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -67,6 +68,8 @@ func (e Error) Error() string {
 			tags = append(tags, fmt.Sprintf("%s=%+v", tag, val))
 		}
 	}
+
+	sort.Strings(tags)
 
 	if len(tags) > 0 {
 		err.WriteString(" where ")
