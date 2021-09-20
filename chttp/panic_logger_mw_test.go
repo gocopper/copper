@@ -47,6 +47,7 @@ func TestPanicLoggerMiddleware_PanicError(t *testing.T) {
 	assert.Equal(t, "Recovered from a panic while handling HTTP request", logs[0].Msg)
 	assert.Equal(t, clogger.LevelError, logs[0].Level)
 	assert.Equal(t, errors.New("test-error"), logs[0].Error)
+	assert.Contains(t, logs[0].Tags["stack"], "panic_logger_mw.go")
 }
 
 func TestPanicLoggerMiddleware_NoPanic(t *testing.T) {
@@ -117,4 +118,5 @@ func TestPanicLoggerMiddleware_PanicNonError(t *testing.T) {
 	assert.Equal(t, clogger.LevelError, logs[0].Level)
 	assert.Equal(t, "test-error", logs[0].Tags["error"])
 	assert.Nil(t, logs[0].Error)
+	assert.Contains(t, logs[0].Tags["stack"], "panic_logger_mw.go")
 }

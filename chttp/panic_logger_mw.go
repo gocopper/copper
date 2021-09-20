@@ -2,6 +2,7 @@ package chttp
 
 import (
 	"net/http"
+	"runtime/debug"
 
 	"github.com/gocopper/copper/clogger"
 )
@@ -18,11 +19,14 @@ func panicLoggerMiddleware(logger clogger.Logger) Middleware {
 				case nil:
 					break
 				case error:
-					log.Error("Recovered from a panic while handling HTTP request", r)
+					log.WithTags(map[string]interface{}{
+						"stack": string(debug.Stack()),
+					}).Error("Recovered from a panic while handling HTTP request", r)
 					w.WriteHeader(http.StatusInternalServerError)
 				default:
 					log.WithTags(map[string]interface{}{
 						"error": r,
+						"stack": string(debug.Stack()),
 					}).Error("Recovered from a panic while handling HTTP request", nil)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
