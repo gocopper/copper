@@ -15,6 +15,8 @@ func panicLoggerMiddleware(logger clogger.Logger) Middleware {
 				})
 
 				switch r := recover().(type) {
+				case nil:
+					break
 				case error:
 					log.Error("Recovered from a panic while handling HTTP request", r)
 					w.WriteHeader(http.StatusInternalServerError)
