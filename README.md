@@ -122,8 +122,6 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 5. Open http://localhost:5901 in your browser
 
-6. Watch the tour on https://gocopper.dev
-
 <br />
 
 ## License
