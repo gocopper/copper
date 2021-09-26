@@ -1,6 +1,7 @@
 package copper
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,16 @@ import (
 // This interface is implemented by various packages within Copper including chttp.Server.
 type Runner interface {
 	Run() error
+}
+
+// New provides a convenience wrapper around InitApp that logs and exits if there is an error.
+func New() *App {
+	app, err := InitApp()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return app
 }
 
 // NewApp creates a new Copper app and returns it along with the app's lifecycle manager,
