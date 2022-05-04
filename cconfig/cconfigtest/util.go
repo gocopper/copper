@@ -6,31 +6,19 @@ import (
 	"path"
 	"testing"
 
-	"github.com/gocopper/copper/cconfig"
 	"github.com/stretchr/testify/assert"
 )
 
 // SetupDirWithConfigs creates a temp directory that can store config files.
-// It creates base.toml, test.toml, and local.toml with the given strings.
 // The directory is cleaned up after test run.
-func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
+func SetupDirWithConfigs(t *testing.T, configs map[string]string) string {
 	t.Helper()
 
 	dir, err := ioutil.TempDir("", "")
 	assert.NoError(t, err)
 
-	if len(configs) >= 1 {
-		err = ioutil.WriteFile(path.Join(dir, "base.toml"), []byte(configs[0]), os.ModePerm)
-		assert.NoError(t, err)
-	}
-
-	if len(configs) >= 2 { // nolint:gomnd
-		err = ioutil.WriteFile(path.Join(dir, "test.toml"), []byte(configs[1]), os.ModePerm)
-		assert.NoError(t, err)
-	}
-
-	if len(configs) >= 3 { // nolint:gomnd
-		err = ioutil.WriteFile(path.Join(dir, "local.toml"), []byte(configs[2]), os.ModePerm)
+	for fp, data := range configs {
+		err = ioutil.WriteFile(path.Join(dir, fp), []byte(data), os.ModePerm)
 		assert.NoError(t, err)
 	}
 
@@ -38,15 +26,5 @@ func SetupDirWithConfigs(t *testing.T, configs ...string) cconfig.Dir {
 		assert.NoError(t, os.RemoveAll(dir))
 	})
 
-	return cconfig.Dir(dir)
-}
-
-// NewEmptyConfig is a helper method to create an empty app config
-func NewEmptyConfig(t *testing.T) cconfig.Config {
-	t.Helper()
-
-	c, err := cconfig.New(SetupDirWithConfigs(t), ".", "test")
-	assert.NoError(t, err)
-
-	return c
+	return dir
 }

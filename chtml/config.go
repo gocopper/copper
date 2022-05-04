@@ -6,7 +6,7 @@ import (
 )
 
 // LoadConfig loads Config from app config
-func LoadConfig(appConfig cconfig.Config) (Config, error) {
+func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 	var config Config
 
 	err := appConfig.Load("chtml", &config)

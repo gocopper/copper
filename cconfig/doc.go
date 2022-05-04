@@ -1,2 +1,2 @@
-// Package cconfig helps read app config easily with support for different environments
+// Package cconfig provides utilities to read app config files. See New and Loader for more documentation and example.
 package cconfig

@@ -16,23 +16,21 @@ import (
 // InitApp creates a new Copper app along with its dependencies.
 func InitApp() (*App, error) {
 	flags := NewFlags()
-	dir := flags.ConfigDir
-	projectDir := flags.ProjectDir
-	env := flags.Env
-	config, err := cconfig.New(dir, projectDir, env)
+	path := flags.ConfigPath
+	loader, err := cconfig.NewWithKeyOverrides(path)
 	if err != nil {
 		return nil, err
 	}
-	cloggerConfig, err := clogger.LoadConfig(config)
+	config, err := clogger.LoadConfig(loader)
 	if err != nil {
 		return nil, err
 	}
-	logger, err := clogger.NewWithConfig(cloggerConfig)
+	logger, err := clogger.NewWithConfig(config)
 	if err != nil {
 		return nil, err
 	}
 	lifecycle := NewLifecycle(logger)
-	app := NewApp(lifecycle, config, logger)
+	app := NewApp(lifecycle, loader, logger)
 	return app, nil
 }
 

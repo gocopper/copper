@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package copper
@@ -15,11 +16,11 @@ func InitApp() (*App, error) {
 			NewApp,
 			NewFlags,
 			NewLifecycle,
-			cconfig.New,
+			cconfig.NewWithKeyOverrides,
 			clogger.NewWithConfig,
 			clogger.LoadConfig,
 
-			wire.FieldsOf(new(*Flags), "Env", "ConfigDir", "ProjectDir"),
+			wire.FieldsOf(new(*Flags), "ConfigPath"),
 		),
 	)
 }

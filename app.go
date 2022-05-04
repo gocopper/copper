@@ -28,7 +28,7 @@ func New() *App {
 
 // NewApp creates a new Copper app and returns it along with the app's lifecycle manager,
 // config, and the logger.
-func NewApp(lifecycle *Lifecycle, config cconfig.Config, logger clogger.Logger) *App {
+func NewApp(lifecycle *Lifecycle, config cconfig.Loader, logger clogger.Logger) *App {
 	return &App{
 		Lifecycle: lifecycle,
 		Config:    config,
@@ -41,7 +41,7 @@ func NewApp(lifecycle *Lifecycle, config cconfig.Config, logger clogger.Logger) 
 // command-line flags.
 type App struct {
 	Lifecycle *Lifecycle
-	Config    cconfig.Config
+	Config    cconfig.Loader
 	Logger    clogger.Logger
 }
 

@@ -15,7 +15,7 @@ const (
 )
 
 // LoadConfig loads Config from app's config
-func LoadConfig(appConfig cconfig.Config) (Config, error) {
+func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 	var config Config
 
 	err := appConfig.Load("clogger", &config)
