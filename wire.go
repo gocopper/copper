@@ -18,7 +18,7 @@ func InitApp() (*App, error) {
 			NewFlags,
 			clifecycle.New,
 			cconfig.NewWithKeyOverrides,
-			clogger.NewWithConfig,
+			clogger.NewZapLogger,
 			clogger.LoadConfig,
 
 			wire.FieldsOf(new(*Flags), "ConfigPath"),

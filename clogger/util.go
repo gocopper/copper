@@ -13,3 +13,20 @@ func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
 
 	return merged
 }
+
+func tagsToKVs(tags map[string]interface{}) []interface{} {
+	kvs := make([]interface{}, 0, len(tags)*2)
+	for k, v := range tags {
+		kvs = append(kvs, k, v)
+	}
+	return kvs
+}
+
+func formatToZapEncoding(f Format) string {
+	switch f {
+	case FormatJSON:
+		return "json"
+	default:
+		return "console"
+	}
+}

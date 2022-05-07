@@ -27,7 +27,7 @@ func InitApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger, err := clogger.NewWithConfig(config)
+	logger, err := clogger.NewZapLogger(config, lifecycle)
 	if err != nil {
 		return nil, err
 	}
