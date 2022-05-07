@@ -7,6 +7,7 @@ package copper
 
 import (
 	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
 	"github.com/google/wire"
 )
@@ -15,6 +16,7 @@ import (
 
 // InitApp creates a new Copper app along with its dependencies.
 func InitApp() (*App, error) {
+	lifecycle := clifecycle.New()
 	flags := NewFlags()
 	path := flags.ConfigPath
 	loader, err := cconfig.NewWithKeyOverrides(path)
@@ -29,7 +31,6 @@ func InitApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	lifecycle := NewLifecycle(logger)
 	app := NewApp(lifecycle, loader, logger)
 	return app, nil
 }

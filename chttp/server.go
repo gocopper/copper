@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gocopper/copper"
+	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
 )
 
 // NewServerParams holds the params needed to create a server.
 type NewServerParams struct {
 	Handler   http.Handler
-	Lifecycle *copper.Lifecycle
+	Lifecycle *clifecycle.Lifecycle
 	Config    Config
 	Logger    clogger.Logger
 }
@@ -34,7 +34,7 @@ type Server struct {
 	handler http.Handler
 	config  Config
 	logger  clogger.Logger
-	lc      *copper.Lifecycle
+	lc      *clifecycle.Lifecycle
 
 	internal http.Server
 }

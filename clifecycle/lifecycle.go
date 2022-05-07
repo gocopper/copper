@@ -1,19 +1,16 @@
-package copper
+package clifecycle
 
 import (
 	"context"
 	"time"
-
-	"github.com/gocopper/copper/clogger"
 )
 
 const defaultStopTimeout = 10 * time.Second
 
-// NewLifecycle instantiates and returns a new Lifecycle that can be used with
+// New instantiates and returns a new Lifecycle that can be used with
 // New to create a Copper app.
-func NewLifecycle(logger clogger.Logger) *Lifecycle {
+func New() *Lifecycle {
 	return &Lifecycle{
-		logger:      logger,
 		onStop:      make([]func(ctx context.Context) error, 0),
 		stopTimeout: defaultStopTimeout,
 	}
@@ -25,7 +22,6 @@ func NewLifecycle(logger clogger.Logger) *Lifecycle {
 // Packages such as chttp use Lifecycle to gracefully stop the HTTP
 // server before the app exits.
 type Lifecycle struct {
-	logger      clogger.Logger
 	onStop      []func(ctx context.Context) error
 	stopTimeout time.Duration
 }
@@ -39,13 +35,13 @@ func (lc *Lifecycle) OnStop(fn func(ctx context.Context) error) {
 
 // Stop runs all of the registered stop funcs in order along with a
 // context with a configured timeout.
-func (lc *Lifecycle) Stop() {
+func (lc *Lifecycle) Stop(logger Logger) {
 	for _, fn := range lc.onStop {
 		ctx, cancel := context.WithTimeout(context.Background(), lc.stopTimeout)
 
 		err := fn(ctx)
 		if err != nil {
-			lc.logger.Error("Failed to run cleanup func", err)
+			logger.Error("Failed to run cleanup func", err)
 		}
 
 		cancel()

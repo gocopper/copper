@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
 )
 
@@ -28,7 +29,7 @@ func New() *App {
 
 // NewApp creates a new Copper app and returns it along with the app's lifecycle manager,
 // config, and the logger.
-func NewApp(lifecycle *Lifecycle, config cconfig.Loader, logger clogger.Logger) *App {
+func NewApp(lifecycle *clifecycle.Lifecycle, config cconfig.Loader, logger clogger.Logger) *App {
 	return &App{
 		Lifecycle: lifecycle,
 		Config:    config,
@@ -40,7 +41,7 @@ func NewApp(lifecycle *Lifecycle, config cconfig.Loader, logger clogger.Logger) 
 // It provides functionality to read config in multiple environments as defined by
 // command-line flags.
 type App struct {
-	Lifecycle *Lifecycle
+	Lifecycle *clifecycle.Lifecycle
 	Config    cconfig.Loader
 	Logger    clogger.Logger
 }
@@ -55,12 +56,12 @@ func (a *App) Run(fns ...Runner) {
 		err := fns[i].Run()
 		if err != nil {
 			a.Logger.Error("Failed to run", err)
-			a.Lifecycle.Stop()
+			a.Lifecycle.Stop(a.Logger)
 			os.Exit(1)
 		}
 	}
 
-	a.Lifecycle.Stop()
+	a.Lifecycle.Stop(a.Logger)
 }
 
 // Start runs the provided fns and then waits on the OS's INT and TERM signals from the
@@ -83,5 +84,5 @@ func (a *App) Start(fns ...Runner) {
 
 	<-osInt
 
-	a.Lifecycle.Stop()
+	a.Lifecycle.Stop(a.Logger)
 }

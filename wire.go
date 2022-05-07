@@ -5,6 +5,7 @@ package copper
 
 import (
 	"github.com/gocopper/copper/cconfig"
+	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
 	"github.com/google/wire"
 )
@@ -15,7 +16,7 @@ func InitApp() (*App, error) {
 		wire.Build(
 			NewApp,
 			NewFlags,
-			NewLifecycle,
+			clifecycle.New,
 			cconfig.NewWithKeyOverrides,
 			clogger.NewWithConfig,
 			clogger.LoadConfig,
