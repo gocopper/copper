@@ -2,6 +2,7 @@ package chtml
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/gocopper/copper/chttp"
 )
@@ -9,10 +10,9 @@ import (
 type (
 	// Router provides routes to serve static assets and the index page for a single-page app
 	Router struct {
-		rw     *ReaderWriter
-		config Config
-
-		staticFileServer http.Handler
+		rw        *ReaderWriter
+		staticDir StaticDir
+		config    Config
 	}
 
 	// NewRouterParams holds the params needed to instantiate a new Router
@@ -24,13 +24,12 @@ type (
 )
 
 // NewRouter instantiates a new Router
-func NewRouter(p NewRouterParams) *Router {
+func NewRouter(p NewRouterParams) (*Router, error) {
 	return &Router{
-		rw:     p.RW,
-		config: p.Config,
-
-		staticFileServer: http.FileServer(http.FS(p.StaticDir)),
-	}
+		rw:        p.RW,
+		staticDir: p.StaticDir,
+		config:    p.Config,
+	}, nil
 }
 
 // Routes defines the HTTP routes for this router
@@ -39,7 +38,7 @@ func (ro *Router) Routes() []chttp.Route {
 		{
 			Path:    "/static/{path:.*}",
 			Methods: []string{http.MethodGet},
-			Handler: ro.staticFileServer.ServeHTTP,
+			Handler: ro.HandleStaticFile,
 		},
 	}
 
@@ -52,6 +51,17 @@ func (ro *Router) Routes() []chttp.Route {
 	}
 
 	return routes
+}
+
+// HandleStaticFile serves the requested static file as found in the web/public directory. In non-dev env, the static
+// files are embedded in the binary.
+func (ro *Router) HandleStaticFile(w http.ResponseWriter, r *http.Request) {
+	if ro.config.DevMode {
+		http.ServeFile(w, r, path.Join("web", "public", chttp.URLParams(r)["path"]))
+		return
+	}
+
+	http.FileServer(http.FS(ro.staticDir)).ServeHTTP(w, r)
 }
 
 // HandleIndexPage renders the index.html page

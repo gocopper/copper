@@ -1,11 +1,10 @@
 package chtml
 
 import (
-	"html/template"
-	"net/http"
-
 	// embeds html templates
 	_ "embed"
+	"html/template"
+	"net/http"
 
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
