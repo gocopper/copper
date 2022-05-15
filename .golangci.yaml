@@ -5,7 +5,6 @@ issues:
 run:
   build-tags:
     - wireinject
-    - csql_sqlite
 
 linters:
   disable-all: true

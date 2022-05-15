@@ -11,4 +11,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gorm.io/driver/postgres v1.3.5
+	gorm.io/driver/sqlite v1.3.2
+	gorm.io/gorm v1.23.5
 )
