@@ -29,9 +29,6 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 <p>Build frontend apps along with your backend and ship everything in a single binary.</p>
 
 
-#### 🔨 Frontend Tooling
-<p>Comes with frontend tooling built-in for vanilla JS, React, Vue and other frameworks.</p>
-
 #### 📝 Server-side HTML
 <p>Copper includes utilities that help build web apps with server rendered HTML pages.</p>
 
@@ -42,7 +39,7 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 <p>Skip boilerplate and scaffold code for your packages, database queries and routes.</p>
 
 #### 🔋 Batteries Included
-<p>Includes CLI, lint, dev server, frontend tooling, config management, and more!</p>
+<p>Includes CLI, lint, dev server, config management, and more!</p>
 
 #### 🔩 First-party packages
 <p>Includes packages for authentication, pub/sub, queues, emails, and websockets.</p>
@@ -58,7 +55,7 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 ## Getting Started
 
-> Copper requires Go 1.16+, Node 12+
+> Copper requires Go 1.16+
 
 <br  />
 
