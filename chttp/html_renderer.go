@@ -1,4 +1,4 @@
-package chtml
+package chttp
 
 import (
 	"encoding/json"
@@ -24,15 +24,15 @@ type (
 	// StaticDir represents a directory that holds static resources (JS, CSS, images, etc.)
 	StaticDir fs.FS
 
-	// Renderer provides functionality in rendering templatized HTML along with HTML components
-	Renderer struct {
+	// HTMLRenderer provides functionality in rendering templatized HTML along with HTML components
+	HTMLRenderer struct {
 		htmlDir   HTMLDir
 		staticDir StaticDir
 		devMode   bool
 	}
 
-	// NewRendererParams holds the params needed to create Renderer
-	NewRendererParams struct {
+	// NewHTMLRendererParams holds the params needed to create HTMLRenderer
+	NewHTMLRendererParams struct {
 		HTMLDir   HTMLDir
 		StaticDir StaticDir
 		Config    Config
@@ -40,10 +40,10 @@ type (
 	}
 )
 
-// NewRenderer creates a new Renderer with HTML templates stored in dir and registers the provided HTML
+// NewHTMLRenderer creates a new HTMLRenderer with HTML templates stored in dir and registers the provided HTML
 // components
-func NewRenderer(p NewRendererParams) (*Renderer, error) {
-	hr := Renderer{
+func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
+	hr := HTMLRenderer{
 		htmlDir:   p.HTMLDir,
 		staticDir: p.StaticDir,
 		devMode:   p.Config.DevMode,
@@ -63,14 +63,14 @@ func NewRenderer(p NewRendererParams) (*Renderer, error) {
 	return &hr, nil
 }
 
-func (r *Renderer) funcMap(req *http.Request) template.FuncMap {
+func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
 	return template.FuncMap{
 		"partial": r.partial(req),
 		"assets":  r.assets(req),
 	}
 }
 
-func (r *Renderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
+func (r *HTMLRenderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
 	var dest strings.Builder
 
 	tmpl, err := template.New(layout).
@@ -95,7 +95,7 @@ func (r *Renderer) render(req *http.Request, layout, page string, data interface
 	return template.HTML(dest.String()), nil
 }
 
-func (r *Renderer) partial(req *http.Request) func(name string, data interface{}) (template.HTML, error) {
+func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interface{}) (template.HTML, error) {
 	return func(name string, data interface{}) (template.HTML, error) {
 		var dest strings.Builder
 
@@ -122,7 +122,7 @@ func (r *Renderer) partial(req *http.Request) func(name string, data interface{}
 	}
 }
 
-func (r *Renderer) assets(req *http.Request) func() (template.HTML, error) {
+func (r *HTMLRenderer) assets(req *http.Request) func() (template.HTML, error) {
 	return func() (template.HTML, error) {
 		if r.devMode {
 			return r.devAssets(req)
@@ -132,7 +132,7 @@ func (r *Renderer) assets(req *http.Request) func() (template.HTML, error) {
 	}
 }
 
-func (r *Renderer) devAssets(req *http.Request) (template.HTML, error) {
+func (r *HTMLRenderer) devAssets(req *http.Request) (template.HTML, error) {
 	const reactRefreshURL = "http://localhost:3000/@react-refresh"
 	var out strings.Builder
 
@@ -194,7 +194,7 @@ func (r *Renderer) devAssets(req *http.Request) (template.HTML, error) {
 	return template.HTML(out.String()), nil
 }
 
-func (r *Renderer) prodAssets() (template.HTML, error) {
+func (r *HTMLRenderer) prodAssets() (template.HTML, error) {
 	var (
 		out      strings.Builder
 		manifest struct {

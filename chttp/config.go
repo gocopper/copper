@@ -19,5 +19,7 @@ func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 
 // Config holds the params needed to configure Server
 type Config struct {
-	Port uint `default:"7501"`
+	Port                    uint `default:"7501"`
+	DevMode                 bool `toml:"dev_mode"`
+	EnableSinglePageRouting bool `toml:"enable_single_page_routing"`
 }

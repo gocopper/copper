@@ -1,31 +1,29 @@
-package chtml
+package chttp
 
 import (
 	"net/http"
 	"path"
-
-	"github.com/gocopper/copper/chttp"
 )
 
 type (
-	// Router provides routes to serve static assets and the index page for a single-page app
-	Router struct {
+	// HTMLRouter provides routes to serve (1) static assets (2) index page for an SPA
+	HTMLRouter struct {
 		rw        *ReaderWriter
 		staticDir StaticDir
 		config    Config
 	}
 
-	// NewRouterParams holds the params needed to instantiate a new Router
-	NewRouterParams struct {
+	// NewHTMLRouterParams holds the params needed to instantiate a new Router
+	NewHTMLRouterParams struct {
 		StaticDir StaticDir
 		RW        *ReaderWriter
 		Config    Config
 	}
 )
 
-// NewRouter instantiates a new Router
-func NewRouter(p NewRouterParams) (*Router, error) {
-	return &Router{
+// NewHTMLRouter instantiates a new Router
+func NewHTMLRouter(p NewHTMLRouterParams) (*HTMLRouter, error) {
+	return &HTMLRouter{
 		rw:        p.RW,
 		staticDir: p.StaticDir,
 		config:    p.Config,
@@ -33,8 +31,8 @@ func NewRouter(p NewRouterParams) (*Router, error) {
 }
 
 // Routes defines the HTTP routes for this router
-func (ro *Router) Routes() []chttp.Route {
-	routes := []chttp.Route{
+func (ro *HTMLRouter) Routes() []Route {
+	routes := []Route{
 		{
 			Path:    "/static/{path:.*}",
 			Methods: []string{http.MethodGet},
@@ -43,7 +41,7 @@ func (ro *Router) Routes() []chttp.Route {
 	}
 
 	if ro.config.EnableSinglePageRouting {
-		routes = append(routes, chttp.Route{
+		routes = append(routes, Route{
 			Path:    "/{path:.*}",
 			Methods: []string{http.MethodGet},
 			Handler: ro.HandleIndexPage,
@@ -55,9 +53,9 @@ func (ro *Router) Routes() []chttp.Route {
 
 // HandleStaticFile serves the requested static file as found in the web/public directory. In non-dev env, the static
 // files are embedded in the binary.
-func (ro *Router) HandleStaticFile(w http.ResponseWriter, r *http.Request) {
+func (ro *HTMLRouter) HandleStaticFile(w http.ResponseWriter, r *http.Request) {
 	if ro.config.DevMode {
-		http.ServeFile(w, r, path.Join("web", "public", chttp.URLParams(r)["path"]))
+		http.ServeFile(w, r, path.Join("web", "public", URLParams(r)["path"]))
 		return
 	}
 
@@ -65,7 +63,7 @@ func (ro *Router) HandleStaticFile(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleIndexPage renders the index.html page
-func (ro *Router) HandleIndexPage(w http.ResponseWriter, r *http.Request) {
+func (ro *HTMLRouter) HandleIndexPage(w http.ResponseWriter, r *http.Request) {
 	ro.rw.WriteHTML(w, r, WriteHTMLParams{
 		PageTemplate: "index.html",
 	})
