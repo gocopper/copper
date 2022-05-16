@@ -54,7 +54,7 @@ func (ro *HTMLRouter) Routes() []Route {
 // HandleStaticFile serves the requested static file as found in the web/public directory. In non-dev env, the static
 // files are embedded in the binary.
 func (ro *HTMLRouter) HandleStaticFile(w http.ResponseWriter, r *http.Request) {
-	if ro.config.DevMode {
+	if ro.config.UseLocalHTML {
 		http.ServeFile(w, r, path.Join("web", "public", URLParams(r)["path"]))
 		return
 	}

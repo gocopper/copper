@@ -28,7 +28,6 @@ type (
 	HTMLRenderer struct {
 		htmlDir   HTMLDir
 		staticDir StaticDir
-		devMode   bool
 	}
 
 	// NewHTMLRendererParams holds the params needed to create HTMLRenderer
@@ -46,12 +45,9 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	hr := HTMLRenderer{
 		htmlDir:   p.HTMLDir,
 		staticDir: p.StaticDir,
-		devMode:   p.Config.DevMode,
 	}
 
-	if p.Config.DevMode {
-		p.Logger.Info("chtml dev mode is enabled")
-
+	if p.Config.UseLocalHTML {
 		wd, err := os.Getwd()
 		if err != nil {
 			return nil, cerrors.New(err, "failed to get current working directory", nil)
@@ -124,7 +120,8 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 
 func (r *HTMLRenderer) assets(req *http.Request) func() (template.HTML, error) {
 	return func() (template.HTML, error) {
-		if r.devMode {
+		// todo: remove vite assets
+		if false {
 			return r.devAssets(req)
 		}
 

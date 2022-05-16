@@ -136,8 +136,6 @@ func (rw *ReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, e
 // WriteHTML writes an HTML response to the provided http.ResponseWriter. Using the given WriteHTMLParams, the HTML
 // is generated with a layout, page, and component templates.
 func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p WriteHTMLParams) {
-	var renderHTMLError = rw.config.DevMode
-
 	if p.StatusCode == 0 && p.Error == nil {
 		p.StatusCode = http.StatusOK
 	}
@@ -164,7 +162,7 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 		}).Error("Failed to handle request", p.Error)
 	}
 
-	if p.Error != nil && renderHTMLError {
+	if p.Error != nil && rw.config.RenderHTMLError {
 		w.WriteHeader(p.StatusCode)
 		w.Header().Set("content-type", "text/html")
 
