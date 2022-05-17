@@ -24,16 +24,28 @@ type (
 
 	// HTMLRenderer provides functionality in rendering templatized HTML along with HTML components
 	HTMLRenderer struct {
-		htmlDir   HTMLDir
-		staticDir StaticDir
+		htmlDir     HTMLDir
+		staticDir   StaticDir
+		renderFuncs []HTMLRenderFunc
+	}
+
+	// HTMLRenderFunc can be used to register new template functions
+	HTMLRenderFunc struct {
+		// Name for the function that can be invoked in a template
+		Name string
+
+		// Func should return a function that takes in any number of params and returns either a single return value,
+		// or two return values of which the second has type error.
+		Func func(r *http.Request) interface{}
 	}
 
 	// NewHTMLRendererParams holds the params needed to create HTMLRenderer
 	NewHTMLRendererParams struct {
-		HTMLDir   HTMLDir
-		StaticDir StaticDir
-		Config    Config
-		Logger    clogger.Logger
+		HTMLDir     HTMLDir
+		StaticDir   StaticDir
+		RenderFuncs []HTMLRenderFunc
+		Config      Config
+		Logger      clogger.Logger
 	}
 )
 
@@ -41,8 +53,9 @@ type (
 // components
 func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	hr := HTMLRenderer{
-		htmlDir:   p.HTMLDir,
-		staticDir: p.StaticDir,
+		htmlDir:     p.HTMLDir,
+		staticDir:   p.StaticDir,
+		renderFuncs: p.RenderFuncs,
 	}
 
 	if p.Config.UseLocalHTML {
@@ -58,9 +71,15 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 }
 
 func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
-	return template.FuncMap{
+	var funcMap = template.FuncMap{
 		"partial": r.partial(req),
 	}
+
+	for i := range r.renderFuncs {
+		funcMap[r.renderFuncs[i].Name] = r.renderFuncs[i].Func(req)
+	}
+
+	return funcMap
 }
 
 func (r *HTMLRenderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
