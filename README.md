@@ -47,77 +47,26 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 <br />
 
-## Current Status
-
-💎️ Copper is currently in preview as new features are added. While the APIs are unlikely to change in any major ways, some details may change as they are refined. Feedback and contributions are welcome! 
-
-<br />
-
 ## Getting Started
 
-> Copper requires Go 1.16+
-
-<br  />
-
-1. Install the Copper CLI
+1. Install Copper & Wire
 ```
-❯ go install github.com/gocopper/cli/cmd/copper@latest
-```
-
-2. Install Wire CLI
-```
+❯ go install github.com/gocopper/cli/cmd/copper@v1
 ❯ go install github.com/google/wire/cmd/wire@latest
 ```
 
-3. Scaffold your project
+2. Create a new project
 ```
-❯ copper init
-? What's the module name for your project? xnotes
-
-# Create Project Files
-
- SUCCESS  Create xnotes/config/local.toml (Took 1ms)
- SUCCESS  Create xnotes/go.mod (Took 0s)
- SUCCESS  Create xnotes/pkg/app/handler.go (Took 0s)
- SUCCESS  Create xnotes/pkg/app/wire.go (Took 0s)
- SUCCESS  Create xnotes/pkg/web/public/favicon.svg (Took 1ms)
- SUCCESS  Create xnotes/pkg/web/public/logo.svg (Took 0s)
- SUCCESS  Create xnotes/pkg/web/src/pages/index.html (Took 0s)
- SUCCESS  Create xnotes/config/prod.toml (Took 0s)
- SUCCESS  Create xnotes/cmd/migrate/wire.go (Took 0s)
- SUCCESS  Create xnotes/pkg/app/migrations.go (Took 0s)
- SUCCESS  Create xnotes/pkg/web/wire.go (Took 0s)
- SUCCESS  Create xnotes/.golangci.yaml (Took 0s)
- SUCCESS  Create xnotes/cmd/app/main.go (Took 1ms)
- SUCCESS  Create xnotes/cmd/app/wire.go (Took 0s)
- SUCCESS  Create xnotes/cmd/migrate/main.go (Took 0s)
- SUCCESS  Create xnotes/config/dev.toml (Took 0s)
- SUCCESS  Create xnotes/pkg/web/src/layouts/main.html (Took 0s)
- SUCCESS  Create xnotes/pkg/web/src/main.js (Took 0s)
- SUCCESS  Create xnotes/pkg/web/vite.config.js (Took 0s)
- SUCCESS  Create xnotes/.gitignore (Took 0s)
- SUCCESS  Create xnotes/pkg/web/package.json (Took 0s)
- SUCCESS  Create xnotes/pkg/web/router.go (Took 0s)
- SUCCESS  Create xnotes/pkg/web/src/styles.css (Took 0s)
- SUCCESS  Create xnotes/config/base.toml (Took 0s)
-
-# First Commands
-
-┌──────────────┐
-| cd xnotes    |
-| copper build |
-| copper watch |
-└──────────────┘
+❯ copper create github.com/user/xnotes
 ```
 
-4. Start Project
-```cgo
+3. Run app server
+```
 ❯ cd xnotes
-❯ copper build
-❯ copper watch
+❯ copper run -watch
 ```
 
-5. Open http://localhost:5901 in your browser
+4. Open http://localhost:5901 in your browser
 
 <br />
 
