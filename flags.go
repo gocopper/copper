@@ -14,7 +14,7 @@ type Flags struct {
 
 // NewFlags reads the command line flags and returns Flags with the values set.
 func NewFlags() *Flags {
-	var configPath = flag.String("config", "./config/local.toml", "Path to config file")
+	var configPath = flag.String("config", "./config/dev.toml", "Path to config file")
 
 	flag.Parse()
 
