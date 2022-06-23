@@ -47,6 +47,11 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 <br />
 
+## Intro Video (Hacker News Clone)
+[![](https://user-images.githubusercontent.com/2974009/175425653-da11ba79-d9ec-4e82-a2e0-5f5515d3417e.png)](https://vimeo.com/723537998)
+
+<br />
+
 ## Getting Started
 
 1. Install Copper & Wire
