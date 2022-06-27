@@ -54,24 +54,7 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 ## Getting Started
 
-1. Install Copper & Wire
-```
-❯ go install github.com/gocopper/cli/cmd/copper@v1
-❯ go install github.com/google/wire/cmd/wire@latest
-```
-
-2. Create a new project
-```
-❯ copper create github.com/user/xnotes
-```
-
-3. Run app server
-```
-❯ cd xnotes
-❯ copper run -watch
-```
-
-4. Open http://localhost:5901 in your browser
+Head over to the documentation to get started - [https://docs.gocopper.dev/](https://docs.gocopper.dev/getting-started)
 
 <br />
 
