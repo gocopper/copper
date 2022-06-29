@@ -56,6 +56,8 @@ Copper is a Go toolkit complete with everything you need to build web apps. It f
 
 Head over to the documentation to get started - [https://docs.gocopper.dev/](https://docs.gocopper.dev/getting-started)
 
+Join us on Discord here - https://discord.gg/fT2AEZyM6A
+
 <br />
 
 ## License
