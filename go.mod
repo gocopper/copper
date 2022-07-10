@@ -3,6 +3,7 @@ module github.com/gocopper/copper
 go 1.16
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/google/wire v0.5.0
 	github.com/gorilla/context v1.1.1 // indirect

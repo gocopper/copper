@@ -1,6 +1,7 @@
 package chttp
 
 import (
+	_ "embed"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -9,9 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gocopper/copper/clogger"
-
 	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/clogger"
 )
 
 type (
@@ -36,7 +36,7 @@ type (
 
 		// Func should return a function that takes in any number of params and returns either a single return value,
 		// or two return values of which the second has type error.
-		Func func(r *http.Request) interface{}
+		Func func(r *http.Request, html *HTMLRenderer) interface{}
 	}
 
 	// NewHTMLRendererParams holds the params needed to create HTMLRenderer
@@ -70,14 +70,22 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	return &hr, nil
 }
 
+func (r *HTMLRenderer) Render(req *http.Request, path string, data map[string]interface{}) (template.HTML, error) {
+	return r.renderPartialFromDirWithFuncs(path, r.funcMap(req), data)
+}
+
 func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
 	var funcMap = template.FuncMap{
-		"partial": r.partial(req),
-		"dict":    dict,
+		"partial": func(req *http.Request, html *HTMLRenderer) interface{} {
+			return func(name string, data interface{}) (template.HTML, error) {
+				return r.renderPartialFromDirWithFuncs(path.Join("partials", name), r.funcMap(req), data)
+			}
+		},
+		"dict": dict,
 	}
 
 	for i := range r.renderFuncs {
-		funcMap[r.renderFuncs[i].Name] = r.renderFuncs[i].Func(req)
+		funcMap[r.renderFuncs[i].Name] = r.renderFuncs[i].Func(req, r)
 	}
 
 	return funcMap
@@ -108,29 +116,34 @@ func (r *HTMLRenderer) render(req *http.Request, layout, page string, data inter
 	return template.HTML(dest.String()), nil
 }
 
-func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interface{}) (template.HTML, error) {
-	return func(name string, data interface{}) (template.HTML, error) {
-		var dest strings.Builder
+func (r *HTMLRenderer) renderPartialFromDirWithFuncs(tmplPath string, fnMap template.FuncMap, data interface{}) (template.HTML, error) {
+	var (
+		name = path.Base(tmplPath) + ".html"
+		dir  = path.Dir(tmplPath)
 
-		tmpl, err := template.New(name+".html").
-			Funcs(r.funcMap(req)).
-			ParseFS(r.htmlDir,
-				path.Join("src", "partials", "*.html"),
-			)
-		if err != nil {
-			return "", cerrors.New(err, "failed to parse partial template", map[string]interface{}{
-				"name": name,
-			})
-		}
+		dest strings.Builder
+	)
 
-		err = tmpl.Execute(&dest, data)
-		if err != nil {
-			return "", cerrors.New(err, "failed to execute partial template", map[string]interface{}{
-				"name": name,
-			})
-		}
-
-		// nolint:gosec
-		return template.HTML(dest.String()), nil
+	tmpl, err := template.New(name).
+		Funcs(fnMap).
+		ParseFS(r.htmlDir,
+			path.Join("src", dir, "*.html"),
+		)
+	if err != nil {
+		return "", cerrors.New(err, "failed to parse partial template", map[string]interface{}{
+			"dir":  dir,
+			"name": name,
+		})
 	}
+
+	err = tmpl.Execute(&dest, data)
+	if err != nil {
+		return "", cerrors.New(err, "failed to execute partial template", map[string]interface{}{
+			"dir":  dir,
+			"name": name,
+		})
+	}
+
+	// nolint:gosec
+	return template.HTML(dest.String()), nil
 }

@@ -3,6 +3,8 @@ package chttp
 import (
 	"net/http"
 	"path"
+
+	"github.com/gocopper/copper/clogger"
 )
 
 type (
@@ -11,6 +13,7 @@ type (
 		rw        *ReaderWriter
 		staticDir StaticDir
 		config    Config
+		logger    clogger.Logger
 	}
 
 	// NewHTMLRouterParams holds the params needed to instantiate a new Router
@@ -18,6 +21,7 @@ type (
 		StaticDir StaticDir
 		RW        *ReaderWriter
 		Config    Config
+		Logger    clogger.Logger
 	}
 )
 
@@ -27,6 +31,7 @@ func NewHTMLRouter(p NewHTMLRouterParams) (*HTMLRouter, error) {
 		rw:        p.RW,
 		staticDir: p.StaticDir,
 		config:    p.Config,
+		logger:    p.Logger,
 	}, nil
 }
 
