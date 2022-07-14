@@ -6,6 +6,7 @@ import (
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -21,6 +22,8 @@ func NewDBConnection(lc *clifecycle.Lifecycle, config Config, logger clogger.Log
 		dialect = sqlite.Open(config.DSN)
 	case "postgres":
 		dialect = postgres.Open(config.DSN)
+	case "mysql":
+		dialect = mysql.Open(config.DSN)
 	default:
 		return nil, cerrors.New(nil, "unknown dialect", map[string]interface{}{
 			"dialect": config.Dialect,
