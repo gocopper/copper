@@ -73,6 +73,7 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
 	var funcMap = template.FuncMap{
 		"partial": r.partial(req),
+		"dict":    dict,
 	}
 
 	for i := range r.renderFuncs {
