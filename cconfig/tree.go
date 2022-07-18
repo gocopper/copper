@@ -3,13 +3,14 @@ package cconfig
 import (
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/gocopper/copper/cerrors"
 	"github.com/pelletier/go-toml"
 )
 
 //nolint:funlen
-func loadTree(fp string, disableKeyOverrides bool) (*toml.Tree, error) {
+func loadTree(fp, overrides string, disableKeyOverrides bool) (*toml.Tree, error) {
 	tree, err := toml.LoadFile(fp)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load config file", map[string]interface{}{
@@ -55,7 +56,7 @@ func loadTree(fp string, disableKeyOverrides bool) (*toml.Tree, error) {
 
 		// Load the parent tree at the given path defined by the extends key. Note that this is a recursive call
 		// that will load all ancestors.
-		parentTree, err := loadTree(parentFilePath, disableKeyOverrides)
+		parentTree, err := loadTree(parentFilePath, "", disableKeyOverrides)
 		if err != nil {
 			return nil, cerrors.New(err, "failed to load parent tree", map[string]interface{}{
 				"parentPath": parentFilePath,
@@ -71,6 +72,22 @@ func loadTree(fp string, disableKeyOverrides bool) (*toml.Tree, error) {
 		}
 	}
 
+	// Apply overrides
+	for _, ov := range strings.Split(overrides, ";") {
+		t, err := toml.Load(ov)
+		if err != nil {
+			return nil, cerrors.New(err, "failed to parse override as TOML", map[string]interface{}{
+				"override": ov,
+			})
+		}
+
+		tree, err = mergeTrees(tree, t, disableKeyOverrides)
+		if err != nil {
+			return nil, cerrors.New(err, "failed to merge tree with overrides", map[string]interface{}{
+				"override": ov,
+			})
+		}
+	}
 	return tree, nil
 }
 

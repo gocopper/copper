@@ -5,8 +5,12 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-// Path defines the path to the config file.
-type Path string
+type (
+	// Path defines the path to the config file.
+	Path string
+	// Overrides defines a ';' separated string of config overrides in TOML format
+	Overrides string
+)
 
 // Loader provides methods to load config files into structs.
 type Loader interface {
@@ -51,8 +55,8 @@ type Loader interface {
 //
 // If a config key is present in multiple files, New returns an error. For example, if prod.toml sets a value for 'key1'
 // that has already been set in base.toml, an error will be returned. To enable key overrides see NewWithKeyOverrides.
-func New(fp Path) (Loader, error) {
-	return newLoader(string(fp), true)
+func New(fp Path, ov Overrides) (Loader, error) {
+	return newLoader(string(fp), string(ov), true)
 }
 
 // NewWithKeyOverrides works exactly the same way as New except it supports key overrides. For example, this is a valid
@@ -65,12 +69,12 @@ func New(fp Path) (Loader, error) {
 // key1 = "val2"
 //
 // If prod.toml is loaded, key1 will be set to "val2" since it has been overridden in prod.toml.
-func NewWithKeyOverrides(fp Path) (Loader, error) {
-	return newLoader(string(fp), false)
+func NewWithKeyOverrides(fp Path, overrides Overrides) (Loader, error) {
+	return newLoader(string(fp), string(overrides), false)
 }
 
-func newLoader(fp string, disableKeyOverrides bool) (*loader, error) {
-	tree, err := loadTree(fp, disableKeyOverrides)
+func newLoader(fp, overrides string, disableKeyOverrides bool) (*loader, error) {
+	tree, err := loadTree(fp, overrides, disableKeyOverrides)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load config tree", map[string]interface{}{
 			"path": fp,

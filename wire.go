@@ -21,7 +21,7 @@ func InitApp() (*App, error) {
 			clogger.NewZapLogger,
 			clogger.LoadConfig,
 
-			wire.FieldsOf(new(*Flags), "ConfigPath"),
+			wire.FieldsOf(new(*Flags), "ConfigPath", "ConfigOverrides"),
 		),
 	)
 }
