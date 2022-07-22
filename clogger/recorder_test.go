@@ -12,11 +12,7 @@ func TestNewRecorder(t *testing.T) {
 	t.Parallel()
 
 	logger := clogger.NewRecorder(nil)
-
-	_, ok := logger.(clogger.Logger)
-
 	assert.NotNil(t, logger)
-	assert.True(t, ok)
 }
 
 func TestRecorder_Debug(t *testing.T) {

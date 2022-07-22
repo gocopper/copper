@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// NewZapLogger creates a Logger that internally uses go.uber.org/zap for logging
 func NewZapLogger(config Config, lc *clifecycle.Lifecycle) (Logger, error) {
 	const OutStdErr = "stderr"
 

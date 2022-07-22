@@ -15,11 +15,7 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	logger := clogger.New()
-
-	_, ok := logger.(clogger.Logger)
-
 	assert.NotNil(t, logger)
-	assert.True(t, ok)
 }
 
 func TestNewWithConfig(t *testing.T) {
@@ -38,11 +34,7 @@ func TestNewWithConfig(t *testing.T) {
 		Format: clogger.FormatPlain,
 	})
 	assert.NoError(t, err)
-
-	_, ok := logger.(clogger.Logger)
-
 	assert.NotNil(t, logger)
-	assert.True(t, ok)
 }
 
 func TestNewWithConfig_OutFileErr(t *testing.T) {
@@ -87,11 +79,7 @@ func TestNewWithParams(t *testing.T) {
 	t.Parallel()
 
 	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain)
-
-	_, ok := logger.(clogger.Logger)
-
 	assert.NotNil(t, logger)
-	assert.True(t, ok)
 }
 
 func TestLogger_Debug(t *testing.T) {

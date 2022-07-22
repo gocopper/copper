@@ -11,11 +11,7 @@ func TestNewNoop(t *testing.T) {
 	t.Parallel()
 
 	logger := clogger.NewNoop()
-
-	_, ok := logger.(clogger.Logger)
-
 	assert.NotNil(t, logger)
-	assert.True(t, ok)
 }
 
 func TestNoopLogger_WithTags(t *testing.T) {
