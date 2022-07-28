@@ -27,6 +27,10 @@ func NewDBConnection(lc *clifecycle.Lifecycle, config Config, logger clogger.Log
 		return nil, cerrors.New(err, "failed to ping db", nil)
 	}
 
+	if config.MaxOpenConnections != nil {
+		db.SetMaxOpenConns(*config.MaxOpenConnections)
+	}
+
 	lc.OnStop(func(ctx context.Context) error {
 		logger.Info("Closing database connection..")
 
