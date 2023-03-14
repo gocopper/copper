@@ -1,7 +1,7 @@
 package chttptest
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,7 +37,7 @@ func PingRoutes(t *testing.T, routes []chttp.Route) {
 		resp, err := http.Get(server.URL + route.Path) //nolint:noctx
 		assert.NoError(t, err)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		assert.NoError(t, resp.Body.Close())
 		assert.NoError(t, err)
 

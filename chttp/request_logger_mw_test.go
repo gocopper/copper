@@ -1,7 +1,7 @@
 package chttp_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,7 +46,7 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 	resp, err := http.Get(server.URL + "/test") //nolint:noctx
 	assert.NoError(t, err)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Body.Close())
 

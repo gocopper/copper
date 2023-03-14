@@ -103,7 +103,7 @@ func (r *HTMLRenderer) render(req *http.Request, layout, page string, data inter
 		return "", cerrors.New(err, "failed to execute template", nil)
 	}
 
-	// nolint:gosec
+	//nolint:gosec
 	return template.HTML(dest.String()), nil
 }
 
@@ -129,7 +129,7 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 			})
 		}
 
-		// nolint:gosec
+		//nolint:gosec
 		return template.HTML(dest.String()), nil
 	}
 }

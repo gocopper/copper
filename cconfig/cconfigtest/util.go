@@ -1,7 +1,6 @@
 package cconfigtest
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -14,11 +13,11 @@ import (
 func SetupDirWithConfigs(t *testing.T, configs map[string]string) string {
 	t.Helper()
 
-	dir, err := ioutil.TempDir("", "")
+	dir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)
 
 	for fp, data := range configs {
-		err = ioutil.WriteFile(path.Join(dir, fp), []byte(data), os.ModePerm)
+		err = os.WriteFile(path.Join(dir, fp), []byte(data), os.ModePerm)
 		assert.NoError(t, err)
 	}
 

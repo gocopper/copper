@@ -3,7 +3,6 @@ package clogger_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestNew(t *testing.T) {
 func TestNewWithConfig(t *testing.T) {
 	t.Parallel()
 
-	log, err := ioutil.TempFile("", "*")
+	log, err := os.CreateTemp("", "*")
 	assert.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -40,7 +39,7 @@ func TestNewWithConfig(t *testing.T) {
 func TestNewWithConfig_OutFileErr(t *testing.T) {
 	t.Parallel()
 
-	log, err := ioutil.TempFile("", "*")
+	log, err := os.CreateTemp("", "*")
 	assert.NoError(t, err)
 
 	assert.NoError(t, os.Chmod(log.Name(), 0000))
@@ -59,7 +58,7 @@ func TestNewWithConfig_OutFileErr(t *testing.T) {
 func TestNewWithConfig_ErrFileErr(t *testing.T) {
 	t.Parallel()
 
-	log, err := ioutil.TempFile("", "*")
+	log, err := os.CreateTemp("", "*")
 	assert.NoError(t, err)
 
 	assert.NoError(t, os.Chmod(log.Name(), 0000))

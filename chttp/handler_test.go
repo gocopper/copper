@@ -1,7 +1,7 @@
 package chttp_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,7 +37,7 @@ func TestNewHandler(t *testing.T) {
 	resp, err := http.Get(server.URL) //nolint:noctx
 	assert.NoError(t, err)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, resp.Body.Close())
 	assert.NoError(t, err)
 
