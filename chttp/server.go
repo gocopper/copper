@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gocopper/copper/clifecycle"
 	"github.com/gocopper/copper/clogger"
@@ -21,11 +22,13 @@ type NewServerParams struct {
 // NewServer creates a new server.
 func NewServer(p NewServerParams) *Server {
 	return &Server{
-		handler:  p.Handler,
-		config:   p.Config,
-		logger:   p.Logger,
-		lc:       p.Lifecycle,
-		internal: http.Server{},
+		handler: p.Handler,
+		config:  p.Config,
+		logger:  p.Logger,
+		lc:      p.Lifecycle,
+		internal: http.Server{
+			ReadTimeout: time.Duration(p.Config.ReadTimeoutSeconds) * time.Second,
+		},
 	}
 }
 

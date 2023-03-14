@@ -23,4 +23,5 @@ type Config struct {
 	UseLocalHTML            bool `toml:"use_local_html"`
 	RenderHTMLError         bool `toml:"render_html_error"`
 	EnableSinglePageRouting bool `toml:"enable_single_page_routing"`
+	ReadTimeoutSeconds      uint `toml:"read_timeout_seconds" default:"10"`
 }
