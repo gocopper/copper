@@ -73,7 +73,12 @@ func (m *Migrator) Run() error {
 		}
 	}
 
-	n, err := migrate.Exec(m.db, m.config.Dialect, source, direction)
+	migrateMax := 0 // no limit
+	if direction == migrate.Down {
+		migrateMax = 1 // only run 1 migration when reverting
+	}
+
+	n, err := migrate.ExecMax(m.db, m.config.Dialect, source, direction, migrateMax)
 	if err != nil {
 		return cerrors.New(err, "failed to exec database migrations", nil)
 	}
