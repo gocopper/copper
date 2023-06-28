@@ -11,6 +11,7 @@ import (
 
 	"github.com/gocopper/copper/clogger"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/gocopper/copper/cerrors"
 )
 
@@ -71,13 +72,13 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 }
 
 func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
-	var funcMap = template.FuncMap{
-		"partial": r.partial(req),
-	}
+	var funcMap = sprig.FuncMap()
 
 	for i := range r.renderFuncs {
 		funcMap[r.renderFuncs[i].Name] = r.renderFuncs[i].Func(req)
 	}
+
+	funcMap["partial"] = r.partial(req)
 
 	return funcMap
 }
