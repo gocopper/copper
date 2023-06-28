@@ -111,15 +111,23 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 	return func(name string, data interface{}) (template.HTML, error) {
 		var dest strings.Builder
 
-		tmpl, err := template.New(name+".html").
+		tmpl, err := template.New(name).
 			Funcs(r.funcMap(req)).
 			ParseFS(r.htmlDir,
-				path.Join("src", "partials", "*.html"),
+				path.Join("src", "partials", "*html"),
 			)
 		if err != nil {
 			return "", cerrors.New(err, "failed to parse partial template", map[string]interface{}{
 				"name": name,
 			})
+		}
+
+		for _, ext := range []string{".html", ".gohtml"} {
+			t := tmpl.Lookup(name + ext)
+			if t != nil {
+				tmpl = t
+				break
+			}
 		}
 
 		err = tmpl.Execute(&dest, data)
