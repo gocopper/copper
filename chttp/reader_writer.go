@@ -189,3 +189,14 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 	w.Header().Set("content-type", "text/html")
 	_, _ = w.Write([]byte(out))
 }
+
+// Unauthorized writes a 401 Unauthorized response to the http.ResponseWriter. If a redirect URL is configured,
+// the user is redirected to that URL instead.
+func (rw *ReaderWriter) Unauthorized(w http.ResponseWriter, r *http.Request) {
+	if rw.config.RedirectURLForUnauthorizedRequests != nil {
+		http.Redirect(w, r, *rw.config.RedirectURLForUnauthorizedRequests, http.StatusSeeOther)
+		return
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+}

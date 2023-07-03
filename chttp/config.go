@@ -19,9 +19,10 @@ func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 
 // Config holds the params needed to configure Server
 type Config struct {
-	Port                    uint `default:"7501"`
-	UseLocalHTML            bool `toml:"use_local_html"`
-	RenderHTMLError         bool `toml:"render_html_error"`
-	EnableSinglePageRouting bool `toml:"enable_single_page_routing"`
-	ReadTimeoutSeconds      uint `toml:"read_timeout_seconds" default:"10"`
+	Port                               uint    `default:"7501"`
+	UseLocalHTML                       bool    `toml:"use_local_html"`
+	RenderHTMLError                    bool    `toml:"render_html_error"`
+	EnableSinglePageRouting            bool    `toml:"enable_single_page_routing"`
+	ReadTimeoutSeconds                 uint    `toml:"read_timeout_seconds" default:"10"`
+	RedirectURLForUnauthorizedRequests *string `toml:"redirect_url_for_unauthorized_requests"`
 }
