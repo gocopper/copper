@@ -30,6 +30,12 @@ type (
 		Data       interface{}
 	}
 
+	// WritePartialParams are the parameters for WritePartial
+	WritePartialParams struct {
+		Name string
+		Data interface{}
+	}
+
 	// ReaderWriter provides functions to read data from HTTP requests and write response bodies in various formats
 	ReaderWriter struct {
 		html   *HTMLRenderer
@@ -186,6 +192,20 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 	}
 
 	w.WriteHeader(p.StatusCode)
+	w.Header().Set("content-type", "text/html")
+	_, _ = w.Write([]byte(out))
+}
+
+// WritePartial renders a partial template with the given name and data
+func (rw *ReaderWriter) WritePartial(w http.ResponseWriter, r *http.Request, p WritePartialParams) {
+	out, err := rw.html.partial(r)(p.Name, p.Data)
+	if err != nil {
+		rw.WriteHTMLError(w, r, cerrors.New(err, "failed to render partial", map[string]interface{}{
+			"name": p.Name,
+		}))
+		return
+	}
+
 	w.Header().Set("content-type", "text/html")
 	_, _ = w.Write([]byte(out))
 }
