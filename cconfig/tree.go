@@ -1,6 +1,8 @@
 package cconfig
 
 import (
+	"html/template"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -11,7 +13,30 @@ import (
 
 //nolint:funlen
 func loadTree(fp, overrides string, disableKeyOverrides bool) (*toml.Tree, error) {
-	tree, err := toml.LoadFile(fp)
+	tmpl, err := template.ParseFiles(fp)
+	if err != nil {
+		return nil, cerrors.New(err, "failed to parse config file as template", map[string]interface{}{
+			"path": fp,
+		})
+	}
+
+	envVars := make(map[string]string)
+	for _, e := range os.Environ() {
+		pair := strings.Split(e, "=")
+		envVars[pair[0]] = pair[1]
+	}
+
+	var tomlOut strings.Builder
+	err = tmpl.Execute(&tomlOut, map[string]interface{}{
+		"EnvVars": envVars,
+	})
+	if err != nil {
+		return nil, cerrors.New(err, "failed to execute config file template", map[string]interface{}{
+			"path": fp,
+		})
+	}
+
+	tree, err := toml.LoadBytes([]byte(tomlOut.String()))
 	if err != nil {
 		return nil, cerrors.New(err, "failed to load config file", map[string]interface{}{
 			"path": fp,
