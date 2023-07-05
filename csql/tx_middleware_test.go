@@ -24,7 +24,7 @@ func TestTxMiddleware_Handle_Commit(t *testing.T) {
 	var (
 		logger  = clogger.NewNoop()
 		config  = csql.Config{Dialect: "sqlite3"}
-		querier = csql.NewQuerier(db, config)
+		querier = csql.NewQuerier(db, config, logger)
 		mw      = csql.NewTxMiddleware(db, config, logger)
 	)
 
@@ -55,7 +55,7 @@ func TestTxMiddleware_Handle_Rollback(t *testing.T) {
 	var (
 		logger  = clogger.NewNoop()
 		config  = csql.Config{Dialect: "sqlite3"}
-		querier = csql.NewQuerier(db, config)
+		querier = csql.NewQuerier(db, config, logger)
 		mw      = csql.NewTxMiddleware(db, config, logger)
 	)
 

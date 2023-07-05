@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/gocopper/copper/clogger"
 	"github.com/gocopper/copper/csql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func TestQuerier_Read(t *testing.T) {
 	_, err = db.Exec("create table people (name text);insert into people (name) values ('test');")
 	assert.NoError(t, err)
 
-	querier := csql.NewQuerier(db, csql.Config{Dialect: "sqlite3"})
+	querier := csql.NewQuerier(db, csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
 
 	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
 	assert.NoError(t, err)
@@ -75,7 +76,7 @@ func TestQuerier_Exec(t *testing.T) {
 	_, err = db.Exec("create table people (name text);insert into people (name) values ('test');")
 	assert.NoError(t, err)
 
-	querier := csql.NewQuerier(db, csql.Config{Dialect: "sqlite3"})
+	querier := csql.NewQuerier(db, csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
 
 	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
 	assert.NoError(t, err)

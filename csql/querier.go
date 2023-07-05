@@ -3,14 +3,17 @@ package csql
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/clogger"
 	"github.com/jmoiron/sqlx"
 )
 
 // Querier provides a set of helpful methods to run database queries. It can be used to run parameterized queries
 // and scan results into Go structs or slices.
 type Querier interface {
+	InTx(ctx context.Context, fn func(context.Context) error) error
 	WithIn() Querier
 	Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error
@@ -18,23 +21,65 @@ type Querier interface {
 }
 
 // NewQuerier returns a querier using the given database connection and the dialect
-func NewQuerier(db *sql.DB, config Config) Querier {
+func NewQuerier(db *sql.DB, config Config, logger clogger.Logger) Querier {
 	return &querier{
-		db: sqlx.NewDb(db, config.Dialect),
-		in: false,
+		db:      sqlx.NewDb(db, config.Dialect),
+		dialect: config.Dialect,
+		in:      false,
+		logger:  logger,
 	}
 }
 
 type querier struct {
-	db *sqlx.DB
-	in bool
+	db      *sqlx.DB
+	dialect string
+	in      bool
+	logger  clogger.Logger
 }
 
 func (q *querier) WithIn() Querier {
 	return &querier{
-		db: q.db,
-		in: true,
+		db:      q.db,
+		dialect: q.dialect,
+		in:      true,
+		logger:  q.logger,
 	}
+}
+
+func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) error {
+	ctx, tx, err := CtxWithTx(ctx, q.db.DB, q.dialect)
+	if err != nil {
+		return cerrors.New(err, "failed to create context with database transaction", nil)
+	}
+
+	defer func() {
+		// Try a rollback in a deferred function to account for panics
+		err := tx.Rollback()
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			q.logger.Error("Failed to rollback database transaction", err)
+			return
+		}
+
+		if err == nil {
+			q.logger.Warn("Rolled back an unexpectedly open database transaction", nil)
+		}
+	}()
+
+	err = fn(ctx)
+	if err != nil {
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+			q.logger.Error("Failed to rollback database transaction", err)
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return cerrors.New(err, "failed to commit database transaction", nil)
+	}
+
+	return nil
 }
 
 func (q *querier) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
