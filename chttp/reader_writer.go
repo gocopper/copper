@@ -4,7 +4,9 @@ import (
 	// Used to embed error.html
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"html/template"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -101,14 +103,19 @@ func (rw *ReaderWriter) ReadJSON(w http.ResponseWriter, req *http.Request, body 
 	url := req.URL.String()
 
 	err := json.NewDecoder(req.Body).Decode(body)
-	if err != nil {
-		rw.logger.Warn("Failed to read body", cerrors.New(err, "invalid json", map[string]interface{}{
-			"url": url,
-		}))
-
+	if err != nil && errors.Is(err, io.EOF) {
 		rw.WriteJSON(w, WriteJSONParams{
 			StatusCode: http.StatusBadRequest,
-			Data:       err,
+			Data:       map[string]string{"error": "empty body"},
+		})
+
+		return false
+	} else if err != nil {
+		rw.WriteJSON(w, WriteJSONParams{
+			StatusCode: http.StatusBadRequest,
+			Data: cerrors.New(err, "invalid body json", map[string]interface{}{
+				"url": url,
+			}),
 		})
 
 		return false
