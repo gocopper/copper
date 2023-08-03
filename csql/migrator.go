@@ -78,7 +78,12 @@ func (m *Migrator) Run() error {
 		migrateMax = 1 // only run 1 migration when reverting
 	}
 
-	n, err := migrate.ExecMax(m.db, m.config.Dialect, source, direction, migrateMax)
+	dialect := m.config.Dialect
+	if dialect == "pgx" {
+		dialect = "postgres"
+	}
+
+	n, err := migrate.ExecMax(m.db, dialect, source, direction, migrateMax)
 	if err != nil {
 		return cerrors.New(err, "failed to exec database migrations", nil)
 	}
