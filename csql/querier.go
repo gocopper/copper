@@ -13,6 +13,7 @@ import (
 // Querier provides a set of helpful methods to run database queries. It can be used to run parameterized queries
 // and scan results into Go structs or slices.
 type Querier interface {
+	CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error)
 	InTx(ctx context.Context, fn func(context.Context) error) error
 	WithIn() Querier
 	Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error
@@ -37,13 +38,8 @@ type querier struct {
 	logger  clogger.Logger
 }
 
-func (q *querier) WithIn() Querier {
-	return &querier{
-		db:      q.db,
-		dialect: q.dialect,
-		in:      true,
-		logger:  q.logger,
-	}
+func (q *querier) CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error) {
+	return CtxWithTx(ctx, q.db.DB, q.dialect)
 }
 
 func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) error {
@@ -80,6 +76,15 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 	}
 
 	return nil
+}
+
+func (q *querier) WithIn() Querier {
+	return &querier{
+		db:      q.db,
+		dialect: q.dialect,
+		in:      true,
+		logger:  q.logger,
+	}
 }
 
 func (q *querier) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
