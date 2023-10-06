@@ -64,6 +64,8 @@ func NewReaderWriter(html *HTMLRenderer, config Config, logger clogger.Logger) *
 // WriteJSON writes a JSON response to the http.ResponseWriter. It can be configured with status code and data using
 // WriteJSONParams.
 func (rw *ReaderWriter) WriteJSON(w http.ResponseWriter, p WriteJSONParams) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if p.StatusCode > 0 {
 		w.WriteHeader(p.StatusCode)
 	}
@@ -71,8 +73,6 @@ func (rw *ReaderWriter) WriteJSON(w http.ResponseWriter, p WriteJSONParams) {
 	if p.Data == nil {
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	errData, ok := p.Data.(error)
 	if ok {
@@ -176,8 +176,8 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 	}
 
 	if p.Error != nil && rw.config.RenderHTMLError {
-		w.WriteHeader(p.StatusCode)
 		w.Header().Set("content-type", "text/html")
+		w.WriteHeader(p.StatusCode)
 
 		errorHTMLTmpl := template.Must(template.New("chtml/error.html").Parse(errorHTML))
 
@@ -198,8 +198,8 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 		return
 	}
 
-	w.WriteHeader(p.StatusCode)
 	w.Header().Set("content-type", "text/html")
+	w.WriteHeader(p.StatusCode)
 	_, _ = w.Write([]byte(out))
 }
 
