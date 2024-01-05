@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gocopper/copper/clogger"
 )
@@ -37,6 +38,8 @@ func (mw *RequestLoggerMiddleware) Handle(next http.Handler) http.Handler {
 				"method": r.Method,
 				"url":    r.URL.Path,
 			}
+
+			begin = time.Now()
 		)
 
 		user, _, ok := r.BasicAuth()
@@ -47,6 +50,7 @@ func (mw *RequestLoggerMiddleware) Handle(next http.Handler) http.Handler {
 		next.ServeHTTP(&loggerRw, r)
 
 		tags["statusCode"] = loggerRw.statusCode
+		tags["duration"] = time.Since(begin).String()
 
 		mw.logger.WithTags(tags).Info(fmt.Sprintf("%s %s %d", r.Method, r.URL.Path, loggerRw.statusCode))
 	})
