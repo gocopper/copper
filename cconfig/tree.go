@@ -1,6 +1,10 @@
 package cconfig
 
 import (
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"context"
+	"hash/crc32"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -113,6 +117,12 @@ func loadTree(fp, overrides string, disableKeyOverrides bool) (*toml.Tree, error
 			})
 		}
 	}
+
+	err = loadSecrets(tree)
+	if err != nil {
+		return nil, cerrors.New(err, "failed to load secrets", nil)
+	}
+
 	return tree, nil
 }
 
@@ -180,4 +190,74 @@ func mergeTrees(base, override *toml.Tree, disableKeyOverrides bool) (*toml.Tree
 	}
 
 	return base, nil
+}
+
+func loadSecrets(tree *toml.Tree) error {
+	for _, key := range tree.Keys() {
+		switch keyVal := tree.Get(key).(type) {
+		case *toml.Tree:
+			err := loadSecrets(keyVal)
+			if err != nil {
+				return cerrors.New(err, "failed to load secrets for key", map[string]interface{}{
+					"key": key,
+				})
+			}
+
+		case string:
+			if strings.HasPrefix(keyVal, "google-secret-manager:") {
+				secretName := strings.TrimPrefix(keyVal, "google-secret-manager:")
+				secretVal, err := accessGoogleSecretVersion(secretName)
+				if err != nil {
+					return cerrors.New(err, "failed to get secret", map[string]interface{}{
+						"secretName": secretName,
+					})
+				}
+
+				tree.Set(key, secretVal)
+			}
+		}
+	}
+	return nil
+}
+
+// accessGoogleSecretVersion accesses the payload for the given secret version if one
+// exists. The version can be a version number as a string (e.g. "5") or an
+// alias (e.g. "latest").
+func accessGoogleSecretVersion(name string) (string, error) {
+	// name := "projects/my-project/secrets/my-secret/versions/5"
+	// name := "projects/my-project/secrets/my-secret/versions/latest"
+
+	// Create the client.
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return "", cerrors.New(err, "create secretmanager", nil)
+	}
+	defer client.Close()
+
+	// Build the request.
+	req := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: name,
+	}
+
+	// Call the API.
+	result, err := client.AccessSecretVersion(ctx, req)
+	if err != nil {
+		return "", cerrors.New(err, "failed to access secret version", map[string]interface{}{
+			"name": name,
+		})
+	}
+
+	// Verify the data checksum.
+	crc32c := crc32.MakeTable(crc32.Castagnoli)
+	checksum := int64(crc32.Checksum(result.Payload.Data, crc32c))
+	if checksum != *result.Payload.DataCrc32C {
+		return "", cerrors.New(err, "Data corruption detected.", map[string]interface{}{
+			"name":              name,
+			"computed_checksum": checksum,
+			"data_checksum":     *result.Payload.DataCrc32C,
+		})
+	}
+
+	return string(result.Payload.Data), nil
 }
