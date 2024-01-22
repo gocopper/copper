@@ -123,10 +123,9 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 		"msg":   msg,
 	}
 
-	dict = mergeTags(dict, l.redactedTags())
+	dict = mergeTags(mergeTags(dict, redactTags(l.tags, l.redactFields)), redactTags(cerrors.Tags(err), l.redactFields))
 
 	if err != nil {
-		// todo: if err is of type cerrors.Error, then add tags to dict
 		errStr := err.Error()
 		if stringHasRedactedFields(errStr, l.redactFields) {
 			dict["error"] = "<redacted>"
@@ -142,9 +141,13 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 }
 
 func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
-	var o strings.Builder
+	var (
+		logErr = cerrors.New(nil, msg, redactTags(l.tags, l.redactFields)).Error()
 
-	o.WriteString(cerrors.New(nil, msg, l.redactedTags()).Error())
+		o strings.Builder
+	)
+
+	o.WriteString(logErr)
 
 	if err != nil {
 		o.WriteString(" because\n> ")
@@ -157,18 +160,4 @@ func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
 	}
 
 	log.New(dest, "", log.LstdFlags).Printf("[%s] %s", lvl.String(), o.String())
-}
-
-func (l *logger) redactedTags() map[string]interface{} {
-	redactedTags := make(map[string]interface{})
-
-	for k, v := range l.tags {
-		if stringHasRedactedFields(k, l.redactFields) {
-			redactedTags[k] = "<redacted>"
-		} else {
-			redactedTags[k] = v
-		}
-	}
-
-	return redactedTags
 }

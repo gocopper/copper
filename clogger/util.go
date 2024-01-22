@@ -63,3 +63,17 @@ func expandRedactedFields(redactedFields []string) []string {
 	}
 	return expanded
 }
+
+func redactTags(tags map[string]interface{}, redactFields []string) map[string]interface{} {
+	redactedTags := make(map[string]interface{})
+
+	for k, v := range tags {
+		if stringHasRedactedFields(k, redactFields) {
+			redactedTags[k] = "<redacted>"
+		} else {
+			redactedTags[k] = v
+		}
+	}
+
+	return redactedTags
+}
