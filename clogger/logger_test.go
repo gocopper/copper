@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gocopper/copper/cerrors"
+
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
 )
@@ -77,7 +79,7 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 func TestNewWithParams(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain)
+	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain, nil)
 	assert.NotNil(t, logger)
 }
 
@@ -86,7 +88,7 @@ func TestLogger_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
 	)
 
 	logger.Debug("test debug log")
@@ -99,7 +101,7 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
 	)
 
 	logger.
@@ -113,17 +115,43 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 	assert.Contains(t, buf.String(), "[DEBUG] test debug log where key2=val2,key=val")
 }
 
+func TestLogger_WithTags_RedactedFields(t *testing.T) {
+	t.Parallel()
+
+	var (
+		buf    bytes.Buffer
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, []string{
+			"secret", "password", "userPin",
+		})
+
+		testErr = cerrors.New(nil, "test-error", map[string]interface{}{
+			"secret":   "my_api_key",
+			"user-pin": "12456",
+		})
+	)
+
+	logger.WithTags(map[string]interface{}{
+		"password": "abc123",
+		"USER_PIN": "123456",
+	}).Error("test debug log", testErr)
+
+	assert.NotContains(t, buf.String(), "my_api_key")
+	assert.NotContains(t, buf.String(), "12456")
+	assert.NotContains(t, buf.String(), "abc123")
+	assert.Contains(t, buf.String(), "<redacted>")
+}
+
 func TestLogger_Info(t *testing.T) {
 	t.Parallel()
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
 	)
 
 	logger.Info("test info log")
 
-	assert.Contains(t, buf.String(), "[INFO] test info log")
+	assert.Contains(t, buf.String(), "[INFO] test info log", nil)
 }
 
 func TestLogger_Warn(t *testing.T) {
@@ -131,7 +159,7 @@ func TestLogger_Warn(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
 	)
 
 	logger.Warn("test warn log", errors.New("test-error")) //nolint:goerr113
@@ -144,7 +172,7 @@ func TestLogger_Error(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
 	)
 
 	logger.Error("test error log", errors.New("test-error")) //nolint:goerr113

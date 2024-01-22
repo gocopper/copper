@@ -1,5 +1,11 @@
 package clogger
 
+import (
+	"strings"
+
+	"github.com/iancoleman/strcase"
+)
+
 func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
 	merged := make(map[string]interface{})
 
@@ -33,4 +39,27 @@ func formatToZapEncoding(f Format) string {
 	default:
 		return "console"
 	}
+}
+
+func stringHasRedactedFields(s string, redactedFields []string) bool {
+	for _, ef := range redactedFields {
+		if strings.Contains(strings.ToLower(s), strings.ToLower(ef)) {
+			return true
+		}
+	}
+	return false
+}
+
+func expandRedactedFields(redactedFields []string) []string {
+	expanded := make([]string, 0, len(redactedFields))
+	for _, f := range redactedFields {
+		expanded = append(expanded, f,
+			strcase.ToSnake(f),
+			strcase.ToKebab(f),
+			strcase.ToDelimited(f, '-'),
+			strcase.ToDelimited(f, '.'),
+			strcase.ToCamel(f),
+		)
+	}
+	return expanded
 }

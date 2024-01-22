@@ -2,10 +2,10 @@ package clogger
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gocopper/copper/cerrors"
@@ -23,7 +23,7 @@ type Logger interface {
 
 // New returns a Logger implementation that can logs to console.
 func New() Logger {
-	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain)
+	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain, nil)
 }
 
 // NewWithConfig creates a Logger based on the provided config.
@@ -56,88 +56,119 @@ func NewWithConfig(config Config) (Logger, error) {
 		}
 	}
 
-	return NewWithWriters(outFile, errFile, config.Format), nil
+	return NewWithWriters(outFile, errFile, config.Format, config.RedactFields), nil
 }
 
 // NewWithWriters creates a Logger that uses the provided writers. out is
 // used for debug and info levels. err is used for warn and error levels.
-func NewWithWriters(out, err io.Writer, format Format) Logger {
+func NewWithWriters(out, err io.Writer, format Format, redactFields []string) Logger {
 	return &logger{
-		out:    out,
-		err:    err,
-		tags:   make(map[string]interface{}),
-		format: format,
+		out:          out,
+		err:          err,
+		tags:         make(map[string]interface{}),
+		format:       format,
+		redactFields: expandRedactedFields(redactFields),
 	}
 }
 
 type logger struct {
-	out    io.Writer
-	err    io.Writer
-	tags   map[string]interface{}
-	format Format
+	out          io.Writer
+	err          io.Writer
+	tags         map[string]interface{}
+	format       Format
+	redactFields []string
 }
 
 func (l *logger) WithTags(tags map[string]interface{}) Logger {
 	return &logger{
-		out:    l.out,
-		err:    l.err,
-		tags:   mergeTags(l.tags, tags),
-		format: l.format,
+		out:          l.out,
+		err:          l.err,
+		tags:         mergeTags(l.tags, tags),
+		format:       l.format,
+		redactFields: l.redactFields,
 	}
 }
 
 func (l *logger) Debug(msg string) {
-	l.log(l.out, LevelDebug, errors.New(msg)) //nolint:goerr113
+	l.log(l.out, LevelDebug, msg, nil) //nolint:goerr113
 }
 
 func (l *logger) Info(msg string) {
-	l.log(l.out, LevelInfo, errors.New(msg)) //nolint:goerr113
+	l.log(l.out, LevelInfo, msg, nil) //nolint:goerr113
 }
 
 func (l *logger) Warn(msg string, err error) {
-	l.log(l.err, LevelWarn, cerrors.New(err, msg, nil))
+	l.log(l.err, LevelWarn, msg, err)
 }
 
 func (l *logger) Error(msg string, err error) {
-	l.log(l.err, LevelError, cerrors.New(err, msg, nil))
+	l.log(l.err, LevelError, msg, err)
 }
 
-func (l *logger) log(dest io.Writer, lvl Level, err error) {
+func (l *logger) log(dest io.Writer, lvl Level, msg string, err error) {
 	switch l.format {
 	case FormatJSON:
-		l.logJSON(dest, lvl, err)
+		l.logJSON(dest, lvl, msg, err)
 	case FormatPlain:
 		fallthrough
 	default:
-		l.logPlain(dest, lvl, err)
+		l.logPlain(dest, lvl, msg, err)
 	}
 }
 
-func (l *logger) logJSON(dest io.Writer, lvl Level, err error) {
+func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 	var dict = map[string]interface{}{
 		"ts":    time.Now().Format(time.RFC3339),
 		"level": lvl.String(),
+		"msg":   msg,
 	}
 
-	dict = mergeTags(dict, l.tags)
+	dict = mergeTags(dict, l.redactedTags())
 
-	switch cerr := err.(type) {
-	case cerrors.Error:
-		dict["msg"] = cerr.Message
-
-		dict = mergeTags(dict, cerr.Tags)
-
-		if cerr.Cause != nil {
-			dict["error"] = cerr.Cause.Error()
+	if err != nil {
+		// todo: if err is of type cerrors.Error, then add tags to dict
+		errStr := err.Error()
+		if stringHasRedactedFields(errStr, l.redactFields) {
+			dict["error"] = "<redacted>"
+		} else {
+			dict["error"] = errStr
 		}
-	default:
-		dict["msg"] = err.Error()
 	}
 
-	jsonStr, _ := json.Marshal(dict)
-	_, _ = dest.Write([]byte(string(jsonStr) + "\n"))
+	enc := json.NewEncoder(dest)
+	enc.SetEscapeHTML(false)
+
+	_ = enc.Encode(dict)
 }
 
-func (l *logger) logPlain(dest io.Writer, lvl Level, err error) {
-	log.New(dest, "", log.LstdFlags).Printf("[%s] %s", lvl.String(), cerrors.WithTags(err, l.tags).Error())
+func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
+	var o strings.Builder
+
+	o.WriteString(cerrors.New(nil, msg, l.redactedTags()).Error())
+
+	if err != nil {
+		o.WriteString(" because\n> ")
+		errStr := err.Error()
+		if stringHasRedactedFields(errStr, l.redactFields) {
+			o.WriteString("<redacted>")
+		} else {
+			o.WriteString(errStr)
+		}
+	}
+
+	log.New(dest, "", log.LstdFlags).Printf("[%s] %s", lvl.String(), o.String())
+}
+
+func (l *logger) redactedTags() map[string]interface{} {
+	redactedTags := make(map[string]interface{})
+
+	for k, v := range l.tags {
+		if stringHasRedactedFields(k, l.redactFields) {
+			redactedTags[k] = "<redacted>"
+		} else {
+			redactedTags[k] = v
+		}
+	}
+
+	return redactedTags
 }

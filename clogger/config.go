@@ -32,7 +32,8 @@ func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 
 // Config holds the params needed to configure Logger
 type Config struct {
-	Out    string `toml:"out"`
-	Err    string `toml:"err"`
-	Format Format `toml:"format"`
+	Out          string   `toml:"out"`
+	Err          string   `toml:"err"`
+	Format       Format   `toml:"format"`
+	RedactFields []string `toml:"redact_fields"`
 }
