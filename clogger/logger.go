@@ -126,7 +126,12 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 	dict = mergeTags(mergeTags(dict, redactTags(l.tags, l.redactFields)), redactTags(cerrors.Tags(err), l.redactFields))
 
 	if err != nil {
-		dict["error"] = err.Error()
+		errStr := err.Error()
+		if stringHasRedactedFields(errStr, l.redactFields) {
+			errStr = "<redacted>"
+		}
+
+		dict["error"] = errStr
 	}
 
 	enc := json.NewEncoder(dest)

@@ -118,27 +118,29 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 func TestLogger_WithTags_RedactedFields(t *testing.T) {
 	t.Parallel()
 
-	var (
-		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, []string{
-			"secret", "password", "userPin",
-		})
+	for _, format := range []clogger.Format{clogger.FormatJSON, clogger.FormatPlain} {
+		var (
+			buf    bytes.Buffer
+			logger = clogger.NewWithWriters(&buf, &buf, format, []string{
+				"secret", "password", "userPin",
+			})
 
-		testErr = cerrors.New(nil, "test-error", map[string]interface{}{
-			"secret":   "my_api_key",
-			"user-pin": "12456",
-		})
-	)
+			testErr = cerrors.New(nil, "test-error", map[string]interface{}{
+				"secret":   "my_api_key",
+				"user-pin": "12456",
+			})
+		)
 
-	logger.WithTags(map[string]interface{}{
-		"password": "abc123",
-		"USER_PIN": "123456",
-	}).Error("test debug log", testErr)
+		logger.WithTags(map[string]interface{}{
+			"password": "abc123",
+			"USER_PIN": "123456",
+		}).Error("test debug log", testErr)
 
-	assert.NotContains(t, buf.String(), "my_api_key")
-	assert.NotContains(t, buf.String(), "12456")
-	assert.NotContains(t, buf.String(), "abc123")
-	assert.Contains(t, buf.String(), "<redacted>")
+		assert.NotContains(t, buf.String(), "my_api_key")
+		assert.NotContains(t, buf.String(), "12456")
+		assert.NotContains(t, buf.String(), "abc123")
+		assert.Contains(t, buf.String(), "<redacted>")
+	}
 }
 
 func TestLogger_Info(t *testing.T) {
