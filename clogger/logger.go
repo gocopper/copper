@@ -123,15 +123,12 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 		"msg":   msg,
 	}
 
-	dict = mergeTags(mergeTags(dict, redactTags(l.tags, l.redactFields)), redactTags(cerrors.Tags(err), l.redactFields))
+	dict = mergeTags(mergeTags(dict, l.tags), cerrors.Tags(err))
+
+	dict, _ = redactJSONObject(dict, l.redactFields)
 
 	if err != nil {
-		errStr := err.Error()
-		if stringHasRedactedFields(errStr, l.redactFields) {
-			errStr = "<redacted>"
-		}
-
-		dict["error"] = errStr
+		dict["error"] = cerrors.WithoutTags(err).Error()
 	}
 
 	enc := json.NewEncoder(dest)
@@ -142,21 +139,20 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 
 func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
 	var (
-		logErr = cerrors.New(nil, msg, redactTags(l.tags, l.redactFields)).Error()
+		logErr = cerrors.New(nil, msg, l.tags).Error()
 
 		o strings.Builder
 	)
 
-	o.WriteString(logErr)
+	if len(l.redactFields) == 0 {
+		o.WriteString(logErr)
 
-	if err != nil {
-		o.WriteString(" because\n> ")
-		errStr := err.Error()
-		if stringHasRedactedFields(errStr, l.redactFields) {
-			o.WriteString("<redacted>")
-		} else {
-			o.WriteString(errStr)
+		if err != nil {
+			o.WriteString(" because\n> ")
+			o.WriteString(err.Error())
 		}
+	} else {
+		o.WriteString("<field redacting not supported for plain logs>")
 	}
 
 	log.New(dest, "", log.LstdFlags).Printf("[%s] %s", lvl.String(), o.String())

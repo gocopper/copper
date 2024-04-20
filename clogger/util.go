@@ -1,8 +1,6 @@
 package clogger
 
 import (
-	"strings"
-
 	"github.com/iancoleman/strcase"
 )
 
@@ -41,15 +39,6 @@ func formatToZapEncoding(f Format) string {
 	}
 }
 
-func stringHasRedactedFields(s string, redactedFields []string) bool {
-	for _, ef := range redactedFields {
-		if strings.Contains(strings.ToLower(s), strings.ToLower(ef)) {
-			return true
-		}
-	}
-	return false
-}
-
 func expandRedactedFields(redactedFields []string) []string {
 	expanded := make([]string, 0, len(redactedFields))
 	for _, f := range redactedFields {
@@ -62,18 +51,4 @@ func expandRedactedFields(redactedFields []string) []string {
 		)
 	}
 	return expanded
-}
-
-func redactTags(tags map[string]interface{}, redactFields []string) map[string]interface{} {
-	redactedTags := make(map[string]interface{})
-
-	for k, v := range tags {
-		if stringHasRedactedFields(k, redactFields) {
-			redactedTags[k] = "<redacted>"
-		} else {
-			redactedTags[k] = v
-		}
-	}
-
-	return redactedTags
 }

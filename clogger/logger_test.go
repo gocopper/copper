@@ -128,18 +128,25 @@ func TestLogger_WithTags_RedactedFields(t *testing.T) {
 			testErr = cerrors.New(nil, "test-error", map[string]interface{}{
 				"secret":   "my_api_key",
 				"user-pin": "12456",
+				"params": map[string]string{
+					"password": "abc123",
+				},
 			})
 		)
 
 		logger.WithTags(map[string]interface{}{
 			"password": "abc123",
 			"USER_PIN": "123456",
+			"params": map[string]string{
+				"password": "abc123",
+			},
 		}).Error("test debug log", testErr)
 
 		assert.NotContains(t, buf.String(), "my_api_key")
 		assert.NotContains(t, buf.String(), "12456")
+		assert.NotContains(t, buf.String(), "123456")
 		assert.NotContains(t, buf.String(), "abc123")
-		assert.Contains(t, buf.String(), "<redacted>")
+		assert.Contains(t, buf.String(), "redact")
 	}
 }
 

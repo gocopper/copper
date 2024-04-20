@@ -12,6 +12,19 @@ func Tags(err error) map[string]interface{} {
 	return mergeTags(cerr.Tags, Tags(cerr.Cause))
 }
 
+func WithoutTags(err error) error {
+	var cerr Error
+
+	if !errors.As(err, &cerr) {
+		return err
+	}
+
+	cerr.Tags = nil
+	cerr.Cause = WithoutTags(cerr.Cause)
+
+	return cerr
+}
+
 func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
 	merged := make(map[string]interface{})
 
