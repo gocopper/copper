@@ -17,12 +17,7 @@ func redactJSONObject(in map[string]interface{}, redactFields []string) (map[str
 		return nil, err
 	}
 
-	redactFieldsSet := make(map[string]bool)
-	for _, f := range redactFields {
-		redactFieldsSet[strings.ToLower(f)] = true
-	}
-
-	redacted, err := redactJSON(b.Bytes(), redactFieldsSet)
+	redacted, err := redactJSON(b.Bytes(), redactFields)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +31,7 @@ func redactJSONObject(in map[string]interface{}, redactFields []string) (map[str
 	return out, nil
 }
 
-func redactJSON(in json.RawMessage, redactKeys map[string]bool) (json.RawMessage, error) {
+func redactJSON(in json.RawMessage, redactFields []string) (json.RawMessage, error) {
 	var err error
 
 	if in[0] == 123 { //  123 is `{` => object
@@ -48,12 +43,21 @@ func redactJSON(in json.RawMessage, redactKeys map[string]bool) (json.RawMessage
 		}
 
 		for k, v := range cont {
-			if redact, ok := redactKeys[strings.ToLower(k)]; ok && redact {
-				cont[k] = json.RawMessage(`"redacted"`)
+
+			didRedact := false
+			for i := range redactFields {
+				if strings.Contains(strings.ToLower(k), strings.ToLower(redactFields[i])) {
+					cont[k] = json.RawMessage(`"redacted"`)
+					didRedact = true
+					break
+				}
+			}
+
+			if didRedact {
 				continue
 			}
 
-			cont[k], err = redactJSON(v, redactKeys)
+			cont[k], err = redactJSON(v, redactFields)
 			if err != nil {
 				return nil, err
 			}
@@ -69,7 +73,7 @@ func redactJSON(in json.RawMessage, redactKeys map[string]bool) (json.RawMessage
 		}
 
 		for i, v := range cont {
-			cont[i], err = redactJSON(v, redactKeys)
+			cont[i], err = redactJSON(v, redactFields)
 			if err != nil {
 				return nil, err
 			}

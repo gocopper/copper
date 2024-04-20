@@ -17,9 +17,7 @@ func TestRedactJSON(t *testing.T) {
 	in, err := json.Marshal(t1)
 	assert.NoError(t, err)
 
-	out, err := redactJSON(in, map[string]bool{
-		"f": true,
-	})
+	out, err := redactJSON(in, []string{"f"})
 	assert.NoError(t, err)
 
 	assert.Equal(t, `{"a":1,"b":"foo","c":{"d":2},"e":[1,2,{"f":"redacted"}]}`, string(out))
