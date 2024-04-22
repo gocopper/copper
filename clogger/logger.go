@@ -123,12 +123,14 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 		"msg":   msg,
 	}
 
-	dict = mergeTags(mergeTags(dict, l.tags), cerrors.Tags(err))
-
-	dict, _ = redactJSONObject(dict, l.redactFields)
-
 	if err != nil {
 		dict["error"] = cerrors.WithoutTags(err).Error()
+	}
+
+	if redactedTags, err := redactJSONObject(mergeTags(cerrors.Tags(err), l.tags), l.redactFields); err != nil {
+		dict["tags"] = cerrors.New(err, "tag redaction failed", nil).Error()
+	} else {
+		dict["tags"] = redactedTags
 	}
 
 	enc := json.NewEncoder(dest)
