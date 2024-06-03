@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/gocopper/copper/cmetrics"
 	"net"
 	"net/http"
 	"time"
@@ -14,14 +15,18 @@ import (
 var errRWIsNotHijacker = errors.New("internal response writer is not http.Hijacker")
 
 // NewRequestLoggerMiddleware creates a new RequestLoggerMiddleware.
-func NewRequestLoggerMiddleware(logger clogger.Logger) *RequestLoggerMiddleware {
-	return &RequestLoggerMiddleware{logger: logger}
+func NewRequestLoggerMiddleware(metrics cmetrics.Metrics, logger clogger.Logger) *RequestLoggerMiddleware {
+	return &RequestLoggerMiddleware{
+		metrics: metrics,
+		logger:  logger,
+	}
 }
 
 // RequestLoggerMiddleware logs each request's HTTP method, path, and status code along with user uuid
 // (from basic auth) if any.
 type RequestLoggerMiddleware struct {
-	logger clogger.Logger
+	metrics cmetrics.Metrics
+	logger  clogger.Logger
 }
 
 // Handle wraps the current request with a request/response recorder. It records the method path and the
@@ -51,6 +56,15 @@ func (mw *RequestLoggerMiddleware) Handle(next http.Handler) http.Handler {
 
 		tags["statusCode"] = loggerRw.statusCode
 		tags["duration"] = time.Since(begin).String()
+
+		mw.metrics.CounterInc("http_requests_total", map[string]string{
+			"status_code": fmt.Sprintf("%d", loggerRw.statusCode),
+			"path":        RawRoutePath(r),
+		})
+		mw.metrics.HistogramObserve("http_request_duration_seconds", map[string]string{
+			"status_code": fmt.Sprintf("%d", loggerRw.statusCode),
+			"path":        RawRoutePath(r),
+		}, time.Since(begin).Seconds())
 
 		mw.logger.WithTags(tags).Info(fmt.Sprintf("%s %s %d", r.Method, r.URL.Path, loggerRw.statusCode))
 	})
