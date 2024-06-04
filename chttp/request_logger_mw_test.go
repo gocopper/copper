@@ -1,6 +1,7 @@
 package chttp_test
 
 import (
+	"github.com/gocopper/copper/cmetrics"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,12 +17,13 @@ func TestNewRequestLoggerMiddleware(t *testing.T) {
 	t.Parallel()
 
 	var (
-		logs   = make([]clogger.RecordedLog, 0)
-		logger = clogger.NewRecorder(&logs)
-		router = chttptest.NewRouter([]chttp.Route{
+		logs    = make([]clogger.RecordedLog, 0)
+		logger  = clogger.NewRecorder(&logs)
+		metrics = cmetrics.NewNoopMetrics()
+		router  = chttptest.NewRouter([]chttp.Route{
 			{
 				Middlewares: []chttp.Middleware{
-					chttp.NewRequestLoggerMiddleware(logger),
+					chttp.NewRequestLoggerMiddleware(metrics, logger),
 				},
 				Path:    "/test",
 				Methods: []string{http.MethodGet},
