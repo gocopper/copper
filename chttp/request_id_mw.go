@@ -25,12 +25,13 @@ func SetRequestIDInCtxMiddleware() Middleware {
 }
 
 // GetRequestID returns the request id from the context.
-// If the request id is not found in the context, it panics.
-// It must be used only after the request id middleware is applied.
+// If the request id is not found in the context, it returns
+// an empty string.
+// It should be used only after the request id middleware is applied.
 func GetRequestID(ctx context.Context) string {
 	requestID, ok := ctx.Value(ctxRequestIDKey).(string)
 	if !ok || requestID == "" {
-		panic("request id not found in context")
+		return ""
 	}
 
 	return requestID
