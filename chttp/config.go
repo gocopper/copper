@@ -25,4 +25,5 @@ type Config struct {
 	EnableSinglePageRouting            bool    `toml:"enable_single_page_routing"`
 	ReadTimeoutSeconds                 uint    `toml:"read_timeout_seconds" default:"10"`
 	RedirectURLForUnauthorizedRequests *string `toml:"redirect_url_for_unauthorized_requests"`
+	BasePath                           *string `toml:"base_path"`
 }

@@ -11,6 +11,10 @@ type Route struct {
 	Path        string
 	Methods     []string
 	Handler     http.HandlerFunc
+
+	// RegisterWithBasePath ensures the route is registered with the base path,
+	// even if its original path does not include the base path prefix
+	RegisterWithBasePath bool
 }
 
 // Router is used to group routes together that are returned by the Routes method.

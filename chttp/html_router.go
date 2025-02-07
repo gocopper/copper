@@ -35,17 +35,19 @@ func NewHTMLRouter(p NewHTMLRouterParams) (*HTMLRouter, error) {
 func (ro *HTMLRouter) Routes() []Route {
 	routes := []Route{
 		{
-			Path:    "/static/{path:.*}",
-			Methods: []string{http.MethodGet},
-			Handler: ro.HandleStaticFile,
+			Path:                 "/static/{path:.*}",
+			Methods:              []string{http.MethodGet},
+			Handler:              ro.HandleStaticFile,
+			RegisterWithBasePath: true,
 		},
 	}
 
 	if ro.config.EnableSinglePageRouting {
 		routes = append(routes, Route{
-			Path:    "/{path:.*}",
-			Methods: []string{http.MethodGet},
-			Handler: ro.HandleIndexPage,
+			Path:                 "/{path:.*}",
+			Methods:              []string{http.MethodGet},
+			Handler:              ro.HandleIndexPage,
+			RegisterWithBasePath: true,
 		})
 	}
 

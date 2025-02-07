@@ -2,6 +2,7 @@ package chttp
 
 import (
 	"net/http"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 type NewHandlerParams struct {
 	Routers           []Router
 	GlobalMiddlewares []Middleware
+	Config            Config
 	Logger            clogger.Logger
 }
 
@@ -34,6 +36,24 @@ func NewHandler(p NewHandlerParams) http.Handler {
 	sortRoutes(routes)
 
 	for _, route := range routes {
+		routePath := route.Path
+
+		// If a base path is set in the configuration ensure that the route path
+		// starts with the base path. If it does not, skip this route.
+		// Otherwise, remove the base path prefix from the route path to allow for
+		// proper registration in the router.
+		if p.Config.BasePath != nil {
+			if route.RegisterWithBasePath {
+				routePath = path.Join(*p.Config.BasePath, routePath)
+			}
+
+			if !strings.HasPrefix(routePath, *p.Config.BasePath) {
+				continue
+			}
+
+			routePath = routePath[len(*p.Config.BasePath):]
+		}
+
 		handler := http.Handler(route.Handler)
 
 		// Register route-level handlers
@@ -48,10 +68,10 @@ func NewHandler(p NewHandlerParams) http.Handler {
 			handler = p.GlobalMiddlewares[i].Handle(handler)
 		}
 
-		handler = setRoutePathInCtxMiddleware(route.Path).Handle(handler)
+		handler = setRoutePathInCtxMiddleware(routePath).Handle(handler)
 		handler = panicLoggerMiddleware(p.Logger).Handle(handler)
 
-		muxRoute := muxRouter.Handle(route.Path, handler)
+		muxRoute := muxRouter.Handle(routePath, handler)
 
 		if len(route.Methods) > 0 {
 			muxRoute.Methods(route.Methods...)
