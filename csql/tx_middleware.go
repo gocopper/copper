@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"database/sql"
 	"errors"
-	"net"
-	"net/http"
-
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
+	"net"
+	"net/http"
+	"strings"
 )
 
 // NewTxMiddleware creates a new TxMiddleware
@@ -58,9 +58,8 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 			logger:   m.logger,
 		}, r.WithContext(ctx))
 
-		// note: this commit will only succeed if neither Write nor WriteHeader was called on the ResponseWriter
-		err = tx.Commit()
-		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+		err = commitTx(tx, m.logger)
+		if err != nil {
 			m.logger.Error("Failed to commit database transaction", err)
 			return
 		}
@@ -78,8 +77,8 @@ func (w *txnrw) Header() http.Header {
 }
 
 func (w *txnrw) Write(b []byte) (int, error) {
-	err := w.tx.Commit()
-	if err != nil && !errors.Is(err, sql.ErrTxDone) {
+	err := commitTx(w.tx, w.logger)
+	if err != nil {
 		return 0, cerrors.New(err, "failed to commit database transaction", nil)
 	}
 
@@ -94,7 +93,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			w.logger.WithTags(map[string]interface{}{
 				"originalStatusCode": statusCode,
-			}).Error("Failed to roll back database transaction", err)
+			}).Error("Failed to rollback database transaction", err)
 			w.internal.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -103,9 +102,8 @@ func (w *txnrw) WriteHeader(statusCode int) {
 		return
 	}
 
-	err := w.tx.Commit()
+	err := commitTx(w.tx, w.logger)
 	if err != nil {
-		w.logger.Error("Failed to commit database transaction", err)
 		w.internal.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -120,4 +118,18 @@ func (w *txnrw) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return h.Hijack()
+}
+
+func commitTx(tx *sql.Tx, logger clogger.Logger) error {
+	err := tx.Commit()
+	if err != nil && errors.Is(err, sql.ErrTxDone) {
+		return nil
+	} else if err != nil && strings.Contains(err.Error(), "commit unexpectedly resulted in rollback") {
+		logger.Warn(err.Error(), nil)
+		return nil
+	} else if err != nil {
+		return cerrors.New(err, "failed to commit database transaction", nil)
+	}
+
+	return nil
 }
