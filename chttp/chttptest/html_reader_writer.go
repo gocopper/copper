@@ -14,8 +14,8 @@ import (
 //go:embed src
 var HTMLDir embed.FS
 
-// NewReaderWriter creates a *chttp.ReaderWriter suitable for use in tests
-func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
+// NewHTMLReaderWriter creates a *chttp.HTMLReaderWriter suitable for use in tests
+func NewHTMLReaderWriter(t *testing.T) *chttp.HTMLReaderWriter {
 	t.Helper()
 
 	r, err := chttp.NewHTMLRenderer(chttp.NewHTMLRendererParams{
@@ -26,5 +26,5 @@ func NewReaderWriter(t *testing.T) *chttp.ReaderWriter {
 	})
 	assert.NoError(t, err)
 
-	return chttp.NewReaderWriter(r, chttp.Config{}, clogger.NewNoop())
+	return chttp.NewHTMLReaderWriter(r, chttp.Config{}, clogger.NewNoop())
 }

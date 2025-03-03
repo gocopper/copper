@@ -3,15 +3,11 @@ package chttp
 import (
 	// Used to embed error.html
 	_ "embed"
-	"encoding/json"
-	"errors"
 	"html/template"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
 )
@@ -26,20 +22,14 @@ type (
 		LayoutTemplate string
 	}
 
-	// WriteJSONParams holds the params for the WriteJSON function in ReaderWriter
-	WriteJSONParams struct {
-		StatusCode int
-		Data       interface{}
-	}
-
 	// WritePartialParams are the parameters for WritePartial
 	WritePartialParams struct {
 		Name string
 		Data interface{}
 	}
 
-	// ReaderWriter provides functions to read data from HTTP requests and write response bodies in various formats
-	ReaderWriter struct {
+	// HTMLReaderWriter provides functions to read data from HTTP requests and write HTML response bodies
+	HTMLReaderWriter struct {
 		html   *HTMLRenderer
 		config Config
 		logger clogger.Logger
@@ -52,95 +42,18 @@ var URLParams = mux.Vars
 //go:embed error.html
 var errorHTML string
 
-// NewReaderWriter instantiates a new ReaderWriter with its dependencies
-func NewReaderWriter(html *HTMLRenderer, config Config, logger clogger.Logger) *ReaderWriter {
-	return &ReaderWriter{
+// NewHTMLReaderWriter instantiates a new HTMLReaderWriter with its dependencies
+func NewHTMLReaderWriter(html *HTMLRenderer, config Config, logger clogger.Logger) *HTMLReaderWriter {
+	return &HTMLReaderWriter{
 		html:   html,
 		config: config,
 		logger: logger,
 	}
 }
 
-// WriteJSON writes a JSON response to the http.ResponseWriter. It can be configured with status code and data using
-// WriteJSONParams.
-func (rw *ReaderWriter) WriteJSON(w http.ResponseWriter, p WriteJSONParams) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if p.StatusCode > 0 {
-		w.WriteHeader(p.StatusCode)
-	}
-
-	if p.Data == nil {
-		return
-	}
-
-	errData, ok := p.Data.(error)
-	if ok {
-		err := json.NewEncoder(w).Encode(map[string]string{
-			"error": errData.Error(),
-		})
-		if err != nil {
-			rw.logger.Error("Failed to marshal error response as json", err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		return
-	}
-
-	err := json.NewEncoder(w).Encode(p.Data)
-	if err != nil {
-		rw.logger.Error("Failed to marshal response as json", err)
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-}
-
-// ReadJSON reads JSON from the http.Request into the body var. If the body struct has validate tags on it, the
-// struct is also validated. If the validation fails, a BadRequest response is sent back and the function returns
-// false.
-func (rw *ReaderWriter) ReadJSON(w http.ResponseWriter, req *http.Request, body interface{}) bool {
-	url := req.URL.String()
-
-	err := json.NewDecoder(req.Body).Decode(body)
-	if err != nil && errors.Is(err, io.EOF) {
-		rw.WriteJSON(w, WriteJSONParams{
-			StatusCode: http.StatusBadRequest,
-			Data:       map[string]string{"error": "empty body"},
-		})
-
-		return false
-	} else if err != nil {
-		rw.WriteJSON(w, WriteJSONParams{
-			StatusCode: http.StatusBadRequest,
-			Data: cerrors.New(err, "invalid body json", map[string]interface{}{
-				"url": url,
-			}),
-		})
-
-		return false
-	}
-
-	ok, err := govalidator.ValidateStruct(body)
-	if !ok {
-		rw.logger.Warn("Failed to read body", cerrors.New(err, "data validation failed", map[string]interface{}{
-			"url": url,
-		}))
-
-		rw.WriteJSON(w, WriteJSONParams{
-			StatusCode: http.StatusBadRequest,
-			Data:       err,
-		})
-
-		return false
-	}
-
-	return true
-}
-
 // WriteHTMLError handles the given error. In render_error is configured to true, it writes an HTML page with the error.
 // Errors are always logged.
-func (rw *ReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, err error) {
+func (rw *HTMLReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, err error) {
 	rw.WriteHTML(w, r, WriteHTMLParams{
 		Error: err,
 	})
@@ -148,7 +61,7 @@ func (rw *ReaderWriter) WriteHTMLError(w http.ResponseWriter, r *http.Request, e
 
 // WriteHTML writes an HTML response to the provided http.ResponseWriter. Using the given WriteHTMLParams, the HTML
 // is generated with a layout, page, and component templates.
-func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p WriteHTMLParams) {
+func (rw *HTMLReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p WriteHTMLParams) {
 	if p.StatusCode == 0 && p.Error == nil {
 		p.StatusCode = http.StatusOK
 	}
@@ -204,7 +117,7 @@ func (rw *ReaderWriter) WriteHTML(w http.ResponseWriter, r *http.Request, p Writ
 }
 
 // WritePartial renders a partial template with the given name and data
-func (rw *ReaderWriter) WritePartial(w http.ResponseWriter, r *http.Request, p WritePartialParams) {
+func (rw *HTMLReaderWriter) WritePartial(w http.ResponseWriter, r *http.Request, p WritePartialParams) {
 	out, err := rw.html.partial(r)(p.Name, p.Data)
 	if err != nil {
 		rw.WriteHTMLError(w, r, cerrors.New(err, "failed to render partial", map[string]interface{}{
@@ -219,7 +132,7 @@ func (rw *ReaderWriter) WritePartial(w http.ResponseWriter, r *http.Request, p W
 
 // Unauthorized writes a 401 Unauthorized response to the http.ResponseWriter. If a redirect URL is configured,
 // the user is redirected to that URL instead.
-func (rw *ReaderWriter) Unauthorized(w http.ResponseWriter, r *http.Request) {
+func (rw *HTMLReaderWriter) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	if rw.config.RedirectURLForUnauthorizedRequests != nil {
 		http.Redirect(w, r, *rw.config.RedirectURLForUnauthorizedRequests, http.StatusSeeOther)
 		return

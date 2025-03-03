@@ -9,7 +9,7 @@ import (
 type (
 	// HTMLRouter provides routes to serve (1) static assets (2) index page for an SPA
 	HTMLRouter struct {
-		rw        *ReaderWriter
+		rw        *HTMLReaderWriter
 		staticDir StaticDir
 		config    Config
 	}
@@ -17,7 +17,7 @@ type (
 	// NewHTMLRouterParams holds the params needed to instantiate a new Router
 	NewHTMLRouterParams struct {
 		StaticDir StaticDir
-		RW        *ReaderWriter
+		RW        *HTMLReaderWriter
 		Config    Config
 	}
 )

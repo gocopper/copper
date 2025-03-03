@@ -7,7 +7,8 @@ import (
 // WireModule can be used as part of google/wire setup.
 var WireModule = wire.NewSet( //nolint:gochecknoglobals
 	LoadConfig,
-	NewReaderWriter,
+	NewJSONReaderWriter,
+	NewHTMLReaderWriter,
 	NewRequestLoggerMiddleware,
 	wire.Struct(new(NewServerParams), "*"),
 	NewServer,
