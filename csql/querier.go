@@ -93,7 +93,7 @@ func (q *querier) Get(ctx context.Context, dest interface{}, query string, args 
 		return err
 	}
 
-	return mustTxFromCtx(ctx).GetContext(ctx, dest, query, args...)
+	return mustTxFromCtx(ctx).Unsafe().GetContext(ctx, dest, query, args...)
 }
 
 func (q *querier) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
@@ -102,7 +102,7 @@ func (q *querier) Select(ctx context.Context, dest interface{}, query string, ar
 		return err
 	}
 
-	return mustTxFromCtx(ctx).SelectContext(ctx, dest, query, args...)
+	return mustTxFromCtx(ctx).Unsafe().SelectContext(ctx, dest, query, args...)
 }
 
 func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
@@ -111,7 +111,7 @@ func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (
 		return nil, err
 	}
 
-	return mustTxFromCtx(ctx).ExecContext(ctx, query, args...)
+	return mustTxFromCtx(ctx).Unsafe().ExecContext(ctx, query, args...)
 }
 
 func (q *querier) mkQueryWithArgs(ctx context.Context, query string, args []interface{}) (string, []interface{}, error) {
