@@ -122,7 +122,7 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 		return err
 	}
 
-	err = tx.Commit()
+	err = q.CommitTx(tx)
 	if err != nil {
 		return cerrors.New(err, "failed to commit database transaction", nil)
 	}
