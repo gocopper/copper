@@ -8,24 +8,25 @@ import (
 	"github.com/gocopper/copper/clogger"
 	"net"
 	"net/http"
-	"strings"
 )
 
 // NewTxMiddleware creates a new TxMiddleware
-func NewTxMiddleware(db *sql.DB, config Config, logger clogger.Logger) *TxMiddleware {
+func NewTxMiddleware(db *sql.DB, querier Querier, config Config, logger clogger.Logger) *TxMiddleware {
 	return &TxMiddleware{
-		db:     db,
-		config: config,
-		logger: logger,
+		db:      db,
+		querier: querier,
+		config:  config,
+		logger:  logger,
 	}
 }
 
 // TxMiddleware is a chttp.Middleware that wraps an HTTP request in a database transaction. If the request succeeds
 // (i.e. 2xx or 3xx response code), the transaction is committed. Else, the transaction is rolled back.
 type TxMiddleware struct {
-	db     *sql.DB
-	config Config
-	logger clogger.Logger
+	db      *sql.DB
+	querier Querier
+	config  Config
+	logger  clogger.Logger
 }
 
 // Handle implements the chttp.Middleware interface. See TxMiddleware
@@ -55,10 +56,11 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 		next.ServeHTTP(&txnrw{
 			internal: w,
 			tx:       tx,
+			querier:  m.querier,
 			logger:   m.logger,
 		}, r.WithContext(ctx))
 
-		err = commitTx(tx, m.logger)
+		err = m.querier.CommitTx(tx)
 		if err != nil {
 			m.logger.Error("Failed to commit database transaction", err)
 			return
@@ -69,6 +71,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 type txnrw struct {
 	internal http.ResponseWriter
 	tx       *sql.Tx
+	querier  Querier
 	logger   clogger.Logger
 }
 
@@ -77,7 +80,7 @@ func (w *txnrw) Header() http.Header {
 }
 
 func (w *txnrw) Write(b []byte) (int, error) {
-	err := commitTx(w.tx, w.logger)
+	err := w.querier.CommitTx(w.tx)
 	if err != nil {
 		return 0, cerrors.New(err, "failed to commit database transaction", nil)
 	}
@@ -102,7 +105,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 		return
 	}
 
-	err := commitTx(w.tx, w.logger)
+	err := w.querier.CommitTx(w.tx)
 	if err != nil {
 		w.internal.WriteHeader(http.StatusInternalServerError)
 		return
@@ -118,18 +121,4 @@ func (w *txnrw) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return h.Hijack()
-}
-
-func commitTx(tx *sql.Tx, logger clogger.Logger) error {
-	err := tx.Commit()
-	if err != nil && errors.Is(err, sql.ErrTxDone) {
-		return nil
-	} else if err != nil && strings.Contains(err.Error(), "commit unexpectedly resulted in rollback") {
-		logger.Warn(err.Error(), nil)
-		return nil
-	} else if err != nil {
-		return cerrors.New(err, "failed to commit database transaction", nil)
-	}
-
-	return nil
 }
