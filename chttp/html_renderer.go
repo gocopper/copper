@@ -37,7 +37,7 @@ type (
 
 		// Func should return a function that takes in any number of params and returns either a single return value,
 		// or two return values of which the second has type error.
-		Func func(r *http.Request) interface{}
+		Func func(r *http.Request) (interface{}, error)
 	}
 
 	// NewHTMLRendererParams holds the params needed to create HTMLRenderer
@@ -71,23 +71,34 @@ func NewHTMLRenderer(p NewHTMLRendererParams) (*HTMLRenderer, error) {
 	return &hr, nil
 }
 
-func (r *HTMLRenderer) funcMap(req *http.Request) template.FuncMap {
+func (r *HTMLRenderer) funcMap(req *http.Request) (template.FuncMap, error) {
 	var funcMap = sprig.FuncMap()
 
 	for i := range r.renderFuncs {
-		funcMap[r.renderFuncs[i].Name] = r.renderFuncs[i].Func(req)
+		fn, err := r.renderFuncs[i].Func(req)
+		if err != nil {
+			return nil, cerrors.New(err, "failed to create render function", map[string]interface{}{
+				"function_name": r.renderFuncs[i].Name,
+			})
+		}
+		funcMap[r.renderFuncs[i].Name] = fn
 	}
 
 	funcMap["partial"] = r.partial(req)
 
-	return funcMap
+	return funcMap, nil
 }
 
 func (r *HTMLRenderer) render(req *http.Request, layout, page string, data interface{}) (template.HTML, error) {
 	var dest strings.Builder
 
+	funcMap, err := r.funcMap(req)
+	if err != nil {
+		return "", cerrors.New(err, "failed to create function map", nil)
+	}
+
 	tmpl, err := template.New(layout).
-		Funcs(r.funcMap(req)).
+		Funcs(funcMap).
 		ParseFS(r.htmlDir,
 			path.Join("src", "layouts", layout),
 			path.Join("src", "pages", page),
@@ -112,8 +123,13 @@ func (r *HTMLRenderer) partial(req *http.Request) func(name string, data interfa
 	return func(name string, data interface{}) (template.HTML, error) {
 		var dest strings.Builder
 
+		funcMap, err := r.funcMap(req)
+		if err != nil {
+			return "", cerrors.New(err, "failed to create function map for partial", nil)
+		}
+
 		tmpl, err := template.New(name).
-			Funcs(r.funcMap(req)).
+			Funcs(funcMap).
 			ParseFS(r.htmlDir,
 				path.Join("src", "partials", "*html"),
 			)
