@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/gocopper/copper/clifecycle"
 	"strings"
 	"time"
 
@@ -26,9 +27,10 @@ type Querier interface {
 }
 
 // NewQuerier returns a querier using the given database connection and the dialect
-func NewQuerier(db *sql.DB, config Config, logger clogger.Logger) Querier {
+func NewQuerier(db *sql.DB, app *clifecycle.Lifecycle, config Config, logger clogger.Logger) Querier {
 	return &querier{
 		db:            sqlx.NewDb(db, config.Dialect),
+		app:           app,
 		dialect:       config.Dialect,
 		in:            false,
 		logger:        logger,
@@ -38,6 +40,7 @@ func NewQuerier(db *sql.DB, config Config, logger clogger.Logger) Querier {
 
 type querier struct {
 	db      *sqlx.DB
+	app     *clifecycle.Lifecycle
 	dialect string
 	in      bool
 	logger  clogger.Logger
@@ -72,8 +75,9 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 
 	if callbacks, ok := q.callbacksByTx[tx]; ok {
 		for i := range callbacks {
-			go func(cb func(context.Context) error) {
-				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			cb := callbacks[i]
+			q.app.Go(func(ctx context.Context) {
+				ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 
 				err := cb(ctx)
 				if err != nil {
@@ -81,7 +85,7 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 				}
 
 				cancel()
-			}(callbacks[i])
+			})
 		}
 	}
 
