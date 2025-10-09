@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/gocopper/copper/clifecycle"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocopper/copper/cerrors"
@@ -34,6 +35,7 @@ func NewQuerier(db *sql.DB, app *clifecycle.Lifecycle, config Config, logger clo
 		dialect:       config.Dialect,
 		in:            false,
 		logger:        logger,
+		mu:            &sync.RWMutex{},
 		callbacksByTx: make(map[*sql.Tx][]func(context.Context) error),
 	}
 }
@@ -45,6 +47,7 @@ type querier struct {
 	in      bool
 	logger  clogger.Logger
 
+	mu            *sync.RWMutex
 	callbacksByTx map[*sql.Tx][]func(context.Context) error
 }
 
@@ -53,6 +56,9 @@ func (q *querier) OnCommit(ctx context.Context, cb func(context.Context) error) 
 	if err != nil {
 		return cerrors.New(err, "failed to get database transaction from context", nil)
 	}
+
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	if _, ok := q.callbacksByTx[tx]; !ok {
 		q.callbacksByTx[tx] = make([]func(context.Context) error, 0)
@@ -73,7 +79,12 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 		q.logger.Warn(err.Error(), nil)
 	}
 
-	if callbacks, ok := q.callbacksByTx[tx]; ok {
+	q.mu.Lock()
+	callbacks, ok := q.callbacksByTx[tx]
+	delete(q.callbacksByTx, tx)
+	q.mu.Unlock()
+
+	if ok {
 		for i := range callbacks {
 			cb := callbacks[i]
 			q.app.Go(func(ctx context.Context) {
@@ -88,8 +99,6 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 			})
 		}
 	}
-
-	delete(q.callbacksByTx, tx)
 
 	return nil
 }
@@ -136,10 +145,13 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 
 func (q *querier) WithIn() Querier {
 	return &querier{
-		db:      q.db,
-		dialect: q.dialect,
-		in:      true,
-		logger:  q.logger,
+		db:            q.db,
+		app:           q.app,
+		dialect:       q.dialect,
+		in:            true,
+		logger:        q.logger,
+		mu:            q.mu,
+		callbacksByTx: q.callbacksByTx,
 	}
 }
 
