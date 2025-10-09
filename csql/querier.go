@@ -25,6 +25,7 @@ type Querier interface {
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	OnCommit(ctx context.Context, cb func(context.Context) error) error
 	CommitTx(tx *sql.Tx) error
+	RollbackTx(tx *sql.Tx) error
 }
 
 // NewQuerier returns a querier using the given database connection and the dialect
@@ -103,6 +104,16 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 	return nil
 }
 
+func (q *querier) RollbackTx(tx *sql.Tx) error {
+	err := tx.Rollback()
+
+	q.mu.Lock()
+	delete(q.callbacksByTx, tx)
+	q.mu.Unlock()
+
+	return err
+}
+
 func (q *querier) CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error) {
 	return CtxWithTx(ctx, q.db.DB, q.dialect)
 }
@@ -115,7 +126,7 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 
 	defer func() {
 		// Try a rollback in a deferred function to account for panics
-		err := tx.Rollback()
+		err := q.RollbackTx(tx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			q.logger.Error("Failed to rollback database transaction", err)
 			return
@@ -128,7 +139,7 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 
 	err = fn(ctx)
 	if err != nil {
-		rollbackErr := tx.Rollback()
+		rollbackErr := q.RollbackTx(tx)
 		if rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
 			q.logger.Error("Failed to rollback database transaction", err)
 		}

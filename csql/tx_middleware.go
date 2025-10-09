@@ -41,7 +41,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 
 		defer func() {
 			// Try a rollback in a deferred function to account for panics
-			err := tx.Rollback()
+			err := m.querier.RollbackTx(tx)
 			if err != nil && !errors.Is(err, sql.ErrTxDone) {
 				m.logger.Error("Failed to rollback database transaction", err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -92,7 +92,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 	const MinErrStatusCode = 400
 
 	if statusCode >= MinErrStatusCode {
-		err := w.tx.Rollback()
+		err := w.querier.RollbackTx(w.tx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			w.logger.WithTags(map[string]interface{}{
 				"originalStatusCode": statusCode,
