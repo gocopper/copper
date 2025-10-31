@@ -2,20 +2,24 @@ package clifecycle
 
 import (
 	"context"
+	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/gocopper/copper/clogger"
 )
 
 const defaultStopTimeout = 30 * time.Second
 
 // New instantiates and returns a new Lifecycle that can be used with
 // New to create a Copper app.
-func New() *Lifecycle {
+func New(logger clogger.Logger) *Lifecycle {
 	ctx, cancel := context.WithCancel(context.Background())
 	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
 
 	return &Lifecycle{
 		Context:        ctx,
+		logger:         logger,
 		cancel:         cancel,
 		ShutdownSignal: shutdownCtx,
 		shutdownCancel: shutdownCancel,
@@ -31,6 +35,7 @@ func New() *Lifecycle {
 // server before the app exits.
 type Lifecycle struct {
 	Context        context.Context
+	logger         clogger.Logger
 	cancel         context.CancelFunc
 	ShutdownSignal context.Context
 	shutdownCancel context.CancelFunc
@@ -50,15 +55,24 @@ func (lc *Lifecycle) OnStop(fn func(ctx context.Context) error) {
 // The goroutine should return when the context is done or when its work is complete.
 //
 // WARNING: Be careful with closure capture in loops. Make copies of loop variables:
-//   for _, handler := range handlers {
-//       handler := handler  // copy to avoid closure capture bug
-//       lc.Go(func(ctx context.Context) {
-//           err := handler.Process(ctx, payload)
-//       })
-//   }
+//
+//	for _, handler := range handlers {
+//	    handler := handler  // copy to avoid closure capture bug
+//	    lc.Go(func(ctx context.Context) {
+//	        err := handler.Process(ctx, payload)
+//	    })
+//	}
 func (lc *Lifecycle) Go(fn func(ctx context.Context)) {
 	lc.wg.Add(1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				lc.logger.WithTags(map[string]interface{}{
+					"error": r,
+					"stack": string(debug.Stack()),
+				}).Error("[copper] Panic in goroutine", nil)
+			}
+		}()
 		defer lc.wg.Done()
 		fn(lc.Context)
 	}()
