@@ -14,6 +14,7 @@ import (
 // Logger can be used to log messages and errors.
 type Logger interface {
 	WithTags(tags map[string]interface{}) Logger
+	WithPrefix(prefix string) Logger
 
 	Debug(msg string)
 	Info(msg string)
@@ -77,6 +78,7 @@ type logger struct {
 	tags         map[string]interface{}
 	format       Format
 	redactFields []string
+	prefix       string
 }
 
 func (l *logger) WithTags(tags map[string]interface{}) Logger {
@@ -86,6 +88,18 @@ func (l *logger) WithTags(tags map[string]interface{}) Logger {
 		tags:         mergeTags(l.tags, tags),
 		format:       l.format,
 		redactFields: l.redactFields,
+		prefix:       l.prefix,
+	}
+}
+
+func (l *logger) WithPrefix(prefix string) Logger {
+	return &logger{
+		out:          l.out,
+		err:          l.err,
+		tags:         l.tags,
+		format:       l.format,
+		redactFields: l.redactFields,
+		prefix:       prefix,
 	}
 }
 
@@ -117,6 +131,10 @@ func (l *logger) log(dest io.Writer, lvl Level, msg string, err error) {
 }
 
 func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
+	if l.prefix != "" {
+		msg = "[" + l.prefix + "] " + msg
+	}
+
 	var dict = map[string]interface{}{
 		"ts":    time.Now().Format(time.RFC3339),
 		"level": lvl.String(),
@@ -140,6 +158,10 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 }
 
 func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
+	if l.prefix != "" {
+		msg = "[" + l.prefix + "] " + msg
+	}
+
 	var (
 		logErr = cerrors.New(nil, msg, l.tags).Error()
 
