@@ -79,7 +79,7 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 func TestNewWithParams(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain, nil)
+	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain, nil, nil)
 	assert.NotNil(t, logger)
 }
 
@@ -88,7 +88,7 @@ func TestLogger_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
 	)
 
 	logger.Debug("test debug log")
@@ -101,7 +101,7 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
 	)
 
 	logger.
@@ -123,7 +123,7 @@ func TestLogger_WithTags_RedactedFields(t *testing.T) {
 			buf    bytes.Buffer
 			logger = clogger.NewWithWriters(&buf, &buf, format, []string{
 				"secret", "password", "userPin",
-			})
+			}, nil)
 
 			testErr = cerrors.New(nil, "test-error", map[string]interface{}{
 				"secret":   "my_api_key",
@@ -155,7 +155,7 @@ func TestLogger_Info(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
 	)
 
 	logger.Info("test info log")
@@ -168,7 +168,7 @@ func TestLogger_Warn(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
 	)
 
 	logger.Warn("test warn log", errors.New("test-error")) //nolint:goerr113
@@ -181,7 +181,7 @@ func TestLogger_Error(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
 	)
 
 	logger.Error("test error log", errors.New("test-error")) //nolint:goerr113

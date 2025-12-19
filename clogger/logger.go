@@ -24,7 +24,7 @@ type Logger interface {
 
 // New returns a Logger implementation that can logs to console.
 func New() Logger {
-	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain, nil)
+	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain, nil, nil)
 }
 
 // NewWithConfig creates a Logger based on the provided config.
@@ -57,18 +57,28 @@ func NewWithConfig(config Config) (Logger, error) {
 		}
 	}
 
-	return NewWithWriters(outFile, errFile, config.Format, config.RedactFields), nil
+	var levelFilter map[Level]bool
+	if len(config.LevelFilter) > 0 {
+		levelFilter = make(map[Level]bool)
+		for _, lvl := range config.LevelFilter {
+			levelFilter[ParseLevel(lvl)] = true
+		}
+	}
+
+	return NewWithWriters(outFile, errFile, config.Format, config.RedactFields, levelFilter), nil
 }
 
 // NewWithWriters creates a Logger that uses the provided writers. out is
 // used for debug and info levels. err is used for warn and error levels.
-func NewWithWriters(out, err io.Writer, format Format, redactFields []string) Logger {
+// levelFilter, if not nil, specifies which levels to include. If nil, all levels are logged.
+func NewWithWriters(out, err io.Writer, format Format, redactFields []string, levelFilter map[Level]bool) Logger {
 	return &logger{
 		out:          out,
 		err:          err,
 		tags:         make(map[string]interface{}),
 		format:       format,
 		redactFields: expandRedactedFields(redactFields),
+		levelFilter:  levelFilter,
 	}
 }
 
@@ -79,6 +89,7 @@ type logger struct {
 	format       Format
 	redactFields []string
 	prefix       string
+	levelFilter  map[Level]bool
 }
 
 func (l *logger) WithTags(tags map[string]interface{}) Logger {
@@ -89,6 +100,7 @@ func (l *logger) WithTags(tags map[string]interface{}) Logger {
 		format:       l.format,
 		redactFields: l.redactFields,
 		prefix:       l.prefix,
+		levelFilter:  l.levelFilter,
 	}
 }
 
@@ -100,6 +112,7 @@ func (l *logger) WithPrefix(prefix string) Logger {
 		format:       l.format,
 		redactFields: l.redactFields,
 		prefix:       prefix,
+		levelFilter:  l.levelFilter,
 	}
 }
 
@@ -120,6 +133,11 @@ func (l *logger) Error(msg string, err error) {
 }
 
 func (l *logger) log(dest io.Writer, lvl Level, msg string, err error) {
+	// Filter by level (if level filter is set)
+	if l.levelFilter != nil && !l.levelFilter[lvl] {
+		return
+	}
+
 	switch l.format {
 	case FormatJSON:
 		l.logJSON(dest, lvl, msg, err)

@@ -36,4 +36,5 @@ type Config struct {
 	Err          string   `toml:"err"`
 	Format       Format   `toml:"format"`
 	RedactFields []string `toml:"redact_fields"`
+	LevelFilter  []string `toml:"level_filter"`
 }

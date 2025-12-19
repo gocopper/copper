@@ -12,6 +12,10 @@ func (l *noop) WithTags(tags map[string]interface{}) Logger {
 	return l
 }
 
+func (l *noop) WithPrefix(prefix string) Logger {
+	return l
+}
+
 func (l *noop) Debug(msg string) {}
 
 func (l *noop) Info(msg string) {}
