@@ -1,11 +1,12 @@
 package cconfig
 
 import (
-	"html/template"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"text/template"
 
 	"github.com/gocopper/copper/cerrors"
 	"github.com/pelletier/go-toml"
@@ -13,7 +14,11 @@ import (
 
 //nolint:funlen
 func loadTree(fp, overrides string, disableKeyOverrides bool) (*toml.Tree, error) {
-	tmpl, err := template.ParseFiles(fp)
+	funcMap := template.FuncMap{
+		"exec": execCmd,
+	}
+
+	tmpl, err := template.New(filepath.Base(fp)).Funcs(funcMap).ParseFiles(fp)
 	if err != nil {
 		return nil, cerrors.New(err, "failed to parse config file as template", map[string]interface{}{
 			"path": fp,
@@ -22,7 +27,7 @@ func loadTree(fp, overrides string, disableKeyOverrides bool) (*toml.Tree, error
 
 	envVars := make(map[string]string)
 	for _, e := range os.Environ() {
-		pair := strings.Split(e, "=")
+		pair := strings.SplitN(e, "=", 2)
 		envVars[pair[0]] = pair[1]
 	}
 
@@ -180,4 +185,15 @@ func mergeTrees(base, override *toml.Tree, disableKeyOverrides bool) (*toml.Tree
 	}
 
 	return base, nil
+}
+
+func execCmd(cmd string) (string, error) {
+	out, err := exec.Command("sh", "-c", cmd).Output()
+	if err != nil {
+		return "", cerrors.New(err, "failed to execute command in config template", map[string]interface{}{
+			"cmd": cmd,
+		})
+	}
+
+	return strings.TrimSpace(string(out)), nil
 }
