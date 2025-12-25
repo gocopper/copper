@@ -188,12 +188,20 @@ func mergeTrees(base, override *toml.Tree, disableKeyOverrides bool) (*toml.Tree
 }
 
 func execCmd(cmd string) (string, error) {
-	out, err := exec.Command("sh", "-c", cmd).Output()
+	c := exec.Command("sh", "-c", cmd)
+
+	var stdout, stderr strings.Builder
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+
+	err := c.Run()
 	if err != nil {
 		return "", cerrors.New(err, "failed to execute command in config template", map[string]interface{}{
-			"cmd": cmd,
+			"cmd":    cmd,
+			"stdout": stdout.String(),
+			"stderr": stderr.String(),
 		})
 	}
 
-	return strings.TrimSpace(string(out)), nil
+	return strings.TrimSpace(stdout.String()), nil
 }
