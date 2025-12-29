@@ -15,16 +15,13 @@ const defaultStopTimeout = 30 * time.Second
 // New to create a Copper app.
 func New(logger clogger.Logger) *Lifecycle {
 	ctx, cancel := context.WithCancel(context.Background())
-	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
 
 	return &Lifecycle{
-		Context:        ctx,
-		logger:         logger,
-		cancel:         cancel,
-		ShutdownSignal: shutdownCtx,
-		shutdownCancel: shutdownCancel,
-		onStop:         make([]func(ctx context.Context) error, 0),
-		stopTimeout:    defaultStopTimeout,
+		Context:     ctx,
+		logger:      logger,
+		cancel:      cancel,
+		onStop:      make([]func(ctx context.Context) error, 0),
+		stopTimeout: defaultStopTimeout,
 	}
 }
 
@@ -34,14 +31,12 @@ func New(logger clogger.Logger) *Lifecycle {
 // Packages such as chttp use Lifecycle to gracefully stop the HTTP
 // server before the app exits.
 type Lifecycle struct {
-	Context        context.Context
-	logger         clogger.Logger
-	cancel         context.CancelFunc
-	ShutdownSignal context.Context
-	shutdownCancel context.CancelFunc
-	onStop         []func(ctx context.Context) error
-	stopTimeout    time.Duration
-	wg             sync.WaitGroup
+	Context     context.Context
+	logger      clogger.Logger
+	cancel      context.CancelFunc
+	onStop      []func(ctx context.Context) error
+	stopTimeout time.Duration
+	wg          sync.WaitGroup
 }
 
 // OnStop registers the provided fn to run before the app exits. The fn
@@ -81,10 +76,10 @@ func (lc *Lifecycle) Go(fn func(ctx context.Context)) {
 // Stop runs all of the registered stop funcs in order along with a
 // context with a configured timeout and waits for them to complete.
 func (lc *Lifecycle) Stop(logger Logger) {
-	// Cancel shutdown signal immediately so handlers can react
-	lc.shutdownCancel()
+	// Cancel context first so goroutines know to stop
+	lc.cancel()
 
-	// Create shutdown context separate from main context
+	// Create shutdown context with timeout for cleanup operations
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), lc.stopTimeout)
 	defer cancel()
 
@@ -109,7 +104,4 @@ func (lc *Lifecycle) Stop(logger Logger) {
 	case <-shutdownCtx.Done():
 		logger.Error("Background jobs did not complete within timeout", shutdownCtx.Err())
 	}
-
-	// Cancel main context only AFTER everything completes
-	lc.cancel()
 }
