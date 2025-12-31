@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"database/sql"
 	"errors"
-	"github.com/gocopper/copper/cerrors"
-	"github.com/gocopper/copper/clogger"
 	"net"
 	"net/http"
+
+	"github.com/gocopper/copper/cerrors"
+	"github.com/gocopper/copper/clogger"
 )
 
 // NewTxMiddleware creates a new TxMiddleware
@@ -34,7 +35,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, tx, err := CtxWithTx(r.Context(), m.db, m.config.Dialect)
 		if err != nil {
-			m.logger.Error("Failed to create context with database transaction", err)
+			m.logger.Error("[csql/middleware] Failed to create context with database transaction", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -43,13 +44,13 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 			// Try a rollback in a deferred function to account for panics
 			err := m.querier.RollbackTx(tx)
 			if err != nil && !errors.Is(err, sql.ErrTxDone) {
-				m.logger.Error("Failed to rollback database transaction", err)
+				m.logger.Error("[csql/middleware] Failed to rollback database transaction", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
 			if err == nil {
-				m.logger.Warn("Rolled back an unexpectedly open database transaction", nil)
+				m.logger.Warn("[csql/middleware] Rolled back an unexpectedly open database transaction", nil)
 			}
 		}()
 
@@ -62,7 +63,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 
 		err = m.querier.CommitTx(tx)
 		if err != nil {
-			m.logger.Error("Failed to commit database transaction", err)
+			m.logger.Error("[csql/middleware] Failed to commit database transaction", err)
 			return
 		}
 	})
@@ -89,14 +90,12 @@ func (w *txnrw) Write(b []byte) (int, error) {
 }
 
 func (w *txnrw) WriteHeader(statusCode int) {
-	const MinErrStatusCode = 400
-
-	if statusCode >= MinErrStatusCode {
+	if statusCode >= http.StatusBadRequest {
 		err := w.querier.RollbackTx(w.tx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			w.logger.WithTags(map[string]interface{}{
 				"originalStatusCode": statusCode,
-			}).Error("Failed to rollback database transaction", err)
+			}).Error("[csql/middleware] Failed to rollback database transaction", err)
 			w.internal.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -106,9 +105,17 @@ func (w *txnrw) WriteHeader(statusCode int) {
 	}
 
 	err := w.querier.CommitTx(w.tx)
-	if err != nil {
+	if err != nil && statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
+		// Don't let 2xx status code go through if tx commit failed
+		w.logger.WithTags(map[string]interface{}{
+			"originalStatusCode": statusCode,
+		}).Error("[csql/middleware] Failed to commit tx", err)
 		w.internal.WriteHeader(http.StatusInternalServerError)
 		return
+	} else if err != nil {
+		w.logger.WithTags(map[string]any{
+			"statusCode": statusCode,
+		}).Warn("[csql/middleware] Failed to commit tx; Continuing normally", err)
 	}
 
 	w.internal.WriteHeader(statusCode)
