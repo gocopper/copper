@@ -11,9 +11,8 @@ import (
 	"github.com/gocopper/copper/cerrors"
 )
 
-// Logger can be used to log messages and errors.
-type Logger interface {
-	WithTags(tags map[string]interface{}) Logger
+type CoreLogger interface {
+	WithTags(tags map[string]any) Logger
 	WithPrefix(prefix string) Logger
 
 	Debug(msg string)
@@ -22,13 +21,21 @@ type Logger interface {
 	Error(msg string, err error)
 }
 
-// New returns a Logger implementation that can logs to console.
-func New() Logger {
-	return NewWithWriters(os.Stdout, os.Stderr, FormatPlain, nil, nil)
+type Logger CoreLogger
+
+func NewWithWriters(out, errWriter io.Writer, format Format, redactFields []string, levelFilter map[Level]bool, hooks []Hook) Logger {
+	return &LoggerImpl{
+		out:          out,
+		err:          errWriter,
+		tags:         make(map[string]any),
+		format:       format,
+		redactFields: expandRedactedFields(redactFields),
+		levelFilter:  levelFilter,
+		hooks:        hooks,
+	}
 }
 
-// NewWithConfig creates a Logger based on the provided config.
-func NewWithConfig(config Config) (Logger, error) {
+func NewCore(config Config) (CoreLogger, error) {
 	const LogFilePerms = 0666
 
 	var (
@@ -40,7 +47,7 @@ func NewWithConfig(config Config) (Logger, error) {
 	if config.Out != "" {
 		outFile, err = os.OpenFile(config.Out, os.O_APPEND|os.O_CREATE|os.O_WRONLY, LogFilePerms)
 		if err != nil {
-			return nil, cerrors.New(err, "failed to open log file", map[string]interface{}{
+			return nil, cerrors.New(err, "failed to open log file", map[string]any{
 				"path": config.Out,
 			})
 		}
@@ -51,7 +58,7 @@ func NewWithConfig(config Config) (Logger, error) {
 	} else if config.Err != "" {
 		errFile, err = os.OpenFile(config.Err, os.O_APPEND|os.O_CREATE|os.O_WRONLY, LogFilePerms)
 		if err != nil {
-			return nil, cerrors.New(err, "failed to open error log file", map[string]interface{}{
+			return nil, cerrors.New(err, "failed to open error log file", map[string]any{
 				"path": config.Err,
 			})
 		}
@@ -65,35 +72,78 @@ func NewWithConfig(config Config) (Logger, error) {
 		}
 	}
 
-	return NewWithWriters(outFile, errFile, config.Format, config.RedactFields, levelFilter), nil
-}
-
-// NewWithWriters creates a Logger that uses the provided writers. out is
-// used for debug and info levels. err is used for warn and error levels.
-// levelFilter, if not nil, specifies which levels to include. If nil, all levels are logged.
-func NewWithWriters(out, err io.Writer, format Format, redactFields []string, levelFilter map[Level]bool) Logger {
-	return &logger{
-		out:          out,
-		err:          err,
-		tags:         make(map[string]interface{}),
-		format:       format,
-		redactFields: expandRedactedFields(redactFields),
+	return &LoggerImpl{
+		out:          outFile,
+		err:          errFile,
+		tags:         make(map[string]any),
+		format:       config.Format,
+		redactFields: expandRedactedFields(config.RedactFields),
 		levelFilter:  levelFilter,
-	}
+		hooks:        make([]Hook, 0),
+	}, nil
 }
 
-type logger struct {
+func New(config Config, hooks []Hook) (Logger, error) {
+	const LogFilePerms = 0666
+
+	var (
+		outFile io.Writer = os.Stdout
+		errFile io.Writer = os.Stderr
+		err     error
+	)
+
+	if config.Out != "" {
+		outFile, err = os.OpenFile(config.Out, os.O_APPEND|os.O_CREATE|os.O_WRONLY, LogFilePerms)
+		if err != nil {
+			return nil, cerrors.New(err, "failed to open log file", map[string]any{
+				"path": config.Out,
+			})
+		}
+	}
+
+	if config.Out == config.Err {
+		errFile = outFile
+	} else if config.Err != "" {
+		errFile, err = os.OpenFile(config.Err, os.O_APPEND|os.O_CREATE|os.O_WRONLY, LogFilePerms)
+		if err != nil {
+			return nil, cerrors.New(err, "failed to open error log file", map[string]any{
+				"path": config.Err,
+			})
+		}
+	}
+
+	var levelFilter map[Level]bool
+	if len(config.LevelFilter) > 0 {
+		levelFilter = make(map[Level]bool)
+		for _, lvl := range config.LevelFilter {
+			levelFilter[ParseLevel(lvl)] = true
+		}
+	}
+
+	return &LoggerImpl{
+		out:          outFile,
+		err:          errFile,
+		tags:         make(map[string]any),
+		format:       config.Format,
+		redactFields: expandRedactedFields(config.RedactFields),
+		levelFilter:  levelFilter,
+		hooks:        hooks,
+	}, nil
+}
+
+type LoggerImpl struct {
 	out          io.Writer
 	err          io.Writer
-	tags         map[string]interface{}
+	tags         map[string]any
 	format       Format
 	redactFields []string
 	prefix       string
 	levelFilter  map[Level]bool
+	hooks        []Hook
 }
 
-func (l *logger) WithTags(tags map[string]interface{}) Logger {
-	return &logger{
+func (l *LoggerImpl) WithTags(tags map[string]any) Logger {
+	return &LoggerImpl{
 		out:          l.out,
 		err:          l.err,
 		tags:         mergeTags(l.tags, tags),
@@ -101,11 +151,12 @@ func (l *logger) WithTags(tags map[string]interface{}) Logger {
 		redactFields: l.redactFields,
 		prefix:       l.prefix,
 		levelFilter:  l.levelFilter,
+		hooks:        l.hooks,
 	}
 }
 
-func (l *logger) WithPrefix(prefix string) Logger {
-	return &logger{
+func (l *LoggerImpl) WithPrefix(prefix string) Logger {
+	return &LoggerImpl{
 		out:          l.out,
 		err:          l.err,
 		tags:         l.tags,
@@ -113,26 +164,27 @@ func (l *logger) WithPrefix(prefix string) Logger {
 		redactFields: l.redactFields,
 		prefix:       prefix,
 		levelFilter:  l.levelFilter,
+		hooks:        l.hooks,
 	}
 }
 
-func (l *logger) Debug(msg string) {
+func (l *LoggerImpl) Debug(msg string) {
 	l.log(l.out, LevelDebug, msg, nil) //nolint:goerr113
 }
 
-func (l *logger) Info(msg string) {
+func (l *LoggerImpl) Info(msg string) {
 	l.log(l.out, LevelInfo, msg, nil) //nolint:goerr113
 }
 
-func (l *logger) Warn(msg string, err error) {
+func (l *LoggerImpl) Warn(msg string, err error) {
 	l.log(l.err, LevelWarn, msg, err)
 }
 
-func (l *logger) Error(msg string, err error) {
+func (l *LoggerImpl) Error(msg string, err error) {
 	l.log(l.err, LevelError, msg, err)
 }
 
-func (l *logger) log(dest io.Writer, lvl Level, msg string, err error) {
+func (l *LoggerImpl) log(dest io.Writer, lvl Level, msg string, err error) {
 	// Filter by level (if level filter is set)
 	if l.levelFilter != nil && !l.levelFilter[lvl] {
 		return
@@ -146,14 +198,18 @@ func (l *logger) log(dest io.Writer, lvl Level, msg string, err error) {
 	default:
 		l.logPlain(dest, lvl, msg, err)
 	}
+
+	for i := range l.hooks {
+		l.hooks[i].OnLog(lvl, msg, l.tags, err)
+	}
 }
 
-func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
+func (l *LoggerImpl) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 	if l.prefix != "" {
 		msg = "[" + l.prefix + "] " + msg
 	}
 
-	var dict = map[string]interface{}{
+	var dict = map[string]any{
 		"ts":    time.Now().Format(time.RFC3339),
 		"level": lvl.String(),
 		"msg":   msg,
@@ -175,7 +231,7 @@ func (l *logger) logJSON(dest io.Writer, lvl Level, msg string, err error) {
 	_ = enc.Encode(dict)
 }
 
-func (l *logger) logPlain(dest io.Writer, lvl Level, msg string, err error) {
+func (l *LoggerImpl) logPlain(dest io.Writer, lvl Level, msg string, err error) {
 	if l.prefix != "" {
 		msg = "[" + l.prefix + "] " + msg
 	}

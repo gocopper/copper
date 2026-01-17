@@ -17,11 +17,10 @@ type Runner interface {
 	Run() error
 }
 
-// New provides a convenience wrapper around InitApp that logs and exits if there is an error.
 func New() *App {
 	app, err := InitApp()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	return app
@@ -29,7 +28,7 @@ func New() *App {
 
 // NewApp creates a new Copper app and returns it along with the app's lifecycle manager,
 // config, and the logger.
-func NewApp(lifecycle *clifecycle.Lifecycle, config cconfig.Loader, logger clogger.Logger) *App {
+func NewApp(lifecycle *clifecycle.Lifecycle, config cconfig.Loader, logger clogger.CoreLogger) *App {
 	return &App{
 		Lifecycle: lifecycle,
 		Config:    config,
@@ -43,7 +42,7 @@ func NewApp(lifecycle *clifecycle.Lifecycle, config cconfig.Loader, logger clogg
 type App struct {
 	Lifecycle *clifecycle.Lifecycle
 	Config    cconfig.Loader
-	Logger    clogger.Logger
+	Logger    clogger.CoreLogger
 }
 
 // Run runs the provided funcs. Once all of the functions complete their run,

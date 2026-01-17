@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gocopper/copper/chttp"
-	"github.com/gocopper/copper/clifecycle"
+	"github.com/gocopper/copper/clifecycle/clifecycletest"
 	"github.com/gocopper/copper/clogger"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,13 +14,12 @@ import (
 func TestServer_Run(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.New()
-	lc := clifecycle.New()
+	lc := clifecycletest.New()
 
 	server := chttp.NewServer(chttp.NewServerParams{
 		Handler:   http.NotFoundHandler(),
 		Config:    chttp.Config{Port: 8999},
-		Logger:    logger,
+		Logger:    clogger.NewNoop(),
 		Lifecycle: lc,
 	})
 
@@ -38,7 +37,7 @@ func TestServer_Run(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-	lc.Stop(logger)
+	lc.Stop(clogger.NewNoop())
 
 	time.Sleep(50 * time.Millisecond) // wait for server to stop
 

@@ -4,8 +4,8 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
-	merged := make(map[string]interface{})
+func mergeTags(t1, t2 map[string]any) map[string]any {
+	merged := make(map[string]any)
 
 	for k, v := range t1 {
 		merged[k] = v
@@ -18,10 +18,10 @@ func mergeTags(t1, t2 map[string]interface{}) map[string]interface{} {
 	return merged
 }
 
-func tagsToKVs(tags map[string]interface{}) []interface{} {
+func tagsToKVs(tags map[string]any) []any {
 	const TagsToKVsMultiplier = 2
 
-	kvs := make([]interface{}, 0, len(tags)*TagsToKVsMultiplier)
+	kvs := make([]any, 0, len(tags)*TagsToKVsMultiplier)
 	for k, v := range tags {
 		kvs = append(kvs, k, v)
 	}

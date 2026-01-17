@@ -8,7 +8,7 @@ func NewNoop() Logger {
 
 type noop struct{}
 
-func (l *noop) WithTags(tags map[string]interface{}) Logger {
+func (l *noop) WithTags(tags map[string]any) Logger {
 	return l
 }
 

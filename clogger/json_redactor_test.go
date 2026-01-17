@@ -3,9 +3,10 @@ package clogger
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
+
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type FooDecimal struct {
@@ -23,7 +24,7 @@ func TestRedactJSONObject(t *testing.T) {
 
 	fmt.Println("====> ", string(o))
 
-	var t1 = map[string]interface{}{
+	var t1 = map[string]any{
 		"a": &d,
 	}
 
@@ -32,11 +33,11 @@ func TestRedactJSONObject(t *testing.T) {
 }
 
 func TestRedactJSON(t *testing.T) {
-	var t1 = map[string]interface{}{
+	var t1 = map[string]any{
 		"a": 1,
 		"b": "foo",
-		"c": map[string]interface{}{"d": 2},
-		"e": []interface{}{1, 2, map[string]interface{}{"f": 3}},
+		"c": map[string]any{"d": 2},
+		"e": []any{1, 2, map[string]any{"f": 3}},
 	}
 
 	in, err := json.Marshal(t1)

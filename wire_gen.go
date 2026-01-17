@@ -15,7 +15,6 @@ import (
 
 // Injectors from wire.go:
 
-// InitApp creates a new Copper app along with its dependencies.
 func InitApp() (*App, error) {
 	flags := NewFlags()
 	path := flags.ConfigPath
@@ -28,17 +27,15 @@ func InitApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger, err := clogger.NewWithConfig(config)
+	coreLogger, err := clogger.NewCore(config)
 	if err != nil {
 		return nil, err
 	}
-	lifecycle := clifecycle.New(logger)
-	app := NewApp(lifecycle, loader, logger)
+	lifecycle := clifecycle.New(coreLogger)
+	app := NewApp(lifecycle, loader, coreLogger)
 	return app, nil
 }
 
 // wire.go:
 
-// WireModule can be used as part of google/wire setup to include the app's
-// lifecycle, config, and logger.
-var WireModule = wire.NewSet(wire.FieldsOf(new(*App), "Lifecycle", "Config", "Logger"))
+var WireModule = wire.NewSet(clogger.New, clogger.LoadConfig, wire.FieldsOf(new(*App), "Config", "Lifecycle"))

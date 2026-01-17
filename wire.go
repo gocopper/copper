@@ -10,7 +10,6 @@ import (
 	"github.com/google/wire"
 )
 
-// InitApp creates a new Copper app along with its dependencies.
 func InitApp() (*App, error) {
 	panic(
 		wire.Build(
@@ -18,7 +17,7 @@ func InitApp() (*App, error) {
 			NewFlags,
 			clifecycle.New,
 			cconfig.NewWithKeyOverrides,
-			clogger.NewWithConfig,
+			clogger.NewCore,
 			clogger.LoadConfig,
 
 			wire.FieldsOf(new(*Flags), "ConfigPath", "ConfigOverrides"),
@@ -26,8 +25,8 @@ func InitApp() (*App, error) {
 	)
 }
 
-// WireModule can be used as part of google/wire setup to include the app's
-// lifecycle, config, and logger.
 var WireModule = wire.NewSet(
-	wire.FieldsOf(new(*App), "Lifecycle", "Config", "Logger"),
+	wire.FieldsOf(new(*App), "Config", "Lifecycle"),
+	clogger.LoadConfig,
+	clogger.New,
 )

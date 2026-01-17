@@ -44,10 +44,10 @@ func TestRecorder_WithTags_Debug(t *testing.T) {
 	)
 
 	logger.
-		WithTags(map[string]interface{}{
+		WithTags(map[string]any{
 			"key": "val",
 		}).
-		WithTags(map[string]interface{}{
+		WithTags(map[string]any{
 			"key2": "val2",
 		}).Debug("test debug log")
 
@@ -57,7 +57,7 @@ func TestRecorder_WithTags_Debug(t *testing.T) {
 
 	assert.Equal(t, clogger.LevelDebug, log.Level)
 	assert.Equal(t, "test debug log", log.Msg)
-	assert.Equal(t, map[string]interface{}{
+	assert.Equal(t, map[string]any{
 		"key":  "val",
 		"key2": "val2",
 	}, log.Tags)

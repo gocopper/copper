@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gocopper/copper/clifecycle/clifecycletest"
 	"github.com/gocopper/copper/clogger"
 	"github.com/gocopper/copper/csql"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +25,9 @@ func TestTxMiddleware_Handle_Commit(t *testing.T) {
 	var (
 		logger  = clogger.NewNoop()
 		config  = csql.Config{Dialect: "sqlite3"}
-		querier = csql.NewQuerier(db, config, logger)
-		mw      = csql.NewTxMiddleware(db, config, logger)
+		lc      = clifecycletest.New()
+		querier = csql.NewQuerier(db, lc, config, logger)
+		mw      = csql.NewTxMiddleware(db, querier, config, logger)
 	)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
@@ -55,8 +57,9 @@ func TestTxMiddleware_Handle_Rollback(t *testing.T) {
 	var (
 		logger  = clogger.NewNoop()
 		config  = csql.Config{Dialect: "sqlite3"}
-		querier = csql.NewQuerier(db, config, logger)
-		mw      = csql.NewTxMiddleware(db, config, logger)
+		lc      = clifecycletest.New()
+		querier = csql.NewQuerier(db, lc, config, logger)
+		mw      = csql.NewTxMiddleware(db, querier, config, logger)
 	)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)

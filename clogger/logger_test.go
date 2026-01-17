@@ -15,11 +15,20 @@ import (
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	logger := clogger.New()
+	logger, err := clogger.New(clogger.Config{}, nil)
+	assert.NoError(t, err)
 	assert.NotNil(t, logger)
 }
 
-func TestNewWithConfig(t *testing.T) {
+func TestNewCore(t *testing.T) {
+	t.Parallel()
+
+	logger, err := clogger.NewCore(clogger.Config{})
+	assert.NoError(t, err)
+	assert.NotNil(t, logger)
+}
+
+func TestNew_WithConfig(t *testing.T) {
 	t.Parallel()
 
 	log, err := os.CreateTemp("", "*")
@@ -29,16 +38,16 @@ func TestNewWithConfig(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	logger, err := clogger.NewWithConfig(clogger.Config{
+	logger, err := clogger.New(clogger.Config{
 		Out:    log.Name(),
 		Err:    log.Name(),
 		Format: clogger.FormatPlain,
-	})
+	}, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, logger)
 }
 
-func TestNewWithConfig_OutFileErr(t *testing.T) {
+func TestNew_OutFileErr(t *testing.T) {
 	t.Parallel()
 
 	log, err := os.CreateTemp("", "*")
@@ -50,14 +59,14 @@ func TestNewWithConfig_OutFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewWithConfig(clogger.Config{
+	_, err = clogger.New(clogger.Config{
 		Out:    log.Name(),
 		Format: clogger.FormatPlain,
-	})
+	}, nil)
 	assert.Error(t, err)
 }
 
-func TestNewWithConfig_ErrFileErr(t *testing.T) {
+func TestNew_ErrFileErr(t *testing.T) {
 	t.Parallel()
 
 	log, err := os.CreateTemp("", "*")
@@ -69,18 +78,11 @@ func TestNewWithConfig_ErrFileErr(t *testing.T) {
 		assert.NoError(t, os.Remove(log.Name()))
 	})
 
-	_, err = clogger.NewWithConfig(clogger.Config{
+	_, err = clogger.New(clogger.Config{
 		Err:    log.Name(),
 		Format: clogger.FormatPlain,
-	})
+	}, nil)
 	assert.Error(t, err)
-}
-
-func TestNewWithParams(t *testing.T) {
-	t.Parallel()
-
-	logger := clogger.NewWithWriters(nil, nil, clogger.FormatPlain, nil, nil)
-	assert.NotNil(t, logger)
 }
 
 func TestLogger_Debug(t *testing.T) {
@@ -88,7 +90,7 @@ func TestLogger_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil, nil)
 	)
 
 	logger.Debug("test debug log")
@@ -101,14 +103,14 @@ func TestLogger_WithTags_Debug(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil, nil)
 	)
 
 	logger.
-		WithTags(map[string]interface{}{
+		WithTags(map[string]any{
 			"key": "val",
 		}).
-		WithTags(map[string]interface{}{
+		WithTags(map[string]any{
 			"key2": "val2",
 		}).Debug("test debug log")
 
@@ -123,9 +125,9 @@ func TestLogger_WithTags_RedactedFields(t *testing.T) {
 			buf    bytes.Buffer
 			logger = clogger.NewWithWriters(&buf, &buf, format, []string{
 				"secret", "password", "userPin",
-			}, nil)
+			}, nil, nil)
 
-			testErr = cerrors.New(nil, "test-error", map[string]interface{}{
+			testErr = cerrors.New(nil, "test-error", map[string]any{
 				"secret":   "my_api_key",
 				"user-pin": "12456",
 				"data": map[string]string{
@@ -134,7 +136,7 @@ func TestLogger_WithTags_RedactedFields(t *testing.T) {
 			})
 		)
 
-		logger.WithTags(map[string]interface{}{
+		logger.WithTags(map[string]any{
 			"passwordOwner": "abc123",
 			"USER_PIN":      "123456",
 			"params": map[string]string{
@@ -155,7 +157,7 @@ func TestLogger_Info(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil, nil)
 	)
 
 	logger.Info("test info log")
@@ -168,7 +170,7 @@ func TestLogger_Warn(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil, nil)
 	)
 
 	logger.Warn("test warn log", errors.New("test-error")) //nolint:goerr113
@@ -181,7 +183,7 @@ func TestLogger_Error(t *testing.T) {
 
 	var (
 		buf    bytes.Buffer
-		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil)
+		logger = clogger.NewWithWriters(&buf, &buf, clogger.FormatPlain, nil, nil, nil)
 	)
 
 	logger.Error("test error log", errors.New("test-error")) //nolint:goerr113

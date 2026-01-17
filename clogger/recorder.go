@@ -6,14 +6,14 @@ package clogger
 func NewRecorder(logs *[]RecordedLog) Logger {
 	return &recorder{
 		Logs: logs,
-		tags: make(map[string]interface{}),
+		tags: make(map[string]any),
 	}
 }
 
 // RecordedLog represents a single log.
 type RecordedLog struct {
 	Level  Level
-	Tags   map[string]interface{}
+	Tags   map[string]any
 	Msg    string
 	Error  error
 	Prefix string
@@ -21,11 +21,11 @@ type RecordedLog struct {
 
 type recorder struct {
 	Logs   *[]RecordedLog
-	tags   map[string]interface{}
+	tags   map[string]any
 	prefix string
 }
 
-func (l *recorder) WithTags(tags map[string]interface{}) Logger {
+func (l *recorder) WithTags(tags map[string]any) Logger {
 	return &recorder{
 		Logs:   l.Logs,
 		tags:   mergeTags(l.tags, tags),

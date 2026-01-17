@@ -11,9 +11,7 @@ import (
 
 const defaultStopTimeout = 30 * time.Second
 
-// New instantiates and returns a new Lifecycle that can be used with
-// New to create a Copper app.
-func New(logger clogger.Logger) *Lifecycle {
+func New(logger clogger.CoreLogger) *Lifecycle {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Lifecycle{
@@ -25,14 +23,9 @@ func New(logger clogger.Logger) *Lifecycle {
 	}
 }
 
-// Lifecycle represents the lifecycle of an app. Most importantly, it
-// allows various parts of the app to register stop funcs that are run
-// before the app exits.
-// Packages such as chttp use Lifecycle to gracefully stop the HTTP
-// server before the app exits.
 type Lifecycle struct {
 	Context     context.Context
-	logger      clogger.Logger
+	logger      clogger.CoreLogger
 	cancel      context.CancelFunc
 	onStop      []func(ctx context.Context) error
 	stopTimeout time.Duration

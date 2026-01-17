@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func redactJSONObject(in map[string]interface{}, redactFields []string) (map[string]interface{}, error) {
+func redactJSONObject(in map[string]any, redactFields []string) (map[string]any, error) {
 	var b bytes.Buffer
 
 	enc := json.NewEncoder(&b)
@@ -22,7 +22,7 @@ func redactJSONObject(in map[string]interface{}, redactFields []string) (map[str
 		return nil, err
 	}
 
-	var out map[string]interface{}
+	var out map[string]any
 	err = json.Unmarshal(redacted, &out)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,6 @@ func redactJSON(in json.RawMessage, redactFields []string) (json.RawMessage, err
 		}
 
 		for k, v := range cont {
-
 			didRedact := false
 			for i := range redactFields {
 				if strings.Contains(strings.ToLower(k), strings.ToLower(redactFields[i])) {
