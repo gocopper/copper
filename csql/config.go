@@ -43,10 +43,12 @@ func LoadConfig(appConfig cconfig.Loader) (Config, error) {
 type (
 	// Config configures the csql module
 	Config struct {
-		Dialect            string           `toml:"dialect"`
-		DSN                string           `toml:"dsn"`
-		Migrations         ConfigMigrations `toml:"migrations"`
-		MaxOpenConnections *int             `toml:"max_open_connections"`
+		Dialect             string           `toml:"dialect"`
+		DSN                 string           `toml:"dsn"`
+		Migrations          ConfigMigrations `toml:"migrations"`
+		MaxOpenConnections  *int             `toml:"max_open_connections"`
+		MaxIdleConnections  *int             `toml:"max_idle_connections"`
+		ConnMaxLifetimeMins *int             `toml:"conn_max_lifetime_mins"`
 	}
 
 	// ConfigMigrations configures the migrations
