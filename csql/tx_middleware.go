@@ -100,7 +100,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 	if statusCode >= http.StatusBadRequest {
 		err := w.querier.RollbackTx(w.tx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
-			w.logger.WithTags(map[string]interface{}{
+			w.logger.WithTags(map[string]any{
 				"originalStatusCode": statusCode,
 			}).Error("[csql/middleware] Failed to rollback database transaction", err)
 			w.internal.WriteHeader(http.StatusInternalServerError)
@@ -114,7 +114,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 	err := w.querier.CommitTx(w.tx)
 	if err != nil && statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
 		// Don't let 2xx status code go through if tx commit failed
-		w.logger.WithTags(map[string]interface{}{
+		w.logger.WithTags(map[string]any{
 			"originalStatusCode": statusCode,
 		}).Error("[csql/middleware] Failed to commit tx", err)
 		w.internal.WriteHeader(http.StatusInternalServerError)

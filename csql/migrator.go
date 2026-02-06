@@ -43,7 +43,7 @@ type Migrator struct {
 
 // Run runs the provided database migrations
 func (m *Migrator) Run() error {
-	m.logger.WithTags(map[string]interface{}{
+	m.logger.WithTags(map[string]any{
 		"direction": m.config.Migrations.Direction,
 		"source":    m.config.Migrations.Source,
 	}).Info("Running database migrations..")
@@ -88,7 +88,7 @@ func (m *Migrator) Run() error {
 		return cerrors.New(err, "failed to exec database migrations", nil)
 	}
 
-	m.logger.WithTags(map[string]interface{}{
+	m.logger.WithTags(map[string]any{
 		"count": n,
 	}).Info("Successfully applied migrations")
 
@@ -114,7 +114,7 @@ func (m *Migrator) hasMigrations() (bool, error) {
 
 	f, err := m.migrations.Open(entries[0].Name())
 	if err != nil {
-		return false, cerrors.New(err, "failed to open migrations file", map[string]interface{}{
+		return false, cerrors.New(err, "failed to open migrations file", map[string]any{
 			"name": entries[0].Name(),
 		})
 	}

@@ -65,7 +65,7 @@ func (cm ConfigMigrations) sqlMigrateDirection() (migrate.MigrationDirection, er
 	case MigrationsDirectionDown:
 		return migrate.Down, nil
 	default:
-		return 0, cerrors.New(nil, "invalid migration direction", map[string]interface{}{
+		return 0, cerrors.New(nil, "invalid migration direction", map[string]any{
 			"direction": cm.Direction,
 		})
 	}

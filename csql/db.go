@@ -18,13 +18,13 @@ func NewDBConnection(lc *clifecycle.Lifecycle, config Config, logger clogger.Log
 		DefaultConnMaxLifetime    = 5 * time.Minute
 	)
 
-	logger.WithTags(map[string]interface{}{
+	logger.WithTags(map[string]any{
 		"dialect": config.Dialect,
 	}).Info("Opening a database connection..")
 
 	db, err := sql.Open(config.Dialect, config.DSN)
 	if err != nil {
-		return nil, cerrors.New(err, "failed to open db connection", map[string]interface{}{
+		return nil, cerrors.New(err, "failed to open db connection", map[string]any{
 			"dialect": config.Dialect,
 		})
 	}

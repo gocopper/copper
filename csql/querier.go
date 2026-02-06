@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/gocopper/copper/clifecycle"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gocopper/copper/clifecycle"
 
 	"github.com/gocopper/copper/cerrors"
 	"github.com/gocopper/copper/clogger"
@@ -16,9 +17,9 @@ import (
 
 // sqlxExecutor defines the common methods used from both *sqlx.DB and *sqlx.Tx.
 type sqlxExecutor interface {
-	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	GetContext(ctx context.Context, dest any, query string, args ...any) error
+	SelectContext(ctx context.Context, dest any, query string, args ...any) error
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	Rebind(query string) string
 }
 
@@ -28,9 +29,9 @@ type Querier interface {
 	CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error)
 	InTx(ctx context.Context, fn func(context.Context) error) error
 	WithIn() Querier
-	Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error
-	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	Get(ctx context.Context, dest any, query string, args ...any) error
+	Select(ctx context.Context, dest any, query string, args ...any) error
+	Exec(ctx context.Context, query string, args ...any) (sql.Result, error)
 	OnCommit(ctx context.Context, cb func(context.Context) error) error
 	CommitTx(tx *sql.Tx) error
 	RollbackTx(tx *sql.Tx) error
@@ -191,7 +192,7 @@ func (q *querier) getExecutor(ctx context.Context) sqlxExecutor {
 	return q.db
 }
 
-func (q *querier) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (q *querier) Get(ctx context.Context, dest any, query string, args ...any) error {
 	query, args, err := q.mkQueryWithArgs(ctx, query, args)
 	if err != nil {
 		return err
@@ -200,7 +201,7 @@ func (q *querier) Get(ctx context.Context, dest interface{}, query string, args 
 	return q.getExecutor(ctx).GetContext(ctx, dest, query, args...)
 }
 
-func (q *querier) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (q *querier) Select(ctx context.Context, dest any, query string, args ...any) error {
 	query, args, err := q.mkQueryWithArgs(ctx, query, args)
 	if err != nil {
 		return err
@@ -209,7 +210,7 @@ func (q *querier) Select(ctx context.Context, dest interface{}, query string, ar
 	return q.getExecutor(ctx).SelectContext(ctx, dest, query, args...)
 }
 
-func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (q *querier) Exec(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	query, args, err := q.mkQueryWithArgs(ctx, query, args)
 	if err != nil {
 		return nil, err
@@ -218,7 +219,7 @@ func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (
 	return q.getExecutor(ctx).ExecContext(ctx, query, args...)
 }
 
-func (q *querier) mkQueryWithArgs(ctx context.Context, query string, args []interface{}) (string, []interface{}, error) {
+func (q *querier) mkQueryWithArgs(ctx context.Context, query string, args []any) (string, []any, error) {
 	var err error
 
 	if q.in {

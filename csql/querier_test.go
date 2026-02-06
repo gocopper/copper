@@ -123,3 +123,24 @@ func TestQuerier_DirectQueries(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, count)
 }
+
+func TestQuerier_CtxWithoutTx(t *testing.T) {
+	t.Parallel()
+
+	db, err := sql.Open("sqlite3", ":memory:")
+	assert.NoError(t, err)
+
+	// Verify CtxWithoutTx removes transaction from context
+	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
+	assert.NoError(t, err)
+
+	// Original context has transaction
+	_, err = csql.TxFromCtx(ctx)
+	assert.NoError(t, err, "original context should have transaction")
+
+	// CtxWithoutTx removes transaction
+	ctxNoTx := csql.CtxWithoutTx(ctx)
+	_, err = csql.TxFromCtx(ctxNoTx)
+	assert.Error(t, err, "CtxWithoutTx should remove transaction from context")
+	assert.Contains(t, err.Error(), "no database transaction in the context")
+}
