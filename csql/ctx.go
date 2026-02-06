@@ -53,3 +53,8 @@ func mustTxFromCtx(ctx context.Context) *sqlx.Tx {
 
 	return tx
 }
+
+func txFromCtxOrNil(ctx context.Context) *sqlx.Tx {
+	tx, _ := ctx.Value(connCtxKey).(*sqlx.Tx)
+	return tx
+}

@@ -30,7 +30,7 @@ func TestTxMiddleware_Handle_Commit(t *testing.T) {
 		mw      = csql.NewTxMiddleware(db, querier, config, logger)
 	)
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil)
 	assert.NoError(t, err)
 
 	mw.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +62,7 @@ func TestTxMiddleware_Handle_Rollback(t *testing.T) {
 		mw      = csql.NewTxMiddleware(db, querier, config, logger)
 	)
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil)
 	assert.NoError(t, err)
 
 	mw.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -21,7 +21,8 @@ func NewTxMiddleware(db *sql.DB, querier Querier, config Config, logger clogger.
 	}
 }
 
-// TxMiddleware is a chttp.Middleware that wraps an HTTP request in a database transaction. If the request succeeds
+// TxMiddleware is a chttp.Middleware that wraps modifying HTTP requests (POST, PUT, PATCH, DELETE) in a database
+// transaction. GET, HEAD, and OPTIONS requests are not wrapped in a transaction. If the request succeeds
 // (i.e. 2xx or 3xx response code), the transaction is committed. Else, the transaction is rolled back.
 type TxMiddleware struct {
 	db      *sql.DB
@@ -33,6 +34,12 @@ type TxMiddleware struct {
 // Handle implements the chttp.Middleware interface. See TxMiddleware
 func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only use transactions for modifying requests
+		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		ctx, tx, err := CtxWithTx(r.Context(), m.db, m.config.Dialect)
 		if err != nil {
 			m.logger.Error("[csql/middleware] Failed to create context with database transaction", err)

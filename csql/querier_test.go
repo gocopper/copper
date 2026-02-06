@@ -90,3 +90,36 @@ func TestQuerier_Exec(t *testing.T) {
 
 	assert.Equal(t, int64(1), n)
 }
+
+func TestQuerier_DirectQueries(t *testing.T) {
+	t.Parallel()
+
+	db, err := sql.Open("sqlite3", ":memory:")
+	assert.NoError(t, err)
+
+	_, err = db.Exec("create table people (name text);")
+	assert.NoError(t, err)
+
+	querier := csql.NewQuerier(db, clifecycletest.New(), csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
+	ctx := context.Background()
+
+	// Queries run directly on DB without transaction
+	_, err = querier.Exec(ctx, "insert into people (name) values (?)", "alice")
+	assert.NoError(t, err)
+
+	_, err = querier.Exec(ctx, "insert into people (name) values (?)", "bob")
+	assert.NoError(t, err)
+
+	var dest struct {
+		Name string
+	}
+	err = querier.Get(ctx, &dest, "select * from people where name = ?", "alice")
+	assert.NoError(t, err)
+	assert.Equal(t, "alice", dest.Name)
+
+	// Verify data was committed
+	var count int
+	err = db.QueryRow("select count(*) from people").Scan(&count)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, count)
+}

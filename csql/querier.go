@@ -14,6 +14,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// sqlxExecutor defines the common methods used from both *sqlx.DB and *sqlx.Tx.
+type sqlxExecutor interface {
+	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	Rebind(query string) string
+}
+
 // Querier provides a set of helpful methods to run database queries. It can be used to run parameterized queries
 // and scan results into Go structs or slices.
 type Querier interface {
@@ -55,7 +63,17 @@ type querier struct {
 func (q *querier) OnCommit(ctx context.Context, cb func(context.Context) error) error {
 	tx, err := TxFromCtx(ctx)
 	if err != nil {
-		return cerrors.New(err, "failed to get database transaction from context", nil)
+		// No transaction - query already auto-committed, run callback immediately
+		q.app.Go(func(ctx context.Context) {
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+
+			err := cb(ctx)
+			if err != nil {
+				q.logger.Error("[csql] Failed to run callback", err)
+			}
+		})
+		return nil
 	}
 
 	q.mu.Lock()
@@ -93,7 +111,7 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 
 				err := cb(ctx)
 				if err != nil {
-					q.logger.Error("Failed to run callback", err)
+					q.logger.Error("[csql] Failed to run callback", err)
 				}
 
 				cancel()
@@ -128,12 +146,12 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 		// Try a rollback in a deferred function to account for panics
 		err := q.RollbackTx(tx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
-			q.logger.Error("Failed to rollback database transaction", err)
+			q.logger.Error("[csql] Failed to rollback database transaction", err)
 			return
 		}
 
 		if err == nil {
-			q.logger.Warn("Rolled back an unexpectedly open database transaction", nil)
+			q.logger.Warn("[csql] Rolled back an unexpectedly open database transaction", nil)
 		}
 	}()
 
@@ -141,7 +159,7 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 	if err != nil {
 		rollbackErr := q.RollbackTx(tx)
 		if rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
-			q.logger.Error("Failed to rollback database transaction", err)
+			q.logger.Error("[csql] Failed to rollback database transaction", err)
 		}
 		return err
 	}
@@ -166,13 +184,20 @@ func (q *querier) WithIn() Querier {
 	}
 }
 
+func (q *querier) getExecutor(ctx context.Context) sqlxExecutor {
+	if tx := txFromCtxOrNil(ctx); tx != nil {
+		return tx
+	}
+	return q.db
+}
+
 func (q *querier) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	query, args, err := q.mkQueryWithArgs(ctx, query, args)
 	if err != nil {
 		return err
 	}
 
-	return mustTxFromCtx(ctx).GetContext(ctx, dest, query, args...)
+	return q.getExecutor(ctx).GetContext(ctx, dest, query, args...)
 }
 
 func (q *querier) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
@@ -181,7 +206,7 @@ func (q *querier) Select(ctx context.Context, dest interface{}, query string, ar
 		return err
 	}
 
-	return mustTxFromCtx(ctx).SelectContext(ctx, dest, query, args...)
+	return q.getExecutor(ctx).SelectContext(ctx, dest, query, args...)
 }
 
 func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
@@ -190,7 +215,7 @@ func (q *querier) Exec(ctx context.Context, query string, args ...interface{}) (
 		return nil, err
 	}
 
-	return mustTxFromCtx(ctx).ExecContext(ctx, query, args...)
+	return q.getExecutor(ctx).ExecContext(ctx, query, args...)
 }
 
 func (q *querier) mkQueryWithArgs(ctx context.Context, query string, args []interface{}) (string, []interface{}, error) {
@@ -203,10 +228,6 @@ func (q *querier) mkQueryWithArgs(ctx context.Context, query string, args []inte
 		}
 	}
 
-	tx, err := txFromCtx(ctx)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return tx.Rebind(query), args, nil
+	executor := q.getExecutor(ctx)
+	return executor.Rebind(query), args, nil
 }
