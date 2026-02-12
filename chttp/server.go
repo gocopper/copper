@@ -47,10 +47,13 @@ func (s *Server) Run() error {
 	s.internal.Addr = fmt.Sprintf(":%d", s.config.Port)
 	s.internal.Handler = s.handler
 
-	s.lc.OnStop(func(ctx context.Context) error {
+	s.lc.Go(func(ctx context.Context) {
+		<-s.lc.Shutdown()
 		s.logger.Info("Shutting down http server..")
 
-		return s.internal.Shutdown(ctx)
+		if err := s.internal.Shutdown(ctx); err != nil {
+			s.logger.Error("HTTP server shutdown error", err)
+		}
 	})
 
 	go func() {

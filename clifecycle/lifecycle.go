@@ -15,21 +15,34 @@ func New(logger clogger.CoreLogger) *Lifecycle {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Lifecycle{
-		Context:     ctx,
+		ctx:         ctx,
 		logger:      logger,
 		cancel:      cancel,
 		onStop:      make([]func(ctx context.Context) error, 0),
 		stopTimeout: defaultStopTimeout,
+		shutdown:    make(chan struct{}),
 	}
 }
 
 type Lifecycle struct {
-	Context     context.Context
+	ctx         context.Context
 	logger      clogger.CoreLogger
 	cancel      context.CancelFunc
 	onStop      []func(ctx context.Context) error
 	stopTimeout time.Duration
 	wg          sync.WaitGroup
+	shutdown    chan struct{}
+}
+
+// Context returns the lifecycle context which remains valid until shutdown completes.
+func (lc *Lifecycle) Context() context.Context {
+	return lc.ctx
+}
+
+// Shutdown returns a channel that's closed when graceful shutdown begins.
+// Goroutines should select on this channel to exit their loops gracefully.
+func (lc *Lifecycle) Shutdown() <-chan struct{} {
+	return lc.shutdown
 }
 
 // OnStop registers the provided fn to run before the app exits. The fn
@@ -62,27 +75,19 @@ func (lc *Lifecycle) Go(fn func(ctx context.Context)) {
 			}
 		}()
 		defer lc.wg.Done()
-		fn(lc.Context)
+		fn(lc.ctx)
 	}()
 }
 
-// Stop runs all of the registered stop funcs in order along with a
-// context with a configured timeout and waits for them to complete.
+// Stop signals graceful shutdown and waits for background goroutines to complete.
+// Context remains valid during graceful shutdown. Only canceled if timeout expires (forced shutdown).
 func (lc *Lifecycle) Stop(logger Logger) {
-	// Cancel context first so goroutines know to stop
-	lc.cancel()
+	// Signal graceful shutdown
+	close(lc.shutdown)
 
-	// Create shutdown context with timeout for cleanup operations
+	// Create shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), lc.stopTimeout)
 	defer cancel()
-
-	// Run cleanup functions (HTTP server shutdown, etc.)
-	for _, fn := range lc.onStop {
-		err := fn(shutdownCtx)
-		if err != nil {
-			logger.Error("Failed to run cleanup func", err)
-		}
-	}
 
 	// Wait for background goroutines to complete with timeout
 	done := make(chan struct{})
@@ -97,4 +102,15 @@ func (lc *Lifecycle) Stop(logger Logger) {
 	case <-shutdownCtx.Done():
 		logger.Error("Background jobs did not complete within timeout", shutdownCtx.Err())
 	}
+
+	// Run cleanup functions (close DB, etc.)
+	for _, fn := range lc.onStop {
+		err := fn(shutdownCtx)
+		if err != nil {
+			logger.Error("Failed to run cleanup func", err)
+		}
+	}
+
+	// Cancel lifecycle context for final cleanup
+	lc.cancel()
 }
