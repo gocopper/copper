@@ -12,28 +12,15 @@ type ctxKey string
 
 const connCtxKey = ctxKey("csql/*sqlx.Tx")
 
-// CtxWithTx creates a context with a new database transaction. Any queries run using Querier will be run within
-// this transaction.
-func CtxWithTx(parentCtx context.Context, db *sql.DB, dialect string) (context.Context, *sql.Tx, error) {
+func ctxWithTx(parentCtx context.Context, db *sql.DB, dialect string) (context.Context, error) {
 	tx, err := sqlx.NewDb(db, dialect).Beginx()
 	if err != nil {
-		return nil, nil, cerrors.New(err, "failed to begin db transaction", map[string]any{
+		return nil, cerrors.New(err, "failed to begin db transaction", map[string]any{
 			"dialect": dialect,
 		})
 	}
 
-	return context.WithValue(parentCtx, connCtxKey, tx), tx.Tx, nil
-}
-
-// TxFromCtx returns an existing transaction from the context. This method should be called with context created
-// using CtxWithTx.
-func TxFromCtx(ctx context.Context) (*sql.Tx, error) {
-	tx, err := txFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx.Tx, nil
+	return context.WithValue(parentCtx, connCtxKey, tx), nil
 }
 
 func txFromCtx(ctx context.Context) (*sqlx.Tx, error) {
@@ -43,15 +30,6 @@ func txFromCtx(ctx context.Context) (*sqlx.Tx, error) {
 	}
 
 	return tx, nil
-}
-
-func mustTxFromCtx(ctx context.Context) *sqlx.Tx {
-	tx, err := txFromCtx(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	return tx
 }
 
 func txFromCtxOrNil(ctx context.Context) *sqlx.Tx {

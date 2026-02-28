@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/gocopper/copper/clifecycle/clifecycletest"
+	"github.com/gocopper/copper/clogger"
 	"github.com/gocopper/copper/csql"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,11 +17,9 @@ func TestCtxWithTx(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
 	assert.NoError(t, err)
 
-	ctx, tx1, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
-	assert.NoError(t, err)
+	querier := csql.NewQuerier(db, clifecycletest.New(), csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
 
-	tx2, err := csql.TxFromCtx(ctx)
+	ctx, err := querier.CtxWithTx(context.Background())
 	assert.NoError(t, err)
-
-	assert.Equal(t, tx1, tx2)
+	assert.NotNil(t, ctx)
 }

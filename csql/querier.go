@@ -26,15 +26,16 @@ type sqlxExecutor interface {
 // Querier provides a set of helpful methods to run database queries. It can be used to run parameterized queries
 // and scan results into Go structs or slices.
 type Querier interface {
-	CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error)
+	CtxWithTx(ctx context.Context) (context.Context, error)
 	InTx(ctx context.Context, fn func(context.Context) error) error
+	InReadOnlyTx(ctx context.Context, fn func(context.Context) error) error
 	WithIn() Querier
 	Get(ctx context.Context, dest any, query string, args ...any) error
 	Select(ctx context.Context, dest any, query string, args ...any) error
 	Exec(ctx context.Context, query string, args ...any) (sql.Result, error)
 	OnCommit(ctx context.Context, cb func(context.Context) error) error
-	CommitTx(tx *sql.Tx) error
-	RollbackTx(tx *sql.Tx) error
+	CommitTx(ctx context.Context) error
+	RollbackTx(ctx context.Context) error
 }
 
 // NewQuerier returns a querier using the given database connection and the dialect
@@ -62,8 +63,8 @@ type querier struct {
 }
 
 func (q *querier) OnCommit(ctx context.Context, cb func(context.Context) error) error {
-	tx, err := TxFromCtx(ctx)
-	if err != nil {
+	tx := txFromCtxOrNil(ctx)
+	if tx == nil {
 		// No transaction - query already auto-committed, run callback immediately
 		q.app.Go(func(ctx context.Context) {
 			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -80,17 +81,22 @@ func (q *querier) OnCommit(ctx context.Context, cb func(context.Context) error) 
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	if _, ok := q.callbacksByTx[tx]; !ok {
-		q.callbacksByTx[tx] = make([]func(context.Context) error, 0)
+	if _, ok := q.callbacksByTx[tx.Tx]; !ok {
+		q.callbacksByTx[tx.Tx] = make([]func(context.Context) error, 0)
 	}
 
-	q.callbacksByTx[tx] = append(q.callbacksByTx[tx], cb)
+	q.callbacksByTx[tx.Tx] = append(q.callbacksByTx[tx.Tx], cb)
 
 	return nil
 }
 
-func (q *querier) CommitTx(tx *sql.Tx) error {
-	err := tx.Commit()
+func (q *querier) CommitTx(ctx context.Context) error {
+	tx := txFromCtxOrNil(ctx)
+	if tx == nil {
+		return nil
+	}
+
+	err := tx.Tx.Commit()
 	if err != nil && !errors.Is(err, sql.ErrTxDone) && !strings.Contains(err.Error(), "commit unexpectedly resulted in rollback") {
 		return err
 	}
@@ -100,11 +106,12 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 	}
 
 	q.mu.Lock()
-	callbacks, ok := q.callbacksByTx[tx]
-	delete(q.callbacksByTx, tx)
+	callbacks, ok := q.callbacksByTx[tx.Tx]
+	delete(q.callbacksByTx, tx.Tx)
 	q.mu.Unlock()
 
-	if ok {
+	// Only run callbacks if commit succeeded
+	if ok && err == nil {
 		for i := range callbacks {
 			cb := callbacks[i]
 			q.app.Go(func(ctx context.Context) {
@@ -123,29 +130,34 @@ func (q *querier) CommitTx(tx *sql.Tx) error {
 	return nil
 }
 
-func (q *querier) RollbackTx(tx *sql.Tx) error {
-	err := tx.Rollback()
+func (q *querier) RollbackTx(ctx context.Context) error {
+	tx := txFromCtxOrNil(ctx)
+	if tx == nil {
+		return nil
+	}
+
+	err := tx.Tx.Rollback()
 
 	q.mu.Lock()
-	delete(q.callbacksByTx, tx)
+	delete(q.callbacksByTx, tx.Tx)
 	q.mu.Unlock()
 
 	return err
 }
 
-func (q *querier) CtxWithTx(ctx context.Context) (context.Context, *sql.Tx, error) {
-	return CtxWithTx(ctx, q.db.DB, q.dialect)
+func (q *querier) CtxWithTx(ctx context.Context) (context.Context, error) {
+	return ctxWithTx(ctx, q.db.DB, q.dialect)
 }
 
 func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) error {
-	ctx, tx, err := CtxWithTx(ctx, q.db.DB, q.dialect)
+	ctx, err := ctxWithTx(ctx, q.db.DB, q.dialect)
 	if err != nil {
 		return cerrors.New(err, "failed to create context with database transaction", nil)
 	}
 
 	defer func() {
 		// Try a rollback in a deferred function to account for panics
-		err := q.RollbackTx(tx)
+		err := q.RollbackTx(ctx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			q.logger.Error("[csql] Failed to rollback database transaction", err)
 			return
@@ -158,19 +170,29 @@ func (q *querier) InTx(ctx context.Context, fn func(context.Context) error) erro
 
 	err = fn(ctx)
 	if err != nil {
-		rollbackErr := q.RollbackTx(tx)
+		rollbackErr := q.RollbackTx(ctx)
 		if rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
 			q.logger.Error("[csql] Failed to rollback database transaction", err)
 		}
 		return err
 	}
 
-	err = q.CommitTx(tx)
+	err = q.CommitTx(ctx)
 	if err != nil {
 		return cerrors.New(err, "failed to commit database transaction", nil)
 	}
 
 	return nil
+}
+
+func (q *querier) InReadOnlyTx(ctx context.Context, fn func(context.Context) error) error {
+	ctx, err := ctxWithTx(ctx, q.db.DB, q.dialect)
+	if err != nil {
+		return cerrors.New(err, "failed to create context with database transaction", nil)
+	}
+	defer q.RollbackTx(ctx) //nolint:errcheck
+
+	return fn(ctx)
 }
 
 func (q *querier) WithIn() Querier {

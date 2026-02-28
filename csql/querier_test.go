@@ -23,7 +23,7 @@ func TestQuerier_Read(t *testing.T) {
 
 	querier := csql.NewQuerier(db, clifecycletest.New(), csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
 
-	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
+	ctx, err := querier.CtxWithTx(context.Background())
 	assert.NoError(t, err)
 
 	t.Run("get", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestQuerier_Exec(t *testing.T) {
 
 	querier := csql.NewQuerier(db, clifecycletest.New(), csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
 
-	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
+	ctx, err := querier.CtxWithTx(context.Background())
 	assert.NoError(t, err)
 
 	res, err := querier.Exec(ctx, "delete from people")
@@ -127,20 +127,43 @@ func TestQuerier_DirectQueries(t *testing.T) {
 func TestQuerier_CtxWithoutTx(t *testing.T) {
 	t.Parallel()
 
-	db, err := sql.Open("sqlite3", ":memory:")
+	// Use shared cache so all connections see the same in-memory database
+	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
+	assert.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.Exec("create table items (name text)")
 	assert.NoError(t, err)
 
-	// Verify CtxWithoutTx removes transaction from context
-	ctx, _, err := csql.CtxWithTx(context.Background(), db, "sqlite3")
+	querier := csql.NewQuerier(db, clifecycletest.New(), csql.Config{Dialect: "sqlite3"}, clogger.NewNoop())
+
+	// Insert via transaction context, then rollback — data should be gone
+	ctx, err := querier.CtxWithTx(context.Background())
 	assert.NoError(t, err)
 
-	// Original context has transaction
-	_, err = csql.TxFromCtx(ctx)
-	assert.NoError(t, err, "original context should have transaction")
+	_, err = querier.Exec(ctx, "insert into items (name) values (?)", "in-tx")
+	assert.NoError(t, err)
 
-	// CtxWithoutTx removes transaction
+	err = querier.RollbackTx(ctx)
+	assert.NoError(t, err)
+
+	var count int
+	err = db.QueryRow("select count(*) from items where name = 'in-tx'").Scan(&count)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, count, "rolled-back transaction data should not persist")
+
+	// Insert via CtxWithoutTx while inside a transaction — data should persist after rollback
+	ctx, err = querier.CtxWithTx(context.Background())
+	assert.NoError(t, err)
+
 	ctxNoTx := csql.CtxWithoutTx(ctx)
-	_, err = csql.TxFromCtx(ctxNoTx)
-	assert.Error(t, err, "CtxWithoutTx should remove transaction from context")
-	assert.Contains(t, err.Error(), "no database transaction in the context")
+	_, err = querier.Exec(ctxNoTx, "insert into items (name) values (?)", "no-tx")
+	assert.NoError(t, err)
+
+	err = querier.RollbackTx(ctx)
+	assert.NoError(t, err)
+
+	err = db.QueryRow("select count(*) from items where name = 'no-tx'").Scan(&count)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, count, "CtxWithoutTx data should persist despite parent tx rollback")
 }

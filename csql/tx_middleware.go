@@ -2,6 +2,7 @@ package csql
 
 import (
 	"bufio"
+	"context"
 	"database/sql"
 	"errors"
 	"net"
@@ -40,7 +41,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx, tx, err := CtxWithTx(r.Context(), m.db, m.config.Dialect)
+		ctx, err := ctxWithTx(r.Context(), m.db, m.config.Dialect)
 		if err != nil {
 			m.logger.Error("[csql/middleware] Failed to create context with database transaction", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -49,7 +50,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 
 		defer func() {
 			// Try a rollback in a deferred function to account for panics
-			err := m.querier.RollbackTx(tx)
+			err := m.querier.RollbackTx(ctx)
 			if err != nil && !errors.Is(err, sql.ErrTxDone) {
 				m.logger.Error("[csql/middleware] Failed to rollback database transaction", err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -63,12 +64,12 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 
 		next.ServeHTTP(&txnrw{
 			internal: w,
-			tx:       tx,
+			ctx:      ctx,
 			querier:  m.querier,
 			logger:   m.logger,
 		}, r.WithContext(ctx))
 
-		err = m.querier.CommitTx(tx)
+		err = m.querier.CommitTx(ctx)
 		if err != nil {
 			m.logger.Error("[csql/middleware] Failed to commit database transaction", err)
 			return
@@ -78,7 +79,7 @@ func (m *TxMiddleware) Handle(next http.Handler) http.Handler {
 
 type txnrw struct {
 	internal http.ResponseWriter
-	tx       *sql.Tx
+	ctx      context.Context
 	querier  Querier
 	logger   clogger.Logger
 }
@@ -88,7 +89,7 @@ func (w *txnrw) Header() http.Header {
 }
 
 func (w *txnrw) Write(b []byte) (int, error) {
-	err := w.querier.CommitTx(w.tx)
+	err := w.querier.CommitTx(w.ctx)
 	if err != nil {
 		return 0, cerrors.New(err, "failed to commit database transaction", nil)
 	}
@@ -98,7 +99,7 @@ func (w *txnrw) Write(b []byte) (int, error) {
 
 func (w *txnrw) WriteHeader(statusCode int) {
 	if statusCode >= http.StatusBadRequest {
-		err := w.querier.RollbackTx(w.tx)
+		err := w.querier.RollbackTx(w.ctx)
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			w.logger.WithTags(map[string]any{
 				"originalStatusCode": statusCode,
@@ -111,7 +112,7 @@ func (w *txnrw) WriteHeader(statusCode int) {
 		return
 	}
 
-	err := w.querier.CommitTx(w.tx)
+	err := w.querier.CommitTx(w.ctx)
 	if err != nil && statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
 		// Don't let 2xx status code go through if tx commit failed
 		w.logger.WithTags(map[string]any{
