@@ -52,6 +52,18 @@ func (lc *Lifecycle) OnStop(fn func(ctx context.Context) error) {
 	lc.onStop = append(lc.onStop, fn)
 }
 
+// SetStopTimeout overrides how long Stop waits for background goroutines to
+// complete before running cleanup funcs and canceling the lifecycle context.
+// Defaults to 30 seconds. Apps whose background work is bounded by a longer
+// deadline should set this above that deadline so graceful shutdown does not
+// force-quit work that is about to finish.
+//
+// Call this during app initialization, before Stop may run; it must not be
+// called concurrently with Stop.
+func (lc *Lifecycle) SetStopTimeout(d time.Duration) {
+	lc.stopTimeout = d
+}
+
 // Go starts a background goroutine that will be waited for during shutdown.
 // The goroutine should return when the context is done or when its work is complete.
 //
